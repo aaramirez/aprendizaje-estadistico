@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aprendizaje automático</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, con scikit-learn corriendo en la página.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="index">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>automático</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+
+<header class="hero">
+  <span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span>
+  <h1>Un modelo que acierta en tus datos todavía no ha demostrado nada</h1>
+  <p class="lede">Entrenar un modelo hoy toma tres líneas de código; saber si sirve, por qué se equivoca y si se puede confiar en él es el verdadero oficio. Este curso enseña los algoritmos clásicos del aprendizaje automático junto con la forma honesta de validarlos, medirlos y explicarlos.</p>
+</header>
+
+<section>
+  <h2>Cómo usar este curso</h2>
+  <div class="prose">
+    <p><b>Estado.</b> El curso está en preparación. La <a href="temario.html">tabla de contenido</a> ya tiene los 12 capítulos con sus secciones y sus laboratorios, y está en revisión.</p>
+    <p><b>Para quién es.</b> Para quien quiere construir modelos: analistas que dan el salto a predecir, desarrolladores y futuros científicos de datos. Conviene haber hecho Ciencia de datos y saber Python con pandas. La teoría estadística se usa y se enlaza: la regresión se demuestra en Modelos lineales, el PCA en Multivariante y la probabilidad en Probabilidad y estadística.</p>
+    <p><b>Cómo está hecho.</b> Un mismo ejemplo recorre el curso: predecir qué clientes de un servicio de suscripción ficticio van a cancelar. Cada capítulo prueba una idea nueva sobre ese problema, y los laboratorios entrenan modelos con scikit-learn en el navegador: mueves un parámetro y ves la frontera, la curva o el error cambiar al instante.</p>
+  </div>
+</section>
+
+<details class="stage" id="temario" open><summary><h2><span class="pn">Empieza aquí</span> Tabla de contenido</h2></summary>
+  <div class="mods">
+    <a class="mod" href="temario.html"><span class="n">≡</span><b>Tabla de contenido</b><p>Cada capítulo con sus secciones y sus laboratorios.</p></a>
+  </div>
+</details>
+
+<details class="stage" id="parte-1" open><summary><h2><span class="pn">Parte 1</span> Aprender de los datos</h2><span class="cuenta" data-etapa-cuenta="1"></span></summary>
+  <div class="mods">
+    <div class="mod soon" data-id="que-es-aprender"><span class="n">01</span><b>Qué es aprender de los datos</b><p>Supervisado y no supervisado, memorizar frente a generalizar, y el flujo de un proyecto.</p></div>
+    <div class="mod soon" data-id="regresion-y-regularizacion"><span class="n">02</span><b>Regresión predictiva y regularización</b><p>La regresión usada para predecir y cómo ridge y lasso la frenan cuando hay muchas variables.</p></div>
+    <div class="mod soon" data-id="clasificacion"><span class="n">03</span><b>Clasificación: logística, k vecinos y Bayes ingenuo</b><p>Tres maneras de separar clases y las fronteras de decisión que dibuja cada una.</p></div>
+  </div>
+</details>
+
+<details class="stage" id="parte-2" open><summary><h2><span class="pn">Parte 2</span> Medir con honestidad</h2><span class="cuenta" data-etapa-cuenta="2"></span></summary>
+  <div class="mods">
+    <div class="mod soon" data-id="validacion"><span class="n">04</span><b>Validación: entrenamiento, validación y prueba</b><p>Particiones, validación cruzada y la fuga de datos que infla los resultados.</p></div>
+    <div class="mod soon" data-id="metricas"><span class="n">05</span><b>Métricas: matriz de confusión, ROC y calibración</b><p>Precisión, exhaustividad, curvas ROC y PR, calibración y el costo de cada error.</p></div>
+    <div class="mod soon" data-id="sesgo-y-varianza"><span class="n">06</span><b>Sesgo y varianza, y curvas de aprendizaje</b><p>Diagnosticar si al modelo le faltan datos o le falta capacidad.</p></div>
+  </div>
+</details>
+
+<details class="stage" id="parte-3" open><summary><h2><span class="pn">Parte 3</span> Modelos más potentes</h2><span class="cuenta" data-etapa-cuenta="3"></span></summary>
+  <div class="mods">
+    <div class="mod soon" data-id="arboles-y-ensambles"><span class="n">07</span><b>Árboles y ensambles: bosques y boosting</b><p>Un árbol que pregunta, un bosque que vota y el boosting que corrige errores: XGBoost y LightGBM.</p></div>
+    <div class="mod soon" data-id="svm-y-kernels"><span class="n">08</span><b>Máquinas de soporte vectorial y kernels</b><p>El margen más ancho posible y el truco que separa lo que no se separa en el plano.</p></div>
+    <div class="mod soon" data-id="no-supervisado"><span class="n">09</span><b>Aprendizaje no supervisado: agrupar y reducir dimensión</b><p>k-means, jerárquico, DBSCAN, PCA, t-SNE y UMAP.</p></div>
+  </div>
+</details>
+
+<details class="stage" id="parte-4" open><summary><h2><span class="pn">Parte 4</span> Del cuaderno al proyecto</h2><span class="cuenta" data-etapa-cuenta="4"></span></summary>
+  <div class="mods">
+    <div class="mod soon" data-id="variables-y-pipelines"><span class="n">10</span><b>Ingeniería de variables y pipelines con scikit-learn</b><p>Escalar, codificar, imputar y crear variables dentro de un pipeline que no filtra información.</p></div>
+    <div class="mod soon" data-id="interpretabilidad"><span class="n">11</span><b>Interpretabilidad: explicar un modelo y una predicción</b><p>Importancia de variables, dependencia parcial, SHAP y sus límites.</p></div>
+    <div class="mod soon" data-id="patrones-de-modelos"><span class="n">12</span><b>Patrones de modelos de aprendizaje automático</b><p>Línea base primero, pipelines, validación anidada y *stacking*, y el proyecto completo.</p></div>
+  </div>
+</details>
+
+
+
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-estadistico" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-estadistico</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+</body>
+</html>
