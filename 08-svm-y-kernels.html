@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SVM y kernels · Aprendizaje automático · Aprendizaje automático</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, con scikit-learn corriendo en la página.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="svm-y-kernels">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>automático</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+<header class="page-head"><span class="num">CAPÍTULO 08 DE 12</span><h1>Máquinas de soporte vectorial y kernels</h1><p class="lede">Entre todas las fronteras que separan dos clases, la máquina de soporte vectorial elige la que deja el margen más ancho, y la decide con unos pocos puntos. Con el truco del kernel separa en un espacio más grande sin calcularlo nunca. Este capítulo la prueba con los clientes que cancelan y responde cuándo conviene usarla hoy.</p></header>
+<section><h2>El hiperplano de margen máximo</h2><div class="prose"><p>Joaquín Varela, el ingeniero de datos que arma las tablas de Retención, pasó por el escritorio de Ximena con una pregunta: «En la universidad me enseñaron que las máquinas de soporte vectorial eran lo mejor que había para clasificar. ¿Las probaste con los clientes?». Ximena no las había probado. Este capítulo es esa prueba, y su respuesta tiene dos partes: las ideas de la SVM están entre las más bonitas del aprendizaje automático, y en este problema no le ganan al boosting del capítulo 07.</p></div><div class="analogia"><b>Imagínalo así</b><p>En un salón de fiestas hay dos grupos de mesas, los invitados de la novia a un lado y los del novio al otro, y tienes que trazar el pasillo por donde pasarán los mozos. Puedes trazarlo de muchas formas, pero el mejor pasillo es el más ancho posible: el que deja más espacio a cada lado, para que nadie choque con una silla. Ese pasillo lo deciden solo las mesas del borde. Las del fondo podrían moverse y el pasillo seguiría igual.</p></div><div class="prose"><p>La <b>máquina de soporte vectorial</b> (<i>support vector machine</i>, SVM) es un clasificador que busca exactamente ese pasillo. En dos variables, la frontera es una recta; en tres, un plano; con quince variables, como las de Retención, es un <b>hiperplano</b> (<i>hyperplane</i>): la versión de un plano en muchas dimensiones, que parte el espacio en dos mitades. Se escribe como <span class="math">w \cdot x + b = 0</span>, donde <span class="math">x</span> son las variables de un cliente, <span class="math">w</span> es un vector con un peso por variable y <span class="math">b</span> un número que corre la frontera. Un cliente con <span class="math">w \cdot x + b &gt; 0</span> queda del lado de «cancela» y uno con valor negativo, del lado de «se queda». Hasta aquí es lo mismo que la logística del capítulo 03: una frontera lineal.</p><p>La diferencia está en cuál de todas las fronteras posibles se elige. Cuando las clases se pueden separar, hay infinitas rectas que lo hacen, y la SVM elige la del <b>margen</b> (<i>margin</i>) más ancho: la distancia entre la frontera y los puntos más cercanos de cada clase.</p></div><figure class="fig fig-esquema" id="08-diagrama-1"><div class="lienzo"><svg viewBox="0 0 830 470" style="min-width:640px" role="img" aria-label="A la izquierda, dos clases de puntos y tres rectas que las separan, todas pasando cerca de algún punto. A la derecha, la recta de margen máximo con la franja del margen a cada lado; los tres puntos que tocan el borde de la franja son los vectores de soporte">
+<defs><marker id="c8d1-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--ink)"/></marker></defs>
+<text x="30" y="34" class="t t-b">MUCHAS RECTAS SEPARAN LAS CLASES…</text>
+<text x="30" y="54" class="t t-s t-m">todas aciertan en estos datos, pero pasan rozando algún punto</text>
+<text x="470" y="34" class="t t-b">…LA SVM ELIGE LA DEL MARGEN MÁS ANCHO</text>
+<text x="470" y="54" class="t t-s t-m">la calle más ancha que cabe entre las dos clases</text>
+<rect x="30" y="70" width="330" height="330" rx="8" class="caja"/>
+<clipPath id="c8d1-k30"><rect x="30" y="70" width="330" height="330" rx="8"/></clipPath><g clip-path="url(#c8d1-k30)">
+<line x1="2.5" y1="2337.3" x2="387.5" y2="-1469.7" class="ln" style="stroke-width:1.6"/>
+<line x1="2.5" y1="-595.4" x2="387.5" y2="923.3" class="ln" style="stroke-width:1.6"/>
+<line x1="2.5" y1="102.2" x2="387.5" y2="305.0" class="ln" style="stroke-width:1.6"/>
+</g>
+<circle cx="142.6" cy="311.4" r="3.8" style="fill:var(--muted)"/>
+<circle cx="80.2" cy="364.9" r="3.8" style="fill:var(--muted)"/>
+<circle cx="113.8" cy="250.2" r="3.8" style="fill:var(--muted)"/>
+<circle cx="124.4" cy="270.4" r="3.8" style="fill:var(--muted)"/>
+<circle cx="151.6" cy="308.8" r="3.8" style="fill:var(--muted)"/>
+<circle cx="196.4" cy="308.6" r="3.8" style="fill:var(--muted)"/>
+<circle cx="133.8" cy="209.2" r="3.8" style="fill:var(--muted)"/>
+<circle cx="120.4" cy="281.4" r="3.8" style="fill:var(--muted)"/>
+<circle cx="109.4" cy="275.3" r="3.8" style="fill:var(--muted)"/>
+<circle cx="65.0" cy="302.3" r="3.8" style="fill:var(--muted)"/>
+<circle cx="170.1" cy="278.7" r="3.8" style="fill:var(--muted)"/>
+<circle cx="116.9" cy="274.2" r="3.8" style="fill:var(--muted)"/>
+<circle cx="134.9" cy="280.3" r="3.8" style="fill:var(--muted)"/>
+<circle cx="139.4" cy="330.1" r="3.8" style="fill:var(--muted)"/>
+<path d="M282.8 198.0L288.3 207.9L277.3 207.9Z" style="fill:var(--warm)"/>
+<path d="M288.1 180.0L293.6 189.9L282.6 189.9Z" style="fill:var(--warm)"/>
+<path d="M239.0 181.4L244.5 191.3L233.5 191.3Z" style="fill:var(--warm)"/>
+<path d="M238.8 151.6L244.3 161.5L233.3 161.5Z" style="fill:var(--warm)"/>
+<path d="M265.7 156.0L271.2 165.9L260.2 165.9Z" style="fill:var(--warm)"/>
+<path d="M235.8 134.9L241.3 144.8L230.3 144.8Z" style="fill:var(--warm)"/>
+<path d="M258.2 141.9L263.7 151.8L252.7 151.8Z" style="fill:var(--warm)"/>
+<path d="M290.0 209.7L295.5 219.6L284.5 219.6Z" style="fill:var(--warm)"/>
+<path d="M275.4 194.4L280.9 204.3L269.9 204.3Z" style="fill:var(--warm)"/>
+<path d="M277.8 140.1L283.3 150.0L272.3 150.0Z" style="fill:var(--warm)"/>
+<path d="M285.4 150.1L290.9 160.0L279.9 160.0Z" style="fill:var(--warm)"/>
+<path d="M234.3 173.8L239.8 183.7L228.8 183.7Z" style="fill:var(--warm)"/>
+<path d="M276.4 149.5L281.9 159.4L270.9 159.4Z" style="fill:var(--warm)"/>
+<path d="M249.5 163.8L255.0 173.7L244.0 173.7Z" style="fill:var(--warm)"/>
+<rect x="470" y="70" width="330" height="330" rx="8" class="caja"/>
+<clipPath id="c8d1-k470"><rect x="470" y="70" width="330" height="330" rx="8"/></clipPath><g clip-path="url(#c8d1-k470)">
+<polygon points="442.5,-187.8 827.5,423.0 827.5,611.7 442.5,0.9" style="fill:var(--c-apl-s);stroke:none"/>
+<line x1="442.5" y1="-187.8" x2="827.5" y2="423.0" class="ln ln-d" style="stroke-width:1.5"/>
+<line x1="442.5" y1="0.9" x2="827.5" y2="611.7" class="ln ln-d" style="stroke-width:1.5"/>
+<line x1="442.5" y1="-93.4" x2="827.5" y2="517.3" class="ln" style="stroke:var(--c-apl);stroke-width:3"/>
+</g>
+<circle cx="582.6" cy="311.4" r="3.8" style="fill:var(--muted)"/>
+<circle cx="520.2" cy="364.9" r="3.8" style="fill:var(--muted)"/>
+<circle cx="553.8" cy="250.2" r="3.8" style="fill:var(--muted)"/>
+<circle cx="564.4" cy="270.4" r="3.8" style="fill:var(--muted)"/>
+<circle cx="591.6" cy="308.8" r="3.8" style="fill:var(--muted)"/>
+<circle cx="636.4" cy="308.6" r="3.8" style="fill:var(--muted)"/>
+<circle cx="636.4" cy="308.6" r="10" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+<circle cx="573.8" cy="209.2" r="3.8" style="fill:var(--muted)"/>
+<circle cx="573.8" cy="209.2" r="10" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+<circle cx="560.4" cy="281.4" r="3.8" style="fill:var(--muted)"/>
+<circle cx="549.4" cy="275.3" r="3.8" style="fill:var(--muted)"/>
+<circle cx="505.0" cy="302.3" r="3.8" style="fill:var(--muted)"/>
+<circle cx="610.1" cy="278.7" r="3.8" style="fill:var(--muted)"/>
+<circle cx="556.9" cy="274.2" r="3.8" style="fill:var(--muted)"/>
+<circle cx="574.9" cy="280.3" r="3.8" style="fill:var(--muted)"/>
+<circle cx="579.4" cy="330.1" r="3.8" style="fill:var(--muted)"/>
+<path d="M722.8 198.0L728.3 207.9L717.3 207.9Z" style="fill:var(--warm)"/>
+<path d="M728.1 180.0L733.6 189.9L722.6 189.9Z" style="fill:var(--warm)"/>
+<path d="M679.0 181.4L684.5 191.3L673.5 191.3Z" style="fill:var(--warm)"/>
+<circle cx="679.0" cy="187.5" r="10" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+<path d="M678.8 151.6L684.3 161.5L673.3 161.5Z" style="fill:var(--warm)"/>
+<path d="M705.7 156.0L711.2 165.9L700.2 165.9Z" style="fill:var(--warm)"/>
+<path d="M675.8 134.9L681.3 144.8L670.3 144.8Z" style="fill:var(--warm)"/>
+<path d="M698.2 141.9L703.7 151.8L692.7 151.8Z" style="fill:var(--warm)"/>
+<path d="M730.0 209.7L735.5 219.6L724.5 219.6Z" style="fill:var(--warm)"/>
+<path d="M715.4 194.4L720.9 204.3L709.9 204.3Z" style="fill:var(--warm)"/>
+<path d="M717.8 140.1L723.3 150.0L712.3 150.0Z" style="fill:var(--warm)"/>
+<path d="M725.4 150.1L730.9 160.0L719.9 160.0Z" style="fill:var(--warm)"/>
+<path d="M674.3 173.8L679.8 183.7L668.8 183.7Z" style="fill:var(--warm)"/>
+<path d="M716.4 149.5L721.9 159.4L710.9 159.4Z" style="fill:var(--warm)"/>
+<path d="M689.5 163.8L695.0 173.7L684.0 173.7Z" style="fill:var(--warm)"/>
+<line x1="592.4" y1="238.8" x2="677.6" y2="185.1" style="stroke:var(--ink);stroke-width:1.8" marker-start="url(#c8d1-m)" marker-end="url(#c8d1-m)"/>
+<text x="635" y="204" class="t t-s t-b" text-anchor="middle" transform="rotate(-32 635 212)">margen</text>
+<text x="30" y="428" class="t t-s"><tspan style="fill:var(--muted)">●</tspan> clase −1 (se queda)   <tspan style="fill:var(--warm)">▲</tspan> clase +1 (cancela)</text>
+<text x="470" y="428" class="t t-s">◯ vectores de soporte: los 3 puntos que tocan el margen.</text>
+<text x="470" y="448" class="t t-s t-m">Si mueves cualquier otro punto, la recta no cambia.</text>
+<text x="30" y="448" class="t t-s t-m">Un cliente nuevo cerca de una de estas rectas cae fácil del lado equivocado.</text>
+</svg></div><figcaption><b>El hiperplano de margen máximo.</b> A la izquierda, dos clases de puntos y tres rectas que las separan sin errores; todas pasan rozando algún punto. A la derecha, la recta que elige la SVM, con la franja del margen a cada lado (rosa) y la flecha que mide su ancho. Los tres puntos con anillo tocan el borde de la franja: son los vectores de soporte. Fíjate en que ningún punto entra en la franja y en que la recta queda justo en el medio.</figcaption></figure><div class="prose"><p>¿Por qué el margen más ancho? Porque deja la mayor distancia de seguridad para los casos nuevos. Un cliente nuevo que se parece a los de una clase, pero no es idéntico a ninguno, cae cerca de ellos; si la frontera pasa rozando, ese pequeño desplazamiento lo manda al lado equivocado. Con un margen ancho, la frontera tolera más variación. La teoría estadística detrás de esta intuición, desarrollada por Vladimir Vapnik y sus colegas entre los años sesenta y noventa, muestra que un margen más ancho se traduce en una cota mejor del error en datos nuevos.</p><p>La cuenta tiene una forma limpia. Si se fija la escala de <span class="math">w</span> para que los puntos más cercanos cumplan <span class="math">w \cdot x + b = \pm 1</span>, el ancho del margen es <span class="math">2 / \lVert w \rVert</span>. Ensanchar el margen es lo mismo que achicar <span class="math">\lVert w \rVert</span>. La SVM resuelve entonces un problema de optimización: hacer <span class="math">\lVert w \rVert^2 / 2</span> lo más chico posible, con la condición de que cada punto quede de su lado y fuera del margen. Es un problema convexo, como el de la regresión lineal: tiene una sola solución y se puede encontrar con exactitud.</p></div></section>
+<section><h2>Vectores de soporte: los puntos que importan</h2><div class="prose"><p>En la solución de ese problema pasa algo notable: la frontera depende solo de los puntos que quedan justo sobre el borde del margen. Esos puntos se llaman <b>vectores de soporte</b> (<i>support vectors</i>), porque «sostienen» la frontera, como los pilares sostienen un puente. Todos los demás podrían moverse, desaparecer o duplicarse, mientras no crucen el margen, y la frontera seguiría en el mismo lugar.</p><p>Matemáticamente, la SVM se puede reescribir en su <b>forma dual</b> (<i>dual form</i>), donde la frontera queda como una suma ponderada sobre los puntos de entrenamiento:</p><div class="math-display">f(x) = \sum_i \alpha_i \, y_i \, (x_i \cdot x) + b</div><p>Cada punto de entrenamiento <span class="math">x_i</span> tiene un peso <span class="math">\alpha_i</span>, y su etiqueta <span class="math">y_i</span> vale +1 o −1. Para casi todos los puntos, <span class="math">\alpha_i = 0</span>: no aportan nada. Solo los vectores de soporte tienen <span class="math">\alpha_i &gt; 0</span>. Para clasificar a un cliente nuevo, la SVM lo compara con cada vector de soporte mediante el producto <span class="math">x_i \cdot x</span>, que mide cuánto se parecen, y suma esas comparaciones con sus pesos.</p><p>Esto tiene dos consecuencias prácticas. La primera: el modelo entrenado es compacto cuando hay pocos vectores de soporte, y lento cuando hay muchos, porque cada predicción recorre todos. La segunda, que es la puerta del resto del capítulo: los datos solo aparecen en la fórmula dentro de productos entre pares de puntos. Si cambiamos ese producto por otra medida de parecido, cambiamos la forma de la frontera sin tocar nada más. Ese es el truco del kernel, que llega dos secciones más abajo.</p><p>Lo que la SVM entrega para cada cliente no es una probabilidad: es <span class="math">f(x)</span>, una distancia firmada a la frontera, que en scikit-learn se obtiene con <code>decision_function</code>. Para ordenar clientes por riesgo y calcular el AUC basta, porque solo importa el orden. Si hace falta una probabilidad, scikit-learn la estima con <code>probability=True</code>, que ajusta una curva logística sobre esas distancias con validación cruzada interna: es más lento y no siempre queda bien calibrada.</p></div></section>
+<section><h2>Margen suave y el parámetro C</h2><div class="prose"><p>Con datos reales, las clases casi nunca se separan del todo. Entre los clientes de Retención hay algunos que tenían todo para quedarse y cancelaron, y otros con todos los síntomas que siguen ahí. Ninguna frontera los deja a todos de su lado, y la SVM de margen duro no tiene solución.</p></div><div class="analogia"><b>Imagínalo así</b><p>Volvamos al pasillo del salón. Algunos invitados del novio se sentaron entre los de la novia. Puedes trazar un pasillo angosto y torcido que respete a cada uno, o uno ancho y derecho que deje a esos pocos del lado equivocado. El organizador decide cuánto le importa cada invitado mal ubicado frente al ancho del pasillo.</p></div><div class="prose"><p>La solución de Corinna Cortes y Vladimir Vapnik, en 1995, fue el <b>margen suave</b> (<i>soft margin</i>): se permite que algunos puntos entren al margen o lo crucen, y cada uno paga una multa proporcional a cuánto se metió. Esa invasión se llama <b>holgura</b> (<i>slack</i>) y se escribe <span class="math">\xi_i</span>: vale 0 para los puntos bien ubicados fuera del margen, entre 0 y 1 para los que están dentro del margen pero del lado correcto, y más de 1 para los que quedaron del lado equivocado. El problema pasa a ser:</p><div class="math-display">\min_{w,\,b} \; \tfrac{1}{2}\lVert w \rVert^2 + C \sum_i \xi_i</div><p>El <b>parámetro C</b> dice cuánto pesa la suma de multas frente al ancho del margen. Esa multa por punto, <span class="math">\max(0,\, 1 - y_i f(x_i))</span>, se llama <b>pérdida bisagra</b> (<i>hinge loss</i>), por la forma de su gráfico: cero mientras el punto está bien ubicado, y una recta que crece cuando entra al margen.</p><ul><li><b>C chico:</b> los errores salen baratos. El margen se ensancha, muchos puntos quedan adentro y todos ellos pasan a ser vectores de soporte. El modelo es más simple: más sesgo, menos varianza.</li><li><b>C grande:</b> cada error cuesta caro. El margen se angosta para dejar fuera a casi todos; con datos ruidosos, la frontera persigue a cada punto. Menos sesgo, más varianza.</li></ul><p>C es un hiperparámetro de regularización, como el lambda de ridge en el capítulo 02, pero al revés: un C grande regulariza <b>menos</b>. En scikit-learn vale 1 por omisión, y se elige con validación cruzada.</p></div><figure class="fig fig-comparacion" id="08-diagrama-2"><div class="lienzo"><svg viewBox="0 0 830 500" style="min-width:640px" role="img" aria-label="La misma nube de puntos con traslape resuelta por una SVM de margen suave con dos valores de C. Con C chico el margen es ancho y muchos puntos quedan dentro de él; con C grande el margen es angosto. Las líneas punteadas naranjas son las holguras: cuánto invade cada punto el margen">
+<text x="30" y="50" class="t t-b">C CHICO (0,05): ERRORES BARATOS</text>
+<text x="30" y="68" class="t t-s t-m">margen ancho, muchos puntos adentro, más sesgo</text>
+<rect x="30" y="80" width="330" height="330" rx="8" class="caja"/>
+<clipPath id="c8d2-k30"><rect x="30" y="80" width="330" height="330" rx="8"/></clipPath><g clip-path="url(#c8d2-k30)">
+<polygon points="-25.0,-315.9 415.0,516.9 415.0,823.6 -25.0,-9.1" style="fill:var(--c-apl-s);stroke:none"/>
+<line x1="-25.0" y1="-315.9" x2="415.0" y2="516.9" class="ln ln-d" style="stroke-width:1.5"/>
+<line x1="-25.0" y1="-9.1" x2="415.0" y2="823.6" class="ln ln-d" style="stroke-width:1.5"/>
+<line x1="-25.0" y1="-162.5" x2="415.0" y2="670.2" class="ln" style="stroke:var(--c-apl);stroke-width:3"/>
+<line x1="158.3" y1="224.0" x2="111.3" y2="248.8" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="143.8" y1="306.6" x2="142.3" y2="307.4" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="137.5" y1="248.2" x2="116.8" y2="259.2" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="166.4" y1="255.2" x2="125.9" y2="276.5" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="201.0" y1="243.4" x2="128.6" y2="281.6" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="223.5" y1="234.7" x2="130.0" y2="284.2" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="108.9" y1="232.1" x2="103.8" y2="234.7" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="168.0" y1="270.3" x2="132.5" y2="289.0" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="140.2" y1="246.1" x2="116.5" y2="258.6" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="150.0" y1="221.3" x2="108.4" y2="243.3" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="163.3" y1="308.9" x2="147.5" y2="317.3" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="202.3" y1="175.8" x2="227.7" y2="162.3" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="258.6" y1="236.1" x2="264.9" y2="232.8" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="253.0" y1="233.6" x2="262.7" y2="228.5" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="232.4" y1="181.6" x2="236.7" y2="179.3" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="207.5" y1="222.3" x2="248.1" y2="200.9" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="195.7" y1="215.6" x2="242.7" y2="190.8" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="247.3" y1="219.1" x2="255.4" y2="214.8" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="218.2" y1="218.2" x2="248.7" y2="202.1" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="248.5" y1="249.4" x2="268.2" y2="239.0" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="218.7" y1="209.3" x2="245.1" y2="195.3" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="219.7" y1="234.9" x2="255.9" y2="215.8" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+</g>
+<circle cx="158.3" cy="224.0" r="3.5" style="fill:var(--muted)"/>
+<circle cx="158.3" cy="224.0" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="81.6" cy="217.7" r="3.5" style="fill:var(--muted)"/>
+<circle cx="143.8" cy="306.6" r="3.5" style="fill:var(--muted)"/>
+<circle cx="143.8" cy="306.6" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="116.8" cy="316.7" r="3.5" style="fill:var(--muted)"/>
+<circle cx="137.5" cy="248.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="137.5" cy="248.2" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="166.4" cy="255.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="166.4" cy="255.2" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="84.9" cy="334.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="201.0" cy="243.4" r="3.5" style="fill:var(--muted)"/>
+<circle cx="201.0" cy="243.4" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="223.5" cy="234.7" r="3.5" style="fill:var(--muted)"/>
+<circle cx="223.5" cy="234.7" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="108.9" cy="232.1" r="3.5" style="fill:var(--muted)"/>
+<circle cx="108.9" cy="232.1" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="168.0" cy="270.3" r="3.5" style="fill:var(--muted)"/>
+<circle cx="168.0" cy="270.3" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="116.2" cy="277.9" r="3.5" style="fill:var(--muted)"/>
+<circle cx="140.2" cy="246.1" r="3.5" style="fill:var(--muted)"/>
+<circle cx="140.2" cy="246.1" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="150.0" cy="221.3" r="3.5" style="fill:var(--muted)"/>
+<circle cx="150.0" cy="221.3" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="117.8" cy="261.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="117.8" cy="261.2" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="163.3" cy="308.9" r="3.5" style="fill:var(--muted)"/>
+<circle cx="163.3" cy="308.9" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M202.3 170.3L207.3 179.3L197.3 179.3Z" style="fill:var(--warm)"/>
+<circle cx="202.3" cy="175.8" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M263.0 212.3L268.0 221.3L258.0 221.3Z" style="fill:var(--warm)"/>
+<path d="M258.6 230.6L263.6 239.6L253.6 239.6Z" style="fill:var(--warm)"/>
+<circle cx="258.6" cy="236.1" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M253.0 228.1L258.0 237.1L248.0 237.1Z" style="fill:var(--warm)"/>
+<circle cx="253.0" cy="233.6" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M251.2 171.2L256.2 180.2L246.2 180.2Z" style="fill:var(--warm)"/>
+<path d="M232.4 176.1L237.4 185.1L227.4 185.1Z" style="fill:var(--warm)"/>
+<circle cx="232.4" cy="181.6" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M207.5 216.8L212.5 225.8L202.5 225.8Z" style="fill:var(--warm)"/>
+<circle cx="207.5" cy="222.3" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M195.7 210.1L200.7 219.1L190.7 219.1Z" style="fill:var(--warm)"/>
+<circle cx="195.7" cy="215.6" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M247.3 213.6L252.3 222.6L242.3 222.6Z" style="fill:var(--warm)"/>
+<circle cx="247.3" cy="219.1" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M234.9 158.6L239.9 167.6L229.9 167.6Z" style="fill:var(--warm)"/>
+<path d="M295.4 250.0L300.4 259.0L290.4 259.0Z" style="fill:var(--warm)"/>
+<path d="M286.5 268.1L291.5 277.1L281.5 277.1Z" style="fill:var(--warm)"/>
+<circle cx="286.5" cy="273.6" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M218.2 212.7L223.2 221.7L213.2 221.7Z" style="fill:var(--warm)"/>
+<circle cx="218.2" cy="218.2" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M248.5 243.9L253.5 252.9L243.5 252.9Z" style="fill:var(--warm)"/>
+<circle cx="248.5" cy="249.4" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M218.7 203.8L223.7 212.8L213.7 212.8Z" style="fill:var(--warm)"/>
+<circle cx="218.7" cy="209.3" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M219.7 229.4L224.7 238.4L214.7 238.4Z" style="fill:var(--warm)"/>
+<circle cx="219.7" cy="234.9" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<text x="30" y="434" class="t t-s t-mono">24 vectores de soporte · 2 mal clasificados</text>
+<text x="30" y="452" class="t t-s t-mono">ancho del margen: 2,61</text>
+<text x="470" y="50" class="t t-b">C GRANDE (100): ERRORES CAROS</text>
+<text x="470" y="68" class="t t-s t-m">margen angosto, persigue cada punto, más varianza</text>
+<rect x="470" y="80" width="330" height="330" rx="8" class="caja"/>
+<clipPath id="c8d2-k470"><rect x="470" y="80" width="330" height="330" rx="8"/></clipPath><g clip-path="url(#c8d2-k470)">
+<polygon points="415.0,74.0 855.0,356.3 855.0,380.6 415.0,98.3" style="fill:var(--c-apl-s);stroke:none"/>
+<line x1="415.0" y1="74.0" x2="855.0" y2="356.3" class="ln ln-d" style="stroke-width:1.5"/>
+<line x1="415.0" y1="98.3" x2="855.0" y2="380.6" class="ln ln-d" style="stroke-width:1.5"/>
+<line x1="415.0" y1="86.2" x2="855.0" y2="368.5" class="ln" style="stroke:var(--c-apl);stroke-width:3"/>
+<line x1="641.0" y1="243.4" x2="641.0" y2="243.4" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="663.5" y1="234.7" x2="653.1" y2="251.1" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="635.7" y1="215.6" x2="635.7" y2="215.6" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="688.5" y1="249.4" x2="688.5" y2="249.4" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+<line x1="659.7" y1="234.9" x2="661.5" y2="232.1" style="stroke:var(--ink);stroke-width:1.4;stroke-dasharray:3 2"/>
+</g>
+<circle cx="598.3" cy="224.0" r="3.5" style="fill:var(--muted)"/>
+<circle cx="521.6" cy="217.7" r="3.5" style="fill:var(--muted)"/>
+<circle cx="583.8" cy="306.6" r="3.5" style="fill:var(--muted)"/>
+<circle cx="556.8" cy="316.7" r="3.5" style="fill:var(--muted)"/>
+<circle cx="577.5" cy="248.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="606.4" cy="255.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="524.9" cy="334.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="641.0" cy="243.4" r="3.5" style="fill:var(--muted)"/>
+<circle cx="641.0" cy="243.4" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="663.5" cy="234.7" r="3.5" style="fill:var(--muted)"/>
+<circle cx="663.5" cy="234.7" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<circle cx="548.9" cy="232.1" r="3.5" style="fill:var(--muted)"/>
+<circle cx="608.0" cy="270.3" r="3.5" style="fill:var(--muted)"/>
+<circle cx="556.2" cy="277.9" r="3.5" style="fill:var(--muted)"/>
+<circle cx="580.2" cy="246.1" r="3.5" style="fill:var(--muted)"/>
+<circle cx="590.0" cy="221.3" r="3.5" style="fill:var(--muted)"/>
+<circle cx="557.8" cy="261.2" r="3.5" style="fill:var(--muted)"/>
+<circle cx="603.3" cy="308.9" r="3.5" style="fill:var(--muted)"/>
+<path d="M642.3 170.3L647.3 179.3L637.3 179.3Z" style="fill:var(--warm)"/>
+<path d="M703.0 212.3L708.0 221.3L698.0 221.3Z" style="fill:var(--warm)"/>
+<path d="M698.6 230.6L703.6 239.6L693.6 239.6Z" style="fill:var(--warm)"/>
+<path d="M693.0 228.1L698.0 237.1L688.0 237.1Z" style="fill:var(--warm)"/>
+<path d="M691.2 171.2L696.2 180.2L686.2 180.2Z" style="fill:var(--warm)"/>
+<path d="M672.4 176.1L677.4 185.1L667.4 185.1Z" style="fill:var(--warm)"/>
+<path d="M647.5 216.8L652.5 225.8L642.5 225.8Z" style="fill:var(--warm)"/>
+<path d="M635.7 210.1L640.7 219.1L630.7 219.1Z" style="fill:var(--warm)"/>
+<circle cx="635.7" cy="215.6" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M687.3 213.6L692.3 222.6L682.3 222.6Z" style="fill:var(--warm)"/>
+<path d="M674.9 158.6L679.9 167.6L669.9 167.6Z" style="fill:var(--warm)"/>
+<path d="M735.4 250.0L740.4 259.0L730.4 259.0Z" style="fill:var(--warm)"/>
+<path d="M726.5 268.1L731.5 277.1L721.5 277.1Z" style="fill:var(--warm)"/>
+<path d="M658.2 212.7L663.2 221.7L653.2 221.7Z" style="fill:var(--warm)"/>
+<path d="M688.5 243.9L693.5 252.9L683.5 252.9Z" style="fill:var(--warm)"/>
+<circle cx="688.5" cy="249.4" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<path d="M658.7 203.8L663.7 212.8L653.7 212.8Z" style="fill:var(--warm)"/>
+<path d="M659.7 229.4L664.7 238.4L654.7 238.4Z" style="fill:var(--warm)"/>
+<circle cx="659.7" cy="234.9" r="9" style="fill:none;stroke:var(--ink);stroke-width:1.6"/>
+<text x="470" y="434" class="t t-s t-mono">5 vectores de soporte · 1 mal clasificados</text>
+<text x="470" y="452" class="t t-s t-mono">ancho del margen: 0,37</text>
+<text x="30" y="478" class="t t-s"><tspan style="fill:var(--muted)">●</tspan> se queda  <tspan style="fill:var(--warm)">▲</tspan> cancela   - - - holgura ξ (<tspan class="t-i">slack</tspan>): cuánto se mete un punto en el margen o lo cruza; minimiza ‖w‖²/2 + C·Σξ</text>
+</svg></div><figcaption><b>El mismo traslape con dos valores de C.</b> A la izquierda, C = 0,05: el margen es ancho (2,61), casi todos los puntos del centro quedan dentro de él y 24 son vectores de soporte; las líneas punteadas negras son las holguras, cuánto invade cada punto. A la derecha, C = 100: el margen se angosta a 0,37, solo 5 puntos lo tocan y la frontera gira para dejar mal clasificado a uno solo. Compara la dirección de las dos fronteras: un solo parámetro cambia la respuesta.</figcaption></figure><div class="lab" id="08-lab-2"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Mueve C y gamma y mira cómo cambian el margen y los vectores de soporte</h3></div><p class="hint">Una SVM de verdad, entrenada en tu navegador con el algoritmo SMO cada vez que mueves algo. Empieza con «Con traslape» y kernel lineal: mueve C de un extremo a otro y cuenta los anillos. Después cambia a «Uno dentro de otro» con kernel gaussiano y sube gamma hasta el máximo. Termina con «60 clientes», 30 que cancelan y 30 que se quedan, con su antigüedad y su velocidad.</p><style>
+[id="08-lab-2"] .c8l2-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="08-lab-2"] .c8l2-grupo{display:grid;gap:6px}
+[id="08-lab-2"] .c8l2-fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px}
+[id="08-lab-2"] canvas{border:1px solid var(--line);max-width:620px;margin:0 auto}
+[id="08-lab-2"] .ctl.off{opacity:.45}
+</style>
+<div class="c8l2-fila">
+  <div class="c8l2-grupo"><span class="c8l2-rot">Datos</span>
+    <div class="btns" id="c8l2-datos" role="group" aria-label="Datos">
+      <button type="button" data-v="sep" aria-pressed="false">Separables</button>
+      <button type="button" data-v="tras" aria-pressed="true">Con traslape</button>
+      <button type="button" data-v="anillo" aria-pressed="false">Uno dentro de otro</button>
+      <button type="button" data-v="cli" aria-pressed="false">60 clientes</button>
+    </div></div>
+  <div class="c8l2-grupo"><span class="c8l2-rot">Kernel</span>
+    <div class="btns" id="c8l2-ker" role="group" aria-label="Kernel">
+      <button type="button" data-v="lin" aria-pressed="true">Lineal</button>
+      <button type="button" data-v="pol" aria-pressed="false">Polinómico (grado 2)</button>
+      <button type="button" data-v="rbf" aria-pressed="false">Gaussiano (RBF)</button>
+    </div></div>
+</div>
+<div class="ctls">
+  <label class="ctl">C: cuánto castiga cada error <output id="c8l2-c-o"></output>
+    <input id="c8l2-c" type="range" min="-2" max="2" step="0.25" value="0"></label>
+  <label class="ctl" id="c8l2-gl">gamma: alcance de cada punto (solo RBF) <output id="c8l2-g-o"></output>
+    <input id="c8l2-g" type="range" min="-1" max="2" step="0.25" value="0.5"></label>
+</div>
+<canvas id="c8l2-cv" role="img" aria-label="Los puntos de dos clases, la frontera de la SVM, las dos líneas del margen y los vectores de soporte marcados con un anillo"></canvas>
+<div class="legend"><span><b style="color:var(--warm)">▲</b> clase +1 (cancela)</span><span><b style="color:var(--muted)">●</b> clase −1 (se queda)</span><span><b style="color:var(--c-apl)">—</b> frontera · <b style="color:var(--c-apl)">- -</b> el margen</span><span>anillo: vector de soporte</span></div>
+<div class="readout texto" id="c8l2-out" aria-live="polite"></div></div><div class="prose"><p>Un detalle importa mucho con los clientes de Retención: solo el 13,7 % cancela. Con la pérdida bisagra, al margen le conviene dejar a muchos de los que cancelan del lado de «se queda», porque son pocos y sus multas suman menos que las de mover la frontera. La solución es la misma del capítulo 03: pesar más los errores de la clase chica. En scikit-learn, <code>class_weight="balanced"</code> multiplica la C de cada clase por la inversa de su frecuencia, unas seis veces más para los que cancelan. Con 4.000 clientes y kernel gaussiano, el AUC de prueba pasa de 0,726 sin pesos a 0,784 con pesos. En una SVM con clases desbalanceadas, eso no es un ajuste fino: es obligatorio.</p></div></section>
+<section><h2>El truco del kernel: polinómico y gaussiano</h2><div class="prose"><p>Hay problemas en que ninguna recta sirve, con margen suave o sin él. Si los clientes que cancelan estuvieran rodeados por los que se quedan, como la yema dentro de la clara, cualquier recta dejaría a la mitad de cada grupo del lado equivocado.</p></div><div class="analogia"><b>Imagínalo así</b><p>Sobre una mesa hay monedas rojas en el centro y azules alrededor, y te piden separarlas con una hoja de papel recta. En la mesa es imposible. Pero si das un golpe desde abajo, justo en el centro, las rojas saltan más alto que las azules, y en el aire una hoja horizontal las separa sin problema. Agregar una dimensión, la altura, convirtió un problema imposible en uno fácil.</p></div><div class="prose"><p>La idea es crear variables nuevas a partir de las que hay. Si a cada punto <span class="math">(x_1, x_2)</span> se le agrega <span class="math">z = x_1^2 + x_2^2</span>, su distancia al centro al cuadrado, los del centro quedan abajo y los de afuera arriba, y un plano horizontal los separa. Ese plano, visto desde arriba, es un círculo en el plano original. A la función que lleva cada punto al espacio grande se la llama <b>transformación de variables</b> (<i>feature map</i>) y se escribe <span class="math">\phi(x)</span>.</p></div><div class="lab" id="08-lab-1"><div class="lab-title"><span class="tag">Laboratorio</span><h3>El truco del kernel en 2D y 3D: levanta los puntos y mira aparecer el plano que los separa</h3></div><p class="hint">Sube «Levantar los puntos» de 0 a 100 %: cada punto sube según una variable nueva. Gira la vista para ver el plano de perfil y mueve su altura hasta que no quede ningún punto del lado equivocado. Mira el panel de la derecha: el mismo plano, de vuelta en el plano original. Repite con «Cuadrantes cruzados», donde la variable nueva es <span class="math">x \cdot y</span>.</p><style>
+[id="08-lab-1"] .c8l1-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="08-lab-1"] .c8l1-grupo{display:grid;gap:6px}
+[id="08-lab-1"] .c8l1-par{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:start}
+[id="08-lab-1"] .c8l1-col{display:grid;gap:4px}
+[id="08-lab-1"] canvas{border:1px solid var(--line)}
+[id="08-lab-1"] .c8l1-f{font:600 .82rem var(--f-mono);color:var(--ink);background:var(--paper);border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
+@media (max-width:620px){[id="08-lab-1"] .c8l1-par{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="c8l1-grupo"><span class="c8l1-rot">Datos</span>
+  <div class="btns" id="c8l1-datos" role="group" aria-label="Datos">
+    <button type="button" data-v="anillos" aria-pressed="true">Un grupo dentro de otro</button>
+    <button type="button" data-v="xor" aria-pressed="false">Cuadrantes cruzados</button>
+  </div></div>
+<div class="ctls">
+  <label class="ctl">Levantar los puntos <output id="c8l1-t-o"></output>
+    <input id="c8l1-t" type="range" min="0" max="100" step="1" value="0"></label>
+  <label class="ctl">Girar la vista <output id="c8l1-g-o"></output>
+    <input id="c8l1-g" type="range" min="-180" max="180" step="5" value="30"></label>
+  <label class="ctl">Altura del plano que separa <output id="c8l1-c-o"></output>
+    <input id="c8l1-c" type="range" min="0" max="100" step="1" value="40"></label>
+</div>
+<div class="c8l1-par">
+  <div class="c8l1-col"><span class="c8l1-rot">En tres dimensiones</span>
+    <canvas id="c8l1-c3" role="img" aria-label="Los puntos levantados en tres dimensiones según la nueva variable, con un plano horizontal que los corta"></canvas></div>
+  <div class="c8l1-col"><span class="c8l1-rot">Vuelta al plano original</span>
+    <canvas id="c8l1-c2" role="img" aria-label="Los mismos puntos en dos dimensiones con la frontera que corresponde al plano: una curva"></canvas></div>
+</div>
+<div class="c8l1-f" id="c8l1-f"></div>
+<div class="legend"><span><b style="color:var(--muted)">●</b> clase A</span><span><b style="color:var(--warm)">▲</b> clase B</span><span><b style="color:var(--c-apl)">▬</b> el plano y la frontera</span></div>
+<div class="readout texto" id="c8l1-out" aria-live="polite"></div></div><div class="prose"><p>El problema de crear las columnas a mano es que crecen sin control. Con quince variables, todos los productos de grado 2 son 120 columnas nuevas; hasta grado 3, más de 800. Y la SVM no necesita las columnas: en su forma dual solo usa productos entre pares de puntos. Si hubiera una función que diera directamente <span class="math">\phi(x_i) \cdot \phi(x_j)</span> a partir de los puntos originales, la SVM trabajaría en el espacio grande sin construirlo jamás. Esa función se llama <b>kernel</b> (<i>núcleo</i>), y reemplazar el producto por un kernel es el <b>truco del kernel</b> (<i>kernel trick</i>).</p></div><figure class="fig fig-esquema" id="08-diagrama-3"><div class="lienzo"><svg viewBox="0 0 900 500" style="min-width:720px" role="img" aria-label="El truco del kernel con un ejemplo numérico. Camino largo: llevar dos puntos a tres dimensiones con la función phi y multiplicar allí, da 25. Atajo: elevar al cuadrado el producto de los puntos originales, también da 25. Debajo, una tabla con los kernels lineal, polinómico y gaussiano, su fórmula, el espacio que simulan y la forma de frontera que dibujan">
+<defs>
+<marker id="c8d3-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker>
+<marker id="c8d3-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-apl"/></marker>
+</defs>
+<rect x="20" y="40" width="200" height="74" rx="8" class="caja"/>
+<text x="34" y="62" class="t t-xs t-b t-m">DOS CLIENTES EN 2D</text>
+<text x="34" y="84" class="t t-mono">x = (1, 2)</text>
+<text x="34" y="104" class="t t-mono">z = (3, 1)</text>
+<text x="20" y="28" class="t t-b">EL MISMO NÚMERO POR DOS CAMINOS</text>
+
+<path d="M220 66H300" class="ln" style="stroke-width:1.8" marker-end="url(#c8d3-a)"/>
+<text x="228" y="58" class="t t-xs t-m">φ: A 3D</text>
+<rect x="306" y="34" width="290" height="70" rx="8" class="caja"/>
+<text x="320" y="56" class="t t-xs t-b t-m">CAMINO LARGO: CALCULAR LAS COLUMNAS NUEVAS</text>
+<text x="320" y="76" class="t t-mono t-s">φ(x) = (x₁², √2·x₁x₂, x₂²) = (1, 2√2, 4)</text>
+<text x="320" y="94" class="t t-mono t-s">φ(z) = (9, 3√2, 1)</text>
+<path d="M596 69H660" class="ln" style="stroke-width:1.8" marker-end="url(#c8d3-a)"/>
+<rect x="666" y="34" width="214" height="70" rx="8" class="caja"/>
+<text x="680" y="56" class="t t-xs t-b t-m">PRODUCTO EN 3D</text>
+<text x="680" y="78" class="t t-mono t-s">9 + 12 + 4 = 25</text>
+<text x="680" y="96" class="t t-s t-m">con más grados, miles de columnas</text>
+
+<path d="M220 94C260 94 270 150 300 150" class="ln s-apl" style="stroke-width:2;fill:none" marker-end="url(#c8d3-b)"/>
+<rect x="306" y="122" width="574" height="56" rx="8" class="c-apl"/>
+<text x="320" y="144" class="t t-xs t-b k-apl">ATAJO: EL KERNEL, SIN SALIR DEL PLANO</text>
+<text x="320" y="166" class="t t-mono t-s">K(x, z) = (x · z)² = (1·3 + 2·1)² = 5² = 25   ← el mismo número, una multiplicación</text>
+<text x="20" y="216" class="t t-s">La SVM solo usa productos entre pares de puntos. Si un kernel entrega ese producto directamente, la SVM trabaja</text>
+<text x="20" y="234" class="t t-s">en el espacio grande sin construirlo nunca. Eso es el <tspan class="t-b">truco del kernel</tspan> (<tspan font-style="italic">kernel trick</tspan>).</text>
+
+<g class="t t-xs t-b t-m"><text x="34" y="270">KERNEL</text><text x="190" y="270">FÓRMULA K(x, z)</text><text x="460" y="270">ESPACIO QUE SIMULA</text><text x="700" y="270">FRONTERA EN EL PLANO</text></g>
+<line x1="20" y1="280" x2="880" y2="280" class="ln"/>
+<rect x="20" y="288" width="860" height="56" rx="6" class="caja"/>
+<text x="34" y="320" class="t t-b">Lineal</text><text x="190" y="320" class="t t-mono t-s">x · z</text>
+<text x="460" y="312" class="t t-s">el mismo, sin cambios</text><text x="460" y="330" class="t t-s t-m">2 variables → 2 dimensiones</text>
+<line x1="710" y1="334" x2="800" y2="298" style="stroke:var(--c-apl);stroke-width:2.5"/><text x="812" y="320" class="t t-s">recta</text>
+<rect x="20" y="352" width="860" height="56" rx="6" class="caja"/>
+<text x="34" y="384" class="t t-b">Polinómico</text><text x="190" y="384" class="t t-mono t-s">(γ · x · z + r)ᵈ</text>
+<text x="460" y="376" class="t t-s">todos los productos de variables</text><text x="460" y="394" class="t t-s t-m">hasta grado d</text>
+<path d="M705 398C730 360 770 360 795 398" style="fill:none;stroke:var(--c-apl);stroke-width:2.5"/><text x="812" y="384" class="t t-s">curva suave</text>
+<rect x="20" y="416" width="860" height="56" rx="6" class="caja"/>
+<text x="34" y="440" class="t t-b">Gaussiano</text><text x="34" y="458" class="t t-s t-m">(RBF)</text><text x="190" y="448" class="t t-mono t-s">exp(−γ · ‖x − z‖²)</text>
+<text x="460" y="440" class="t t-s">infinitas dimensiones: mide</text><text x="460" y="458" class="t t-s t-m">qué tan cerca están dos puntos</text>
+<ellipse cx="718" cy="444" rx="18" ry="13" style="fill:none;stroke:var(--c-apl);stroke-width:2.5"/><ellipse cx="756" cy="446" rx="11" ry="9" style="fill:none;stroke:var(--c-apl);stroke-width:2.5"/><text x="782" y="440" class="t t-s">islas o curvas</text><text x="782" y="458" class="t t-s">de cualquier forma</text>
+<text x="20" y="492" class="t t-s t-m">γ (gamma) controla el alcance: grande = cada punto influye solo en su vecindario; r y d son parámetros del polinómico.</text>
+</svg></div><figcaption><b>El mismo número por dos caminos.</b> Arriba, dos clientes con dos variables. El camino largo los lleva a tres dimensiones con φ y multiplica allí: da 25. El atajo, en rosa, eleva al cuadrado su producto en el plano original: también da 25, con una sola multiplicación. Abajo, una tabla con los tres kernels más usados: su fórmula, el espacio que simulan y la forma de la frontera que dibujan en el plano.</figcaption></figure><div class="prose"><p>Los tres kernels que trae <code>SVC</code> de scikit-learn, con el parámetro <code>kernel</code>:</p><ul><li><b>Lineal</b> (<code>"linear"</code>): el producto de siempre, <span class="math">x \cdot z</span>. La frontera es un hiperplano en las variables originales.</li><li><b>Polinómico</b> (<code>"poly"</code>): <span class="math">(\gamma \, x \cdot z + r)^d</span>. Equivale a trabajar con todos los productos de variables hasta grado <span class="math">d</span>, y dibuja fronteras curvas suaves.</li><li><b>Gaussiano</b> o <b>de base radial</b> (<code>"rbf"</code>, <i>radial basis function</i>): <span class="math">\exp(-\gamma \lVert x - z \rVert^2)</span>. Vale 1 si los dos puntos son iguales y cae hacia 0 a medida que se alejan. Equivale a un espacio de infinitas dimensiones, y la frontera puede tomar casi cualquier forma: islas, curvas, bolsillos. Es el kernel por omisión.</li></ul><p>El parámetro <b>gamma</b> (<span class="math">\gamma</span>) del kernel gaussiano es el alcance de cada punto. Con gamma chico, cada vector de soporte influye en una zona amplia y la frontera es suave. Con gamma grande, cada punto solo influye en su vecindario inmediato, y la frontera se enrosca alrededor de los puntos de entrenamiento: memoriza. Gamma y C se ajustan juntos, con una búsqueda en rejilla como la del capítulo 04, y se compensan: un gamma grande con un C grande es la receta del sobreajuste.</p><p>El kernel gaussiano mide distancias, así que las variables tienen que estar en escalas comparables. Sin escalar, el consumo de los clientes, con desviación de unos 130 GB, aplasta a los reclamos, con desviación de 1: la distancia entre dos clientes es casi solo la diferencia de consumo. Con los clientes de Retención, la SVM gaussiana sin escalar cae a 0,708 de AUC. Escalar dentro del pipeline, como muestra el capítulo 10, no es opcional con una SVM.</p></div></section>
+<section><h2>SVM para regresión</h2><div class="prose"><p>La misma maquinaria sirve para predecir números. La <b>regresión de soporte vectorial</b> (<i>support vector regression</i>, SVR) da vuelta la idea del margen: en vez de una calle vacía entre dos clases, busca un tubo de ancho <span class="math">\varepsilon</span> alrededor de la curva de predicción que contenga a la mayor cantidad de puntos. Los errores menores que <span class="math">\varepsilon</span> no cuentan; solo pagan multa los puntos que quedan fuera del tubo, y esos son los vectores de soporte.</p></div><div class="analogia"><b>Imagínalo así</b><p>Un sastre que ajusta un pantalón no persigue cada milímetro: tiene una tolerancia, y mientras la tela esté dentro de ella, no corta. Solo corrige donde se pasa. La SVR trabaja con esa tolerancia: <span class="math">\varepsilon</span> es cuánto error se acepta sin castigo.</p></div><div class="prose"><p>En scikit-learn es <code>SVR</code>, con los mismos kernels, C y gamma, más <code>epsilon</code>. Ximena la probó con la regresión del capítulo 02, predecir el consumo en GB de cada cliente, entrenando con 4.000 clientes. La regresión lineal tuvo un error absoluto medio de 69,0 GB y un R² de 0,511; la SVR con kernel gaussiano, C = 100 y un tubo de 10 GB bajó a 66,6 GB y 0,540, porque capta algo de la curvatura del consumo frente a las personas del hogar. Mejora poco, tarda treinta veces más y es más difícil de explicar que una recta con coeficientes.</p></div></section>
+<section><h2>Cuándo usar SVM hoy</h2><div class="prose"><p>Entre fines de los años noventa y comienzos de la década de 2010, la SVM con kernel fue el clasificador de referencia en casi todo: texto, imágenes, bioinformática.</p></div><div class="caso"><b>Un caso real</b><p>En 1998, Thorsten Joachims publicó un estudio que se volvió clásico: clasificó noticias de la agencia Reuters por tema (economía, granos, petróleo y decenas más) usando como variables las palabras de cada noticia, miles de columnas. Las SVM superaron a todos los métodos de la época, incluidos Bayes ingenuo, k vecinos y los árboles de decisión de entonces, y casi sin ajustar parámetros. La razón: con muchas más variables que ejemplos, casi todo se puede separar con un hiperplano, y lo que importa es elegir bien entre todos los posibles. El margen máximo hace justamente eso.</p></div><div class="prose"><p>Después llegaron el boosting con histogramas para las tablas y las redes neuronales para imágenes, audio y texto, y la SVM quedó en un lugar más chico. Ximena hizo su propia prueba con los clientes de Retención:</p><div class="tbl"><table><thead><tr><th>Modelo (prueba de 5.000 clientes)</th><th>Filas de entrenamiento</th><th>AUC prueba</th><th>Tiempo de entrenamiento</th></tr></thead><tbody><tr><td>Logística</td><td>15.000</td><td>0,798</td><td>0,1 s</td></tr><tr><td>SVM lineal (<code>LinearSVC</code>)</td><td>15.000</td><td>0,795</td><td>0,1 s</td></tr><tr><td>SVM gaussiana, balanceada</td><td>4.000</td><td>0,784</td><td>1,2 s</td></tr><tr><td>SVM gaussiana, balanceada</td><td>15.000</td><td>0,789</td><td>18 s</td></tr><tr><td>Boosting del capítulo 07</td><td>15.000</td><td>0,812</td><td>1,4 s</td></tr></tbody></table></div></div><div class="ml"><b>En la práctica</b><p><b>La respuesta para Joaquín.</b> Ximena le mostró la tabla. La SVM lineal empata con la logística: las dos son fronteras lineales y solo cambian la pérdida. La gaussiana, con los pesos por clase y una búsqueda de C y gamma en 2.000 clientes, llegó a 0,792 en prueba; con los 15.000 clientes tardó dieciocho segundos en entrenar y nueve mil de ellos quedaron como vectores de soporte, así que también sería lenta para puntuar a los 150.000 clientes cada mes. Joaquín preguntó por qué entonces se la enseñaban como lo mejor. «Lo fue», contestó Ximena, «cuando las tablas eran chicas y no existían los boosting rápidos. El margen y el kernel siguen apareciendo en todas partes; la SVM como modelo, en este problema, no».</p></div><div class="prose"><p>El tiempo es el límite más duro. Entrenar una SVM con kernel crece entre el cuadrado y el cubo del número de filas: en la práctica de abajo, pasar de 4.000 a 8.000 clientes multiplica el tiempo por seis. Más allá de unas decenas de miles de filas se vuelve impráctica, salvo con la SVM lineal (<code>LinearSVC</code>), que escala bien porque no usa kernel.</p><p>Cuándo sigue siendo una buena opción:</p><ul><li><b>Datos medianos o chicos, con muchas variables:</b> texto representado por sus palabras, datos genómicos, espectros de laboratorio. Allí el margen máximo regulariza bien.</li><li><b>Cuando se puede definir un parecido a medida:</b> existen kernels para cadenas de texto, grafos o secuencias de ADN, que comparan objetos sin convertirlos antes en una tabla.</li><li><b>Como línea base lineal rápida</b>, con <code>LinearSVC</code>, en problemas de texto con cientos de miles de columnas.</li><li><b>Detección de anomalías</b> con la SVM de una clase (<code>OneClassSVM</code>), que el capítulo 09 menciona entre los métodos para casos raros.</li></ul><p>Y cuándo no: tablas grandes con columnas de distinto tipo, como la de Retención, donde el boosting gana en precisión y en tiempo; y cuando se necesitan probabilidades bien calibradas o explicaciones simples por cliente.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>La SVM con los clientes de Retención y el costo de crecer</h3></div><p>Vas a comparar la logística con una SVM lineal y con la SVM gaussiana, con y sin pesos por clase, y a medir cómo crece el tiempo de entrenamiento al duplicar las filas. Entra a <code>datos-churn</code> y activa el entorno; no hace falta instalar nada nuevo.</p><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>cd $HOME\datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>.venv\Scripts\activate</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>cd ~/datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>source .venv/bin/activate</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps"><li><span>Guarda este programa como <code>svm.py</code> dentro de <code>datos-churn</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Máquinas de soporte vectorial sobre los clientes que cancelan (capítulo 08)."""</span>
+<span class="ln">import time</span>
+<span class="ln"></span>
+<span class="ln">import pandas as pd</span>
+<span class="ln">from sklearn.compose import ColumnTransformer</span>
+<span class="ln">from sklearn.linear_model import LogisticRegression</span>
+<span class="ln">from sklearn.metrics import roc_auc_score</span>
+<span class="ln">from sklearn.model_selection import train_test_split</span>
+<span class="ln">from sklearn.pipeline import make_pipeline</span>
+<span class="ln">from sklearn.preprocessing import OneHotEncoder, StandardScaler</span>
+<span class="ln">from sklearn.svm import SVC, LinearSVC</span>
+<span class="ln"></span>
+<span class="ln">NUM = ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct",</span>
+<span class="ln">       "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m",</span>
+<span class="ln">       "uso_app_30d", "fin_promo_60d"]</span>
+<span class="ln">CAT = ["tipo_cliente", "region", "contrato", "metodo_pago"]</span>
+<span class="ln">df = pd.read_csv("datos/clientes.csv")</span>
+<span class="ln">ent, pru = train_test_split(df, test_size=0.25, random_state=42, stratify=df.cancela)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def prep():</span>
+<span class="ln">    # La SVM mide distancias: las numéricas se escalan siempre</span>
+<span class="ln">    return ColumnTransformer([("num", StandardScaler(), NUM),</span>
+<span class="ln">                              ("cat", OneHotEncoder(handle_unknown="ignore"), CAT)])</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def probar(nombre, modelo, filas):</span>
+<span class="ln">    datos = ent.sample(filas, random_state=42) if filas &lt; len(ent) else ent</span>
+<span class="ln">    t = time.time()</span>
+<span class="ln">    m = make_pipeline(prep(), modelo).fit(datos, datos.cancela)</span>
+<span class="ln">    seg = time.time() - t</span>
+<span class="ln">    puntaje = m.decision_function(pru)          # distancia firmada a la frontera</span>
+<span class="ln">    sv = int(m[-1].n_support_.sum()) if hasattr(m[-1], "n_support_") else None</span>
+<span class="ln">    print(f"{nombre:34} {filas:&gt;6} filas  AUC prueba {roc_auc_score(pru.cancela, puntaje):.3f}"</span>
+<span class="ln">          f"  {seg:6.1f} s" + (f"  {sv} vectores de soporte" if sv else ""))</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">probar("logística", LogisticRegression(max_iter=1000), 15000)</span>
+<span class="ln">probar("SVM lineal (LinearSVC)", LinearSVC(), 15000)</span>
+<span class="ln">probar("SVM gaussiana, sin pesos", SVC(kernel="rbf"), 4000)</span>
+<span class="ln">probar("SVM gaussiana, balanceada", SVC(kernel="rbf", class_weight="balanced"), 4000)</span>
+<span class="ln">probar("SVM gaussiana, balanceada", SVC(kernel="rbf", class_weight="balanced"), 8000)</span>
+<span class="ln">probar("SVM gaussiana, balanceada", SVC(kernel="rbf", class_weight="balanced"), 15000)</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 43 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo (tarda menos de un minuto):</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python svm.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 svm.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Quita <code>StandardScaler()</code> (escribe <code>"passthrough"</code> en su lugar) y vuelve a correrlo.</span></li></ol><p><b>Qué observar:</b> la logística y la SVM lineal dan 0,798 y 0,795 en un décimo de segundo. La gaussiana sin pesos se queda en 0,732 y con pesos sube a 0,784, con unos 2.500 vectores de soporte de 4.000 clientes. Al pasar de 4.000 a 8.000 filas, el tiempo se multiplica por alrededor de seis, y con 15.000 tarda unos veinte segundos para un AUC de 0,789: más datos no la hicieron mejor que la logística. Sin escalar, las SVM pierden varias centésimas de AUC. Los tiempos dependen de tu computadora, y con otras versiones de scikit-learn las cifras pueden variar en el tercer decimal.</p></div><div class="lab" id="08-lab-3"><div class="lab-title"><span class="tag">Laboratorio</span><h3>SVM con scikit-learn, en la página</h3></div><p class="hint">El código del capítulo corriendo en tu navegador: la SVM lineal frente a la logística, el kernel gaussiano con y sin pesos por clase, escalar o no escalar, los tres kernels, una búsqueda de C y gamma con validación cruzada y la SVR para predecir el consumo. Las SVM con kernel entrenan con 4.000 clientes o menos, para que tarden segundos y no minutos.</p><style>
+[id="08-lab-3"] .c8l3-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="08-lab-3"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="08-lab-3"] .c8l3-estado{font:500 .85rem var(--f-display);color:var(--muted)}
+[id="08-lab-3"] .c8l3-estado.ok{color:var(--good)} [id="08-lab-3"] .c8l3-estado.warn{color:var(--warm)}
+[id="08-lab-3"] .c8l3-lado{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
+[id="08-lab-3"] textarea{width:100%;box-sizing:border-box;min-height:230px;font:.8rem/1.5 var(--f-mono);padding:8px;border:1px solid var(--line);border-left:5px solid var(--c-apl);border-radius:6px;background:var(--card);color:var(--ink);resize:vertical;tab-size:4}
+[id="08-lab-3"] pre.c8l3-salida{margin:0;font:.78rem/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+[id="08-lab-3"] .c8l3-tabla{overflow-x:auto;max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;margin-top:6px}
+[id="08-lab-3"] .c8l3-tabla:empty{display:none}
+[id="08-lab-3"] .c8l3-tabla table{font-size:.78rem;margin:0}
+[id="08-lab-3"] .c8l3-tabla th small{font:500 .66rem var(--f-mono);color:var(--muted)}
+[id="08-lab-3"] .c8l3-tabla .hint{margin:4px 8px}
+[id="08-lab-3"] .opciones{grid-template-columns:minmax(0,1fr);max-width:560px}
+[id="08-lab-3"] .c8l3-sello{font:700 .66rem var(--f-display);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--mark)}
+[id="08-lab-3"] details pre{font:.75rem/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:6px 0 0}
+[id="08-lab-3"] details summary{cursor:pointer;font:600 .85rem var(--f-display)}
+[id="08-lab-3"] .ae-valor{margin:6px 8px;font:.8rem/1.45 var(--f-mono);white-space:pre-wrap}
+</style>
+<div class="opciones"><label>Ejemplo
+  <select id="c8l3-ej"></select></label></div>
+<div class="btns">
+  <button type="button" class="primary" id="c8l3-cargar">Cargar Python con scikit-learn (unos 40 MB · tarda unos segundos)</button>
+  <span class="c8l3-estado" id="c8l3-estado" aria-live="polite">Python sin cargar · mientras tanto ves el resultado guardado</span>
+</div>
+<details><summary>Qué hay en <code>preparar_08.py</code> (se crea solo al cargar)</summary><pre id="c8l3-prep"></pre></details>
+<div class="c8l3-lado">
+  <div>
+    <label class="c8l3-rot" for="c8l3-cod">Código (puedes editarlo)</label>
+    <textarea id="c8l3-cod" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div class="btns"><button type="button" id="c8l3-run" disabled>Ejecutar (Ctrl+Enter)</button>
+      <button type="button" id="c8l3-rest">Restaurar el ejemplo</button></div>
+  </div>
+  <div>
+    <span class="c8l3-rot">Resultado</span> <span class="c8l3-sello" id="c8l3-sello">guardado</span>
+    <pre class="c8l3-salida" id="c8l3-salida" hidden></pre>
+    <div class="c8l3-tabla" id="c8l3-tabla"></div>
+  </div>
+</div>
+<div class="readout texto" id="c8l3-out" aria-live="polite"></div></div></section>
+<section><h2>La idea clave</h2><div class="prose"><p>La SVM elige, entre todas las fronteras que separan dos clases, la que deja el margen más ancho, y esa frontera la deciden solo los vectores de soporte, los puntos del borde. Con datos que se traslapan, el margen suave permite errores y el parámetro C fija cuánto cuestan: C chico da margen ancho y más sesgo; C grande, margen angosto y más varianza. Como la SVM solo usa productos entre pares de puntos, el truco del kernel los reemplaza por una medida de parecido, polinómica o gaussiana, y separa en un espacio más grande sin calcularlo; gamma controla el alcance de cada punto. Exige escalar las variables, pesar las clases desbalanceadas y paciencia, porque crece con el cuadrado de las filas. Hoy brilla con datos medianos y muchas variables; en tablas grandes como la de Retención, el boosting gana.</p></div></section>
+<section><h2>Pruébate</h2><div class="quiz"><h3>Pruébate</h3><details><summary>¿Qué son los vectores de soporte y qué pasa con la frontera si se borra un punto que no es vector de soporte?</summary><p>Son los puntos que quedan sobre el borde del margen o dentro de él, los únicos con peso distinto de cero en la solución. Si se borra cualquier otro punto, la frontera no cambia.</p></details><details><summary>Si aumentas C, ¿el margen se ensancha o se angosta? ¿Por qué?</summary><p>Se angosta: C es el precio de cada punto que invade el margen, y si los errores salen caros, la SVM prefiere un margen angosto que deje fuera a casi todos.</p></details><details><summary>¿Por qué hay que escalar las variables antes de una SVM con kernel gaussiano?</summary><p>Porque el kernel gaussiano mide distancias entre clientes; sin escalar, la variable con números más grandes (el consumo en GB) domina la distancia y las demás casi no cuentan.</p></details><details><summary>¿Qué permite hacer el truco del kernel que no se podría hacer creando las variables a mano?</summary><p>Trabajar en espacios enormes, incluso de infinitas dimensiones como el del kernel gaussiano, sin construir las columnas: el kernel entrega directamente el producto entre dos puntos en ese espacio.</p></details><details><summary>¿Por qué <code>class_weight="balanced"</code> es tan importante en una SVM con los clientes de Retención?</summary><p>Porque solo el 13,7 % cancela: sin pesos, a la pérdida bisagra le conviene dejar a muchos de los que cancelan del lado de «se queda». Con pesos, cada error con un cliente que cancela cuesta unas seis veces más.</p></details><details><summary>¿Qué devuelve <code>decision_function</code> y por qué sirve para calcular el AUC aunque no sea una probabilidad?</summary><p>La distancia firmada de cada cliente a la frontera. El AUC solo depende del orden de los clientes por riesgo, y ese orden lo da igual la distancia que una probabilidad.</p></details></div></section>
+<section><h2>Para investigar</h2><div class="investiga"><h3>Para investigar</h3><p class="hint">Estas preguntas no se responden en el capítulo: búscalas por tu cuenta.</p><ol><li>¿Qué es el teorema de Mercer y qué condición tiene que cumplir una función para poder usarse como kernel?<small>Pista: busca «Mercer's theorem positive semidefinite kernel».</small></li><li>¿Qué son la dimensión VC (Vapnik-Chervonenkis) y la minimización del riesgo estructural, y qué relación tienen con el margen?<small>Pista: busca «VC dimension margin bound».</small></li><li>¿Cómo aproximan <code>Nystroem</code> y <code>RBFSampler</code> de scikit-learn un kernel gaussiano para usarlo con millones de filas?<small>Pista: busca «kernel approximation» en la documentación de scikit-learn y el artículo de Rahimi y Recht (2007).</small></li><li><code>LinearSVC</code> usa por omisión la pérdida bisagra al cuadrado (<code>squared_hinge</code>). ¿En qué se diferencia de la bisagra y qué cambia en la solución?<small>Pista: busca el parámetro <code>loss</code> de <code>LinearSVC</code> y la documentación de LIBLINEAR.</small></li><li>¿Cómo se usan los kernels de cadenas (<i>string kernels</i>) para clasificar secuencias de proteínas o textos sin convertirlos antes en una tabla?</li></ol></div></section>
+<section><h2>Para saber más</h2><div class="vids"><span>Para saber más</span><a class="vid" href="https://scikit-learn.org/stable/modules/svm.html" target="_blank" rel="noopener">scikit-learn: Support Vector Machines <small><code>SVC</code>, <code>LinearSVC</code>, <code>SVR</code>, kernels, pesos por clase y consejos prácticos, en inglés</small></a><a class="vid" href="https://scikit-learn.org/stable/auto_examples/svm/plot_rbf_parameters.html" target="_blank" rel="noopener">scikit-learn: RBF SVM parameters <small>cómo cambian las fronteras con C y gamma, con un mapa de validación, en inglés</small></a><a class="vid" href="https://www.csie.ntu.edu.tw/~cjlin/libsvm/" target="_blank" rel="noopener">LIBSVM <small>la biblioteca que usa <code>SVC</code> de scikit-learn por dentro, con su guía práctica para elegir el kernel, C y gamma, en inglés</small></a><a class="vid" href="https://www.statlearning.com/" target="_blank" rel="noopener">An Introduction to Statistical Learning <small>el capítulo 9 trata las SVM y los kernels, en inglés</small></a></div></section>
+<label class="got"><input type="checkbox" id="got"> Lo tengo claro</label>
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-estadistico" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-estadistico</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="08-lab-2"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  /* [x, y, clase ±1] dentro de [−1,1]² */
+  function generar(tipo){
+    const r=rnd(5),P=[];
+    if(tipo==='cli'){
+      /* 30 clientes mensuales que cancelan y 30 que se quedan: antigüedad (0 a 96 meses) a lo ancho, velocidad entregada (55 a 100 %) a lo alto */
+      return '12,95.3,1;14,98,1;8,80.8,1;13,97.2,1;24,69,1;17,95.7,1;16,97.4,1;11,89.7,1;1,96.6,1;11,97.7,1;14,72.4,1;24,73.9,1;4,80.3,1;2,85.6,1;30,86.1,1;4,77.5,1;11,81.3,1;4,76.7,1;82,99,1;5,91.7,1;12,85.5,1;66,88.7,1;2,87.2,1;4,75.8,1;43,83.9,1;4,90.4,1;14,84.6,1;4,85.1,1;22,88.4,1;3,100,1;7,100,0;61,90.1,0;3,84.1,0;37,91.5,0;26,87.8,0;1,98.3,0;15,76,0;96,82.6,0;3,93.4,0;15,87.2,0;17,97.3,0;2,100,0;18,88.1,0;2,94.6,0;2,84.6,0;8,100,0;21,91.5,0;11,82.8,0;67,90.9,0;27,90,0;24,82.4,0;27,92.3,0;3,100,0;20,84.8,0;10,88.6,0;41,81.2,0;77,80.8,0;20,90.2,0;41,95.7,0;96,98.1,0'.split(';').map(r=>{const [a,v,c]=r.split(',').map(Number);return [a/96*1.9-.95,(v-55)/45*1.9-.95,c?1:-1];});
+    }
+    if(tipo==='anillo'){
+      for(let i=0;i<35;i++){const a=2*Math.PI*r(),rr=Math.abs(.3*Math.sqrt(r())+.04*gauss(r));P.push([rr*Math.cos(a),rr*Math.sin(a),-1]);}
+      for(let i=0;i<45;i++){const a=2*Math.PI*r(),rr=.62+.12*gauss(r);P.push([rr*Math.cos(a),rr*Math.sin(a),1]);}
+    }else{
+      const s=tipo==='sep'?.17:.27,d=tipo==='sep'?.42:.3;
+      for(let i=0;i<40;i++)P.push([-d+s*gauss(r),-d*.6+s*gauss(r),-1]);
+      for(let i=0;i<40;i++)P.push([d+s*gauss(r),d*.6+s*gauss(r),1]);
+    }
+    return P.map(p=>[Math.max(-.98,Math.min(.98,p[0])),Math.max(-.98,Math.min(.98,p[1])),p[2]]);
+  }
+  function kernel(tipo,g){
+    if(tipo==='lin')return (a,b)=>a[0]*b[0]+a[1]*b[1];
+    if(tipo==='pol')return (a,b)=>{const d=a[0]*b[0]+a[1]*b[1]+1;return d*d;};
+    return (a,b)=>Math.exp(-g*((a[0]-b[0])**2+(a[1]-b[1])**2));
+  }
+  /* SMO (Platt, versión simplificada): resuelve el problema dual de la SVM de margen suave */
+  function smo(P,K,C){
+    const n=P.length,y=P.map(p=>p[2]),M=P.map(a=>P.map(b=>K(a,b))),al=new Float64Array(n);let b=0;
+    const f=i=>{let s=b;for(let k=0;k<n;k++)if(al[k])s+=al[k]*y[k]*M[k][i];return s;};
+    const r=rnd(9),tol=1e-3;let pasadas=0,vueltas=0;
+    while(pasadas<8&&vueltas<400){
+      let cambios=0;vueltas++;
+      for(let i=0;i<n;i++){
+        const Ei=f(i)-y[i];
+        if((y[i]*Ei<-tol&&al[i]<C)||(y[i]*Ei>tol&&al[i]>0)){
+          let j=Math.floor(r()*(n-1));if(j>=i)j++;
+          const Ej=f(j)-y[j],ai=al[i],aj=al[j];
+          let L,H;if(y[i]!==y[j]){L=Math.max(0,aj-ai);H=Math.min(C,C+aj-ai);}else{L=Math.max(0,ai+aj-C);H=Math.min(C,ai+aj);}
+          if(H-L<1e-12)continue;
+          const eta=2*M[i][j]-M[i][i]-M[j][j];if(eta>=0)continue;
+          let nj=aj-y[j]*(Ei-Ej)/eta;nj=Math.min(H,Math.max(L,nj));if(Math.abs(nj-aj)<1e-6)continue;
+          const ni=ai+y[i]*y[j]*(aj-nj);al[i]=ni;al[j]=nj;
+          const b1=b-Ei-y[i]*(ni-ai)*M[i][i]-y[j]*(nj-aj)*M[i][j],b2=b-Ej-y[i]*(ni-ai)*M[i][j]-y[j]*(nj-aj)*M[j][j];
+          b=(ni>0&&ni<C)?b1:(nj>0&&nj<C)?b2:(b1+b2)/2;cambios++;
+        }
+      }
+      pasadas=cambios?0:pasadas+1;
+    }
+    return {al,b,y,f};
+  }
+  const st={datos:'tras',ker:'lin'};
+  function grupo(id,k){const bs=[...raiz.querySelectorAll('#'+id+' button')];bs.forEach(bt=>bt.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===bt));st[k]=bt.dataset.v;calcular();}));}
+  grupo('c8l2-datos','datos');grupo('c8l2-ker','ker');
+  const sC=q('#c8l2-c'),sG=q('#c8l2-g');
+  let P=[],R=null,K=null;
+  const dec=pt=>{let s=R.b;for(let k=0;k<P.length;k++)if(R.al[k]>1e-8)s+=R.al[k]*R.y[k]*K(P[k],pt);return s;};
+  const dib=canvasWidget(q('#c8l2-cv'),1,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);if(!R)return;
+    const S=Math.min(w,h),ox=(w-S)/2,X=x=>ox+(x+1)/2*S,Y=y=>(1-y)/2*S;
+    const n=90,F=[];for(let j=0;j<=n;j++){F.push([]);for(let i=0;i<=n;i++)F[j].push(dec([-1+2*i/n,1-2*j/n]));}
+    const off=document.createElement('canvas');off.width=off.height=n;const oc=off.getContext('2d');
+    const cg=tok('--muted'),cw=tok('--warm');
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){const v=F[j][i];if(v<=0)continue;oc.fillStyle=cw;oc.globalAlpha=v<1?.12:.24;oc.fillRect(i,j,1,1);}
+    ctx.imageSmoothingEnabled=true;ctx.drawImage(off,ox,0,S,S);
+    /* curvas de nivel 0 y ±1 con cuadrados que marchan */
+    const nivel=(c,col,lw,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash);ctx.beginPath();const cel=S/n;
+      for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=F[j][i]-c,b=F[j][i+1]-c,cc=F[j+1][i+1]-c,d=F[j+1][i]-c,pts=[];
+        const ed=(v1,v2,x1,y1,x2,y2)=>{if((v1>0)!==(v2>0)){const t=v1/(v1-v2);pts.push([x1+(x2-x1)*t,y1+(y2-y1)*t]);}};
+        ed(a,b,i,j,i+1,j);ed(b,cc,i+1,j,i+1,j+1);ed(cc,d,i+1,j+1,i,j+1);ed(d,a,i,j+1,i,j);
+        for(let k=0;k+1<pts.length;k+=2){ctx.moveTo(ox+pts[k][0]*cel,pts[k][1]*cel);ctx.lineTo(ox+pts[k+1][0]*cel,pts[k+1][1]*cel);}}
+      ctx.stroke();ctx.setLineDash([]);};
+    const ca=tok('--c-apl');nivel(1,ca,1.4,[5,4]);nivel(-1,ca,1.4,[5,4]);nivel(0,ca,2.8,[]);
+    P.forEach((p,i)=>{const x=X(p[0]),y=Y(p[1]);ctx.beginPath();if(p[2]>0){ctx.moveTo(x,y-5.5);ctx.lineTo(x+5,y+3.5);ctx.lineTo(x-5,y+3.5);ctx.closePath();ctx.fillStyle=cw;}else{ctx.arc(x,y,3.3,0,2*Math.PI);ctx.fillStyle=cg;}ctx.fill();
+      if(R.al[i]>1e-6){ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),8,0,2*Math.PI);ctx.lineWidth=1.8;ctx.strokeStyle=tok('--ink');ctx.stroke();}});
+  });
+  function calcular(){
+    const C=Math.pow(10,+sC.value),g=Math.pow(10,+sG.value);
+    q('#c8l2-c-o').textContent=nf(C,C<1?2:C<10?1:0);q('#c8l2-g-o').textContent=nf(g,g<1?2:g<10?1:0);
+    q('#c8l2-gl').classList.toggle('off',st.ker!=='rbf');sG.disabled=st.ker!=='rbf';
+    P=generar(st.datos);K=kernel(st.ker,g);R=smo(P,K,C);
+    dib();
+    const n=P.length,sv=[...R.al].filter(a=>a>1e-6).length,enBorde=[...R.al].filter(a=>a>1e-6&&a<C-1e-6).length;
+    const ok=P.filter(p=>Math.sign(dec(p))===p[2]).length;
+    let ancho='';
+    if(st.ker==='lin'){let w0=0,w1=0;P.forEach((p,i)=>{w0+=R.al[i]*p[2]*p[0];w1+=R.al[i]*p[2]*p[1];});ancho=' · ancho del margen '+nf(2/Math.hypot(w0,w1),2);}
+    let txt;
+    if(st.ker==='lin'&&st.datos==='anillo')txt='Ninguna recta separa un grupo que está dentro de otro: la SVM lineal se rinde y casi todos los puntos terminan como vectores de soporte. Cambia a un kernel polinómico o gaussiano.';
+    else if(st.datos==='cli'&&!(st.ker==='rbf'&&g>=30))txt='Clientes de verdad: los que cancelan y los que se quedan se mezclan en estas dos variables, y casi todos los puntos terminan dentro del margen. Por eso la SVM necesita muchos vectores de soporte y no le saca ventaja a la logística en este problema (el laboratorio con scikit-learn lo mide con las quince variables).';
+    else if(st.ker==='rbf'&&g>=30)txt='Con gamma tan grande cada punto solo influye en su vecindario inmediato: la frontera se enrosca alrededor de los puntos, casi todos son vectores de soporte y el modelo memoriza. Es sobreajuste.';
+    else if(C<=0.05)txt='C chico: los errores salen baratos. El margen se ensancha, muchos puntos quedan dentro de él y todos esos son vectores de soporte. Modelo más simple, más sesgo.';
+    else if(C>=30)txt='C grande: cada error cuesta caro. El margen se angosta para dejar el menor número de puntos del lado equivocado; con datos ruidosos la frontera persigue a cada punto.';
+    else txt='Solo los puntos con anillo definen la frontera: los que están sobre el margen o lo cruzan. Puedes borrar mentalmente todos los demás y la frontera no se movería.';
+    q('#c8l2-out').innerHTML='<span class="big">'+sv+' vectores de soporte de '+n+' puntos · '+nf(100*ok/n,1)+' % bien clasificados'+ancho+'</span>'+
+      '<span>De los vectores de soporte, '+enBorde+' están justo sobre una línea punteada y los otros '+(sv-enBorde)+' quedan dentro del margen o del lado equivocado.</span><span>'+txt+'</span>';
+  }
+  [sC,sG].forEach(s=>s.addEventListener('input',calcular));
+  calcular();
+})();
+</script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="08-lab-1"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  /* [x, y, clase] con x, y entre −1 y 1; clase 0 = A, 1 = B */
+  function generar(tipo){
+    const r=rnd(3),P=[];
+    if(tipo==='anillos'){
+      for(let i=0;i<60;i++){const a=2*Math.PI*r(),rr=Math.abs(.32+.1*gauss(r));P.push([rr*Math.cos(a),rr*Math.sin(a),0]);}
+      for(let i=0;i<90;i++){const a=2*Math.PI*r(),rr=.82+.07*gauss(r);P.push([rr*Math.cos(a),rr*Math.sin(a),1]);}
+    }else{
+      for(let i=0;i<150;i++){let x=2*r()-1,y=2*r()-1;if(Math.abs(x*y)<.03){i--;continue;}P.push([x,y,x*y>0?0:1]);}
+    }
+    return P;
+  }
+  function forma(ctx,x,y,cl,cols){ctx.beginPath();if(cl){ctx.moveTo(x,y-5);ctx.lineTo(x+4.5,y+3.2);ctx.lineTo(x-4.5,y+3.2);ctx.closePath();}else ctx.arc(x,y,3,0,2*Math.PI);ctx.fillStyle=cols[cl];ctx.fill();}
+  /* La variable nueva: z = x² + y² (anillos) o z = x·y (cuadrantes) */
+  const Z={anillos:p=>p[0]*p[0]+p[1]*p[1],xor:p=>p[0]*p[1]};
+  const RANGO={anillos:[0,1.1],xor:[-1,1]};
+  const st={datos:'anillos'};let P=generar('anillos');
+  const bs=[...raiz.querySelectorAll('#c8l1-datos button')];
+  bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b));st.datos=b.dataset.v;P=generar(st.datos);
+    q('#c8l1-c').value=st.datos==='anillos'?40:50;todo();}));
+  const sT=q('#c8l1-t'),sG=q('#c8l1-g'),sC=q('#c8l1-c');
+  const alto=()=>{const [a,b]=RANGO[st.datos];return a+(b-a)*(+sC.value/100);};
+  /* clase que predice el plano: B si z está del lado que corresponde */
+  const pred=p=>{const z=Z[st.datos](p),c=alto();return st.datos==='anillos'?(z>c?1:0):(z<c?1:0);};
+  const r3=canvasWidget(q('#c8l1-c3'),.72,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);
+    const t=+sT.value/100,phi=+sG.value*Math.PI/180,el=.42,[za,zb]=RANGO[st.datos],zs=1.3/(zb-za);
+    const S=Math.min(w,h*1.25)*.3,cx=w/2,cy=h*.7;
+    const proj=(x,y,z)=>{const u=x*Math.cos(phi)-y*Math.sin(phi),v=x*Math.sin(phi)+y*Math.cos(phi);
+      const zz=(z-(st.datos==='anillos'?0:za+(zb-za)/2))*zs;return [cx+u*S,cy-(zz*Math.cos(el)-v*Math.sin(el))*S,v];};
+    /* piso */
+    ctx.strokeStyle=tok('--grid');ctx.lineWidth=1;
+    const z0=st.datos==='anillos'?0:za+(zb-za)/2;
+    for(let k=-4;k<=4;k++){const g=k/4*1.1;let a=proj(g,-1.1,z0),b=proj(g,1.1,z0);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+      a=proj(-1.1,g,z0);b=proj(1.1,g,z0);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+    const c=alto(),cols=[tok('--muted'),tok('--warm')];
+    const pts=P.map(p=>{const z=z0+(Z[st.datos](p)-z0)*t;const s=proj(p[0],p[1],z);return {s,z,cl:p[2],sep:pred(p)===p[2]};});
+    const dibujar=a=>{a.forEach(o=>{forma(ctx,o.s[0],o.s[1],o.cl,cols);
+      if(t>.98&&!o.sep){ctx.lineWidth=1.5;ctx.strokeStyle=tok('--ink');ctx.stroke();}});};
+    const debajo=pts.filter(o=>o.z<c).sort((a,b)=>b.s[2]-a.s[2]),encima=pts.filter(o=>o.z>=c).sort((a,b)=>b.s[2]-a.s[2]);
+    dibujar(debajo);
+    if(t>.02){const cs=[[-1.1,-1.1],[1.1,-1.1],[1.1,1.1],[-1.1,1.1]].map(([x,y])=>proj(x,y,z0+(c-z0)*t));
+      ctx.beginPath();cs.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
+      ctx.globalAlpha=.22*t;ctx.fillStyle=tok('--c-apl');ctx.fill();ctx.globalAlpha=Math.min(1,t*1.5);ctx.strokeStyle=tok('--c-apl');ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;}
+    dibujar(encima);
+    ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('altura = '+(st.datos==='anillos'?'x² + y²':'x · y'),8,8);
+  });
+  const r2=canvasWidget(q('#c8l1-c2'),1,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);
+    const m=6,S=Math.min(w,h)-2*m,ox=(w-S)/2,X=x=>ox+(x+1.1)/2.2*S,Y=y=>m+(1.1-y)/2.2*S;
+    ctx.fillStyle=tok('--paper');ctx.fillRect(ox,m,S,S);
+    /* región que el plano asigna a B, pintada píxel a píxel en una rejilla gruesa */
+    const n=120,off=document.createElement('canvas');off.width=off.height=n;const oc=off.getContext('2d');oc.fillStyle=tok('--warm');
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){const x=-1.1+2.2*(i+.5)/n,y=1.1-2.2*(j+.5)/n;if(pred([x,y]))oc.fillRect(i,j,1,1);}
+    ctx.globalAlpha=.16;ctx.drawImage(off,ox,m,S,S);ctx.globalAlpha=1;
+    const c=alto();ctx.strokeStyle=tok('--c-apl');ctx.lineWidth=2.5;ctx.beginPath();
+    if(st.datos==='anillos'){if(c>0){ctx.arc(X(0),Y(0),Math.sqrt(c)/2.2*S,0,2*Math.PI);}}
+    else{for(const sg of [1,-1]){let pen=false;for(let k=0;k<=200;k++){const x=sg*(0.005+1.1*k/200),y=c/x;if(Math.abs(y)>1.1){pen=false;continue;}pen?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y));pen=true;}}}
+    ctx.stroke();
+    const cols=[tok('--muted'),tok('--warm')];
+    P.forEach(p=>forma(ctx,X(p[0]),Y(p[1]),p[2],cols));
+  });
+  function todo(){
+    const t=+sT.value/100,c=alto();
+    q('#c8l1-t-o').textContent=nf(t*100)+' %';q('#c8l1-g-o').textContent=sG.value+'°';q('#c8l1-c-o').textContent=nf(c,2);
+    r3();r2();
+    const ok=P.filter(p=>pred(p)===p[2]).length,n=P.length;
+    q('#c8l1-f').textContent=st.datos==='anillos'
+      ?'Variable nueva: z = x² + y² (la distancia al centro, al cuadrado). Plano: z = '+nf(c,2)+'  →  en el plano original, el círculo x² + y² = '+nf(c,2)
+      :'Variable nueva: z = x · y. Plano: z = '+nf(c,2)+'  →  en el plano original, la curva x · y = '+nf(c,2)+(Math.abs(c)<.03?' (los dos ejes)':' (una hipérbola)');
+    let txt;
+    if(t<.98)txt='Todavía no terminas de levantar los puntos: sube «Levantar» hasta 100 %. En el plano no hay ninguna recta que deje la clase A de un lado y la B del otro.';
+    else if(ok===n)txt='Separación perfecta: un plano en tres dimensiones deja cada clase de su lado. Mira el panel derecho: ese plano, visto desde arriba, es una '+(st.datos==='anillos'?'circunferencia':'cruz')+' en el plano original. Lineal allá arriba, curva acá abajo.';
+    else txt='El plano deja '+(n-ok)+' punto'+(n-ok===1?'':'s')+' del lado equivocado (con borde oscuro). Mueve la altura del plano hasta que no quede ninguno.';
+    q('#c8l1-out').innerHTML='<span class="big">'+ok+' de '+n+' puntos del lado correcto ('+nf(100*ok/n,1)+' %)</span><span>'+txt+'</span>'+
+      '<span class="hint">El truco del kernel hace esto sin calcular nunca la columna z: la SVM solo necesita productos entre pares de puntos, y el kernel los entrega directamente.</span>';
+  }
+  [sT,sG,sC].forEach(s=>s.addEventListener('input',todo));
+  todo();
+})();
+</script>
+<script>
+(function(){
+  const {$}=window.Lab;
+  const raiz=document.querySelector('[id="08-lab-3"]');
+  /* ---- Componente Pyodide común del curso «Aprendizaje automático» (copiar tal cual) ----
+     Pyodide 314.0.7 (Python 3.14.2; numpy 2.4.6, pandas 3.0.2, scikit-learn 1.8.0).
+     Se descarga solo al pulsar el botón y se comparte entre todos los labs de la página (window.aePy).
+     PY.generador(py) escribe generar_clientes.py (el del capítulo 01) y crea datos/clientes.csv con semilla 42. */
+  const PY=window.aePy||(window.aePy=(function(){
+    const VER='314.0.7',BASE='https://cdn.jsdelivr.net/pyodide/v'+VER+'/full/';
+    let base=null;const listos={};
+    const GEN="\"\"\"Clientes sintéticos para el curso «Aprendizaje automático»: quién cancela el servicio.\n\nFabrica una muestra de clientes de una empresa ficticia de servicios por suscripción,\ntal como estaban el 1 de julio de 2026 (la fecha de corte), y si cancelaron o no en los\n90 días siguientes (columna cancela). Todo es inventado.\n\n    clientes.csv   un cliente por fila, foto del 1 de julio de 2026\n    historial.csv  fotos mensuales de julio de 2025 a junio de 2026: el mismo cliente\n                   aparece en varios meses (sirve para partir por cliente y en el tiempo)\n\nUso: python generar_clientes.py [--n 20000] [--semilla 42] [--carpeta datos]\n\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport numpy as np\nimport pandas as pd\n\nCORTE = pd.Timestamp(\"2026-07-01\")\nREGIONES = [\"Norte\", \"Centro\", \"Sur\", \"Oriente\"]\nPLANES = [\"Básico\", \"Estándar\", \"Plus\", \"Premium\"]\nPRECIO = {\"Básico\": 20.0, \"Estándar\": 30.0, \"Plus\": 45.0, \"Premium\": 60.0}\nMBPS = {\"Básico\": 100, \"Estándar\": 300, \"Plus\": 600, \"Premium\": 1000}\nMETODOS = [\"debito\", \"tarjeta\", \"efectivo\", \"transferencia\", \"billetera\"]\n\n\ndef perfil(rng, n):\n    \"\"\"Lo que no cambia de un mes a otro: quién es el cliente y qué contrató.\"\"\"\n    negocio = rng.random(n) < 0.18\n    p_plan = np.where(negocio[:, None], [0.10, 0.30, 0.35, 0.25], [0.32, 0.41, 0.18, 0.09])\n    plan = np.array(PLANES)[(rng.random(n)[:, None] > p_plan.cumsum(1)).sum(1)]\n    return pd.DataFrame({\n        \"tipo_cliente\": np.where(negocio, \"negocio\", \"hogar\"),\n        \"region\": rng.choice(REGIONES, n, p=[0.30, 0.32, 0.20, 0.18]),\n        \"plan\": plan,\n        \"metodo_pago\": rng.choice(METODOS, n, p=[0.30, 0.25, 0.25, 0.12, 0.08]),\n        \"personas_hogar\": np.where(negocio, 0, rng.choice([1, 2, 3, 4, 5, 6], n,\n                                                          p=[0.18, 0.27, 0.23, 0.19, 0.09, 0.04])),\n        \"dia_facturacion\": rng.choice([1, 10, 20], n),\n        \"riesgo\": rng.normal(0, 1, n),        # la situación de cada cliente: nadie la ve\n        \"propension_reclamo\": rng.gamma(2.0, 0.5, n),\n        \"u_contrato\": rng.random(n), \"u_extra\": rng.random(n),\n        \"extra_base\": rng.poisson(0.5 + 0.3 * negocio),\n        \"f_consumo\": rng.lognormal(0, 0.22, n), \"f_velocidad\": rng.normal(0, 1, n),\n    })\n\n\ndef foto(rng, p, antiguedad):\n    \"\"\"Lo que se mide en una fecha: uso, calidad, reclamos y el riesgo de cancelar.\"\"\"\n    n = len(p)\n    negocio = (p.tipo_cliente == \"negocio\").to_numpy()\n    precio = p.plan.map(PRECIO).to_numpy()\n    mbps = p.plan.map(MBPS).to_numpy()\n    anual = p.u_contrato.to_numpy() < np.clip(0.25 + 0.25 * negocio + 0.004 * antiguedad, 0, 0.8)\n    extra = np.minimum(p.extra_base.to_numpy() + (p.u_extra.to_numpy() < 0.012 * antiguedad), 3)\n    rampa = 1 - np.exp(-antiguedad / 4)          # los primeros meses se usa menos\n    consumo = ((60 + 70 * p.personas_hogar.to_numpy() + 0.12 * mbps + 150 * negocio\n                + 0.10 * mbps * negocio) * rampa * p.f_consumo.to_numpy() * rng.lognormal(0, 0.1, n)).round(1)\n    sur = (p.region == \"Sur\").to_numpy()\n    vel = np.clip(91 - 6 * sur + 6.5 * p.f_velocidad.to_numpy() + rng.normal(0, 2.5, n), 45, 100).round(1)\n    caidas = rng.poisson(0.5 + 0.03 * (100 - vel))\n    reclamos = rng.poisson(p.propension_reclamo.to_numpy() * (0.25 + 0.3 * caidas\n                                                              + 0.6 * (vel < 80)))\n    llamadas = rng.poisson(0.4 + 0.9 * reclamos)\n    tarde = rng.poisson(np.exp(-0.9 + 0.6 * p.riesgo.to_numpy()).clip(0, 8))\n    app = rng.poisson(np.exp(1.4 - 0.25 * p.riesgo.to_numpy() + 0.3 * negocio))\n    promo = (antiguedad <= 13) & (rng.random(n) < 0.45) | (rng.random(n) < 0.05)\n    fin_promo = promo & (rng.random(n) < 0.35)\n    mensual = ~anual\n    basico_lleno = (precio == 20) & (consumo > 320)   # el plan ya le queda chico\n    aniversario = (antiguedad >= 11) & (antiguedad <= 13)  # se cumple el primer año\n    logit = (-2.25 + 1.0 * mensual - 0.75 * np.log1p(antiguedad / 6) + 0.7 * aniversario\n             + 0.40 * np.minimum(reclamos, 3) + 0.20 * caidas + 1.0 * (vel < 80)\n             + 0.4 * fin_promo + 1.1 * (fin_promo & mensual)\n             + 1.3 * (sur & (precio <= 30)) + 1.0 * basico_lleno\n             - 0.32 * extra - 0.10 * app\n             + 0.012 * (precio - 30) + 0.12 * tarde - 0.35 * negocio\n             + 0.35 * (p.metodo_pago == \"efectivo\").to_numpy()\n             - 0.30 * (p.metodo_pago == \"debito\").to_numpy()\n             + 0.45 * p.riesgo.to_numpy())\n    return pd.DataFrame({\n        \"antiguedad_meses\": antiguedad, \"contrato\": np.where(anual, \"anual\", \"mensual\"),\n        \"precio_plan\": precio, \"velocidad_mbps\": mbps, \"servicios_extra\": extra,\n        \"consumo_gb\": consumo, \"velocidad_pct\": vel, \"caidas_90d\": caidas,\n        \"reclamos_90d\": reclamos, \"llamadas_soporte_90d\": llamadas,\n        \"facturas_tarde_12m\": tarde, \"uso_app_30d\": app, \"fin_promo_60d\": fin_promo.astype(int),\n    }), logit\n\n\ndef clientes(n, semilla):\n    rng = np.random.default_rng(semilla)\n    p = perfil(rng, n)\n    antiguedad = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)\n    f, logit = foto(rng, p, antiguedad)\n    cancela = (rng.random(n) < 1 / (1 + np.exp(-(logit + rng.normal(0, 0.6, n))))).astype(int)\n    # Encuesta de satisfacción (0 a 10): la contesta solo una parte, y menos los descontentos\n    nota = np.clip(np.round(8.2 - 0.9 * f.reclamos_90d - 0.5 * p.riesgo - 1.2 * cancela\n                            + rng.normal(0, 1.3, n)), 0, 10)\n    contesta = rng.random(n) < np.clip(0.45 - 0.08 * f.reclamos_90d, 0.1, 0.6)\n    # FUGAS DE DATOS: las dos se registran DESPUÉS de la fecha de corte\n    gestion = np.where(cancela == 1, rng.random(n) < 0.55, rng.random(n) < 0.03).astype(int)\n    sin_pago = np.where(cancela == 1, rng.integers(12, 90, n),\n                        np.clip(rng.integers(0, 31, n) + 7 * f.facturas_tarde_12m, 0, 80))\n    alta = CORTE - pd.to_timedelta(antiguedad * 30.4 + rng.integers(0, 28, n), unit=\"D\")\n    df = pd.concat([p.iloc[:, :6], f], axis=1)   # sin las columnas ocultas\n    df.insert(0, \"cliente_id\", np.arange(100001, 100001 + n))\n    df.insert(1, \"fecha_alta\", alta.strftime(\"%Y-%m-%d\"))\n    df[\"satisfaccion\"] = np.where(contesta, nota, np.nan)\n    df[\"gestion_retencion\"] = gestion\n    df[\"dias_sin_pago\"] = sin_pago\n    df[\"cancela\"] = cancela\n    orden = [\"cliente_id\", \"fecha_alta\", \"antiguedad_meses\", \"tipo_cliente\", \"region\", \"plan\",\n             \"precio_plan\", \"velocidad_mbps\", \"contrato\", \"metodo_pago\", \"dia_facturacion\",\n             \"personas_hogar\", \"servicios_extra\", \"consumo_gb\", \"velocidad_pct\", \"caidas_90d\",\n             \"reclamos_90d\", \"llamadas_soporte_90d\", \"facturas_tarde_12m\", \"uso_app_30d\",\n             \"fin_promo_60d\", \"satisfaccion\", \"gestion_retencion\", \"dias_sin_pago\", \"cancela\"]\n    return df[orden]\n\n\ndef historial(n, semilla):\n    \"\"\"Fotos mensuales de una población que se mueve: entran clientes nuevos y otros se van.\"\"\"\n    rng = np.random.default_rng(semilla + 1)\n    meses = pd.date_range(\"2025-07-01\", \"2026-09-01\", freq=\"MS\")\n    p = perfil(rng, n)\n    antig = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)\n    activo = np.ones(n, bool)\n    sale = np.full(n, -1)\n    filas = []\n    for i, mes in enumerate(meses):\n        nuevos = rng.binomial(n, 0.025) if i else 0       # altas del mes\n        if nuevos:\n            p = pd.concat([p, perfil(rng, nuevos)], ignore_index=True)\n            antig = np.concatenate([antig, np.ones(nuevos, int)])\n            activo = np.concatenate([activo, np.ones(nuevos, bool)])\n            sale = np.concatenate([sale, np.full(nuevos, -1)])\n        f, logit = foto(rng, p, antig)\n        idx = np.flatnonzero(activo)\n        if mes <= pd.Timestamp(\"2026-06-01\"):\n            filas.append(f.iloc[idx].assign(cliente_id=300001 + idx, mes_corte=mes.strftime(\"%Y-%m\"),\n                                            _i=i, _pos=idx).join(p.iloc[idx][[\"tipo_cliente\", \"region\",\n                                                                               \"plan\", \"metodo_pago\"]]))\n        # probabilidad de irse este mes (aprox. un tercio del riesgo a 90 días)\n        prob = 1 / (1 + np.exp(-(logit[idx] - 1.25 + rng.normal(0, 0.6, len(idx)))))\n        se_va = idx[rng.random(len(idx)) < prob]\n        activo[se_va] = False\n        sale[se_va] = i\n        antig = antig + 1\n    h = pd.concat(filas, ignore_index=True)\n    s = sale[h._pos.to_numpy()]\n    h[\"cancela\"] = ((s >= h._i) & (s <= h._i + 2)).astype(int)\n    orden = [\"cliente_id\", \"mes_corte\", \"antiguedad_meses\", \"tipo_cliente\", \"region\", \"plan\",\n             \"precio_plan\", \"contrato\", \"metodo_pago\", \"servicios_extra\", \"consumo_gb\",\n             \"velocidad_pct\", \"caidas_90d\", \"reclamos_90d\", \"llamadas_soporte_90d\",\n             \"facturas_tarde_12m\", \"uso_app_30d\", \"fin_promo_60d\", \"cancela\"]\n    return h[orden].sort_values([\"mes_corte\", \"cliente_id\"], ignore_index=True)\n\n\nif __name__ == \"__main__\":\n    a = argparse.ArgumentParser(description=__doc__.splitlines()[0])\n    a.add_argument(\"--n\", type=int, default=20000, help=\"clientes de la muestra (20000)\")\n    a.add_argument(\"--semilla\", type=int, default=42)\n    a.add_argument(\"--carpeta\", default=\"datos\")\n    a = a.parse_args()\n    carpeta = Path(a.carpeta)\n    carpeta.mkdir(parents=True, exist_ok=True)\n    c = clientes(a.n, a.semilla)\n    c.to_csv(carpeta / \"clientes.csv\", index=False)\n    print(f\"{carpeta / 'clientes.csv'}: {len(c):,} clientes, cancela el {c.cancela.mean():.1%}\")\n    h = historial(a.n // 4, a.semilla)\n    h.to_csv(carpeta / \"historial.csv\", index=False)\n    print(f\"{carpeta / 'historial.csv'}: {len(h):,} filas de {h.cliente_id.nunique():,} clientes, \"\n          f\"cancela el {h.cancela.mean():.1%}\")\n";
+    const AYUDA="import ast, io, json, sys\n_ae_espacios = {}\ndef _ae_limpio(v):\n    if v is None: return None\n    if hasattr(v, \"item\") and not isinstance(v, (str, bytes)):\n        try: v = v.item()\n        except Exception: v = str(v)\n    if isinstance(v, float) and v != v: return None\n    if isinstance(v, (bool, int, float, str)): return v\n    return str(v)\ndef _ae_tabla(x, n=12):\n    mod = type(x).__module__.split(\".\")[0]\n    if mod == \"pandas\":\n        import pandas as pd\n        if isinstance(x, pd.Series): x = x.to_frame()\n        if not isinstance(x, pd.DataFrame): return {\"valor\": repr(x)}\n        h = x.head(n); filas = h.astype(object).values.tolist()\n        indice = [str(i) for i in h.index]\n        cols = [str(c) for c in h.columns]; tipos = [str(t) for t in h.dtypes]\n    elif x is None: return None\n    else: return {\"valor\": repr(x)}\n    return {\"columnas\": cols, \"tipos\": tipos, \"indice\": indice, \"forma\": list(x.shape), \"motor\": mod,\n            \"filas\": [[_ae_limpio(v) for v in f] for f in filas]}\ndef _ae_correr(lab, codigo):\n    import warnings\n    warnings.filterwarnings(\"ignore\")\n    ns = _ae_espacios.setdefault(lab, {\"__name__\": \"__main__\"})\n    buf, viejo = io.StringIO(), sys.stdout\n    sys.stdout = buf\n    try:\n        arbol = ast.parse(codigo); ultimo = None\n        if arbol.body and isinstance(arbol.body[-1], ast.Expr):\n            exp = ast.Expression(arbol.body.pop().value)\n            exec(compile(arbol, \"<lab>\", \"exec\"), ns)\n            ultimo = eval(compile(exp, \"<lab>\", \"eval\"), ns)\n        else:\n            exec(compile(arbol, \"<lab>\", \"exec\"), ns)\n        return json.dumps({\"salida\": buf.getvalue(), \"tabla\": _ae_tabla(ultimo)})\n    except BaseException as e:\n        return json.dumps({\"salida\": buf.getvalue(), \"error\": type(e).__name__ + \": \" + str(e)})\n    finally:\n        sys.stdout = viejo\ndef _ae_generador():\n    import os, sys\n    if os.getcwd() not in sys.path: sys.path.insert(0, os.getcwd())\n    import generar_clientes as g\n    os.makedirs(\"datos\", exist_ok=True)\n    if not os.path.exists(\"datos/clientes.csv\"):\n        g.clientes(20000, 42).to_csv(\"datos/clientes.csv\", index=False)\n";
+    function script(){return new Promise((ok,mal)=>{
+      if(window.loadPyodide)return ok();
+      const s=document.createElement('script');s.src=BASE+'pyodide.js';
+      s.onload=ok;s.onerror=()=>mal(new Error('No se pudo descargar Pyodide'));document.head.appendChild(s);});}
+    return {VER,
+      /* paquetes: ['pandas','scikit-learn']; aviso(texto) recibe el estado */
+      cargar(paquetes,aviso){
+        if(!base){aviso&&aviso('Descargando Python (Pyodide '+VER+')…');
+          base=script().then(()=>loadPyodide({indexURL:BASE})).then(py=>{py.runPython(AYUDA);return py;});
+          base.catch(()=>{base=null;});}
+        return base.then(async py=>{
+          const faltan=paquetes.filter(p=>!listos[p]);
+          if(faltan.length){aviso&&aviso('Instalando '+faltan.join(' y ')+'…');
+            await py.loadPackage(faltan);faltan.forEach(p=>listos[p]=1);}
+          return py;});
+      },
+      /* escribe el generador del curso y crea datos/clientes.csv (20.000 clientes, semilla 42) */
+      generador(py){py.FS.writeFile('generar_clientes.py',GEN);py.runPython('_ae_generador()');},
+      /* archivos: {'nombre.py': 'texto…'}; se escriben en la carpeta de trabajo de Python */
+      archivos(py,archivos){for(const k in archivos)py.FS.writeFile(k,archivos[k]);},
+      async correr(py,lab,codigo){
+        py.globals.set('_ae_codigo',codigo);
+        return JSON.parse(py.runPython('_ae_correr('+JSON.stringify(lab)+', _ae_codigo)'));}
+    };
+  })());
+  /* Dibuja la tabla que devuelve PY.correr (r.tabla) dentro de un elemento */
+  function pintarTabla(el,t){
+    const nfx=(v,dec)=>{if(typeof v!=='number')return v===null?'<i>nulo</i>':String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      let s=Math.abs(v).toFixed(Number.isInteger(v)&&!dec?0:3).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').split('.');
+      s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (v<0?'−':'')+s.join(',');};
+    if(!t){el.innerHTML='';return;}
+    if(t.valor!==undefined){el.innerHTML='<pre class="ae-valor">'+nfx(t.valor)+'</pre>';return;}
+    const idx=t.indice&&!t.indice.every((v,i)=>v===String(i));
+    let h='<table class="tbl"><thead><tr>'+(idx?'<th></th>':'')+t.columnas.map((c,i)=>'<th>'+nfx(c)+'<br><small>'+t.tipos[i]+'</small></th>').join('')+'</tr></thead><tbody>';
+    t.filas.forEach((f,j)=>{h+='<tr>'+(idx?'<th>'+nfx(t.indice[j])+'</th>':'')+f.map((v,i)=>'<td'+(typeof v==='number'?' style="text-align:right"':'')+'>'+(/(^|_)id$/i.test(String(t.columnas[i]))&&typeof v==='number'?String(v):nfx(v,/float/i.test(t.tipos[i])))+'</td>').join('')+'</tr>';});
+    const n=t.forma[0];
+    el.innerHTML=h+'</tbody></table><p class="hint">'+(n>t.filas.length?'Primeras '+t.filas.length+' de ':'')+nfx(n)+' filas × '+t.forma[1]+' columnas</p>';
+  }
+  /* ---- fin del componente ---- */
+  const PREP="\"\"\"Preparación común del laboratorio: datos, partición, una muestra de 4.000 y una función para medir.\"\"\"\nimport pandas as pd\nfrom sklearn import set_config\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.metrics import roc_auc_score\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\n\nset_config(working_memory=128)   # el navegador tiene poca memoria\ndf = pd.read_csv(\"datos/clientes.csv\")\nNUM = [\"antiguedad_meses\", \"precio_plan\", \"servicios_extra\", \"consumo_gb\", \"velocidad_pct\",\n       \"caidas_90d\", \"reclamos_90d\", \"llamadas_soporte_90d\", \"facturas_tarde_12m\",\n       \"uso_app_30d\", \"fin_promo_60d\"]\nCAT = [\"tipo_cliente\", \"region\", \"contrato\", \"metodo_pago\"]\nent, pru = train_test_split(df, test_size=0.25, random_state=42, stratify=df.cancela)\n# La SVM con kernel crece con el cuadrado de las filas: entrenamos con 4.000 de los 15.000\nm4, _ = train_test_split(ent, train_size=4000, random_state=42, stratify=ent.cancela)\n\n\ndef prep(escalar=True):\n    return ColumnTransformer([(\"num\", StandardScaler() if escalar else \"passthrough\", NUM),\n                              (\"cat\", OneHotEncoder(handle_unknown=\"ignore\"), CAT)])\n\n\ndef medir(nombre, modelo, datos):\n    \"\"\"AUC con el puntaje de la SVM (decision_function: la distancia firmada a la frontera).\"\"\"\n    fila = {\"AUC entrenamiento\": round(roc_auc_score(datos.cancela, modelo.decision_function(datos)), 3),\n            \"AUC prueba\": round(roc_auc_score(pru.cancela, modelo.decision_function(pru)), 3)}\n    if hasattr(modelo[-1], \"n_support_\"):\n        fila[\"vectores de soporte\"] = int(modelo[-1].n_support_.sum())\n    return pd.DataFrame(fila, index=[nombre])\n", PREPNOMBRE="preparar_08.py";
+  const EJ=[{"t": "Una SVM lineal frente a la logística", "c": "from preparar_08 import ent, pru, prep, medir\nimport pandas as pd\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.svm import LinearSVC\n\nsvm = make_pipeline(prep(), LinearSVC(C=1.0)).fit(ent, ent.cancela)\nlog = make_pipeline(prep(), LogisticRegression(max_iter=1000)).fit(ent, ent.cancela)\nprint(\"Distancia a la frontera de los tres primeros clientes de prueba:\")\nprint(svm.decision_function(pru.head(3)).round(2))\npd.concat([medir(\"SVM lineal (15.000)\", svm, ent), medir(\"logística (15.000)\", log, ent)])", "x": ["Con los 15.000 clientes, la SVM lineal y la logística dibujan casi la misma frontera: AUC 0,795 contra 0,798. Las dos son modelos lineales; cambia la pérdida que minimizan.", "<code>decision_function</code> devuelve la distancia firmada a la frontera, no una probabilidad: negativa es «se queda», positiva es «cancela». Para el AUC basta, porque solo importa el orden."]}, {"t": "Kernel gaussiano: el desbalance importa", "c": "from preparar_08 import m4, prep, medir\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.svm import SVC\n\nsin_pesos = make_pipeline(prep(), SVC(kernel=\"rbf\")).fit(m4, m4.cancela)\nbalanceada = make_pipeline(prep(), SVC(kernel=\"rbf\", class_weight=\"balanced\")).fit(m4, m4.cancela)\npd.concat([medir(\"RBF sin pesos\", sin_pesos, m4), medir(\"RBF balanceada\", balanceada, m4)])", "x": ["Solo 13,7 % cancela. Sin pesos, al margen le conviene dejar a casi todos los que cancelan del lado de «se queda»: el AUC de prueba cae a 0,726 aunque en entrenamiento llega a 0,914.", "Con <code>class_weight='balanced'</code> cada error con un cliente que cancela cuesta unas seis veces más, y la SVM vuelve a 0,784. En SVM esto no es un detalle: es obligatorio con clases desbalanceadas."]}, {"t": "Escalar o no escalar", "c": "from preparar_08 import m4, prep, medir\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.svm import SVC\n\nsin = make_pipeline(prep(escalar=False), SVC(class_weight=\"balanced\")).fit(m4, m4.cancela)\ncon = make_pipeline(prep(escalar=True), SVC(class_weight=\"balanced\")).fit(m4, m4.cancela)\nprint(m4[[\"consumo_gb\", \"velocidad_pct\", \"reclamos_90d\"]].describe().loc[[\"mean\", \"std\"]].round(1))\npd.concat([medir(\"sin escalar\", sin, m4), medir(\"escaladas\", con, m4)])", "x": ["El kernel gaussiano mide distancias. Sin escalar, el consumo (desviación de 130 GB) aplasta a los reclamos (desviación de 1): la distancia es casi solo consumo, y el AUC cae a 0,708.", "Los árboles del capítulo 07 no necesitaban escalar; la SVM sí, siempre. El capítulo 10 lo mete dentro del pipeline para que no se olvide."]}, {"t": "Lineal, polinómico y gaussiano", "c": "from preparar_08 import m4, prep, medir\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.svm import SVC\n\nkernels = {\"lineal\": SVC(kernel=\"linear\", class_weight=\"balanced\"),\n           \"polinómico, grado 2\": SVC(kernel=\"poly\", degree=2, class_weight=\"balanced\"),\n           \"gaussiano, gamma 0,01\": SVC(kernel=\"rbf\", gamma=0.01, class_weight=\"balanced\"),\n           \"gaussiano, gamma 0,1\": SVC(kernel=\"rbf\", gamma=0.1, class_weight=\"balanced\")}\npd.concat([medir(n, make_pipeline(prep(), k).fit(m4, m4.cancela), m4) for n, k in kernels.items()])", "x": ["Con gamma chico, el kernel gaussiano es suave y llega a 0,800, apenas por encima del lineal (0,795). Con gamma 0,1 cada cliente solo influye en sus vecinos cercanos: entrenamiento 0,948, prueba 0,772. Sobreajuste.", "Más de la mitad de los 4.000 clientes terminan como vectores de soporte: con clases tan mezcladas, muchos puntos quedan dentro del margen."]}, {"t": "Buscar C y gamma con validación cruzada", "c": "from preparar_08 import m4, pru\nimport pandas as pd\nfrom sklearn.metrics import roc_auc_score\nfrom sklearn.model_selection import GridSearchCV, train_test_split\nfrom preparar_08 import prep\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.svm import SVC\n\nm2, _ = train_test_split(m4, train_size=2000, random_state=42, stratify=m4.cancela)\nrejilla = {\"svc__C\": [0.1, 1, 10], \"svc__gamma\": [0.003, 0.03, 0.3]}\nbusca = GridSearchCV(make_pipeline(prep(), SVC(class_weight=\"balanced\")), rejilla, cv=3, scoring=\"roc_auc\")\nbusca.fit(m2, m2.cancela)\nprint(\"Mejor:\", busca.best_params_, \"AUC de validación\", round(busca.best_score_, 3))\nprint(\"AUC en prueba:\", round(roc_auc_score(pru.cancela, busca.decision_function(pru)), 3))\npd.DataFrame(busca.cv_results_).pivot(index=\"param_svc__C\", columns=\"param_svc__gamma\",\n                                      values=\"mean_test_score\").round(3)", "x": ["Nueve combinaciones por tres pliegues: 27 SVM entrenadas en tu navegador, con 2.000 clientes para que tarde segundos y no minutos.", "La tabla dibuja el dilema: gamma y C grandes juntos sobreajustan (esquina de abajo a la derecha). Con datos tabulares como estos, la mejor SVM queda al nivel de la logística, no por encima."]}, {"t": "SVM para regresión: predecir el consumo", "c": "from preparar_08 import m4, pru, NUM, CAT\nimport pandas as pd\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_absolute_error, r2_score\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\nfrom sklearn.svm import SVR\n\nnum = [c for c in NUM if c != \"consumo_gb\"] + [\"personas_hogar\", \"velocidad_mbps\"]\nprep2 = ColumnTransformer([(\"num\", StandardScaler(), num), (\"cat\", OneHotEncoder(handle_unknown=\"ignore\"), CAT)])\nfilas = {}\nfor nombre, modelo in [(\"lineal\", LinearRegression()), (\"SVR, epsilon 10 GB\", SVR(C=100, epsilon=10))]:\n    m = make_pipeline(prep2, modelo).fit(m4, m4.consumo_gb)\n    p = m.predict(pru)\n    filas[nombre] = {\"MAE (GB)\": round(mean_absolute_error(pru.consumo_gb, p), 1), \"R²\": round(r2_score(pru.consumo_gb, p), 3)}\npd.DataFrame(filas).T", "x": ["La SVR (<i>Support Vector Regression</i>) da vuelta la idea: busca un tubo de ancho ε alrededor de la predicción y solo castiga a los clientes que quedan fuera. Errores de menos de 10 GB no cuentan.", "Con el kernel gaussiano capta algo de curvatura (el consumo crece con las personas del hogar, pero no en línea recta) y baja el error medio de 69,0 a 66,6 GB."]}];
+  const GUARDADO=[{"salida": "Distancia a la frontera de los tres primeros clientes de prueba:\n[-0.64 -0.51 -0.97]\n", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba"], "tipos": ["float64", "float64"], "indice": ["SVM lineal (15.000)", "logística (15.000)"], "forma": [2, 2], "motor": "pandas", "filas": [[0.802, 0.795], [0.803, 0.798]]}}, {"salida": "", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba", "vectores de soporte"], "tipos": ["float64", "float64", "int64"], "indice": ["RBF sin pesos", "RBF balanceada"], "forma": [2, 3], "motor": "pandas", "filas": [[0.914, 0.726, 1497], [0.915, 0.784, 2434]]}}, {"salida": "      consumo_gb  velocidad_pct  reclamos_90d\nmean       281.8           89.6           0.6\nstd        129.8            6.8           0.9\n", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba", "vectores de soporte"], "tipos": ["float64", "float64", "int64"], "indice": ["sin escalar", "escaladas"], "forma": [2, 3], "motor": "pandas", "filas": [[0.717, 0.708, 3290], [0.915, 0.784, 2434]]}}, {"salida": "", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba", "vectores de soporte"], "tipos": ["float64", "float64", "int64"], "indice": ["lineal", "polinómico, grado 2", "gaussiano, gamma 0,01", "gaussiano, gamma 0,1"], "forma": [4, 3], "motor": "pandas", "filas": [[0.815, 0.795, 2431], [0.856, 0.791, 2368], [0.829, 0.8, 2512], [0.948, 0.772, 2469]]}}, {"salida": "Mejor: {'svc__C': 10, 'svc__gamma': 0.003} AUC de validación 0.82\nAUC en prueba: 0.792\n", "tabla": {"columnas": ["0.003", "0.03", "0.3"], "tipos": ["float64", "float64", "float64"], "indice": ["0.1", "1.0", "10.0"], "forma": [3, 3], "motor": "pandas", "filas": [[0.789, 0.808, 0.762], [0.813, 0.818, 0.74], [0.82, 0.772, 0.728]]}}, {"salida": "", "tabla": {"columnas": ["MAE (GB)", "R²"], "tipos": ["float64", "float64"], "indice": ["lineal", "SVR, epsilon 10 GB"], "forma": [2, 2], "motor": "pandas", "filas": [[69.0, 0.511], [66.6, 0.54]]}}];
+  let py=null;
+  const sel=raiz.querySelector('#c8l3-ej'),cod=raiz.querySelector('#c8l3-cod');
+  raiz.querySelector('#c8l3-prep').textContent=PREP;
+  sel.innerHTML=EJ.map((e,i)=>'<option value="'+i+'">'+e.t+'</option>').join('');
+  function estado(t,c){const e=raiz.querySelector('#c8l3-estado');e.textContent=t;e.className='c8l3-estado'+(c?' '+c:'');}
+  function mostrar(r,guardado){
+    raiz.querySelector('#c8l3-sello').textContent=guardado?'guardado':'en vivo';
+    const s=raiz.querySelector('#c8l3-salida');s.hidden=!(r.salida||r.error);
+    s.textContent=(r.salida||'')+(r.error?(r.salida?'\n':'')+'Error: '+r.error:'');
+    s.style.color=r.error?'var(--warm)':'';
+    pintarTabla(raiz.querySelector('#c8l3-tabla'),r.error?null:r.tabla);
+    const e=EJ[sel.value];
+    raiz.querySelector('#c8l3-out').innerHTML=r.error?'<span class="warn">El código falló: lee el mensaje de error, que dice el tipo de problema y dónde.</span><span>Corrígelo o pulsa «Restaurar el ejemplo».</span>':
+      '<span class="big">'+e.t+'</span>'+e.x.map(p=>'<span>'+p+'</span>').join('')+(guardado?'':'<span>Si cambiaste el código, las cifras de arriba son las tuyas: compáralas con las del texto.</span>');
+  }
+  function cargarEjemplo(){cod.value=EJ[sel.value].c;mostrar(GUARDADO[sel.value],true);}
+  sel.addEventListener('change',cargarEjemplo);
+  raiz.querySelector('#c8l3-rest').addEventListener('click',cargarEjemplo);
+  async function preparar(){
+    const b=raiz.querySelector('#c8l3-cargar');b.disabled=true;
+    try{
+      py=await PY.cargar(['pandas','scikit-learn'],t=>estado(t));
+      estado('Generando los 20.000 clientes con la semilla 42…');
+      await new Promise(r=>setTimeout(r,30));
+      PY.generador(py);PY.archivos(py,{[PREPNOMBRE]:PREP});
+      estado('Listo: Python 3.14 con scikit-learn 1.8 · edita el código y pulsa Ejecutar','ok');
+      raiz.querySelector('#c8l3-run').disabled=false;b.hidden=true;
+    }catch(e){
+      estado('No se pudo cargar Python. Revisa tu conexión y vuelve a intentar; el resultado guardado sigue abajo.','warn');
+      b.disabled=false;
+    }
+  }
+  raiz.querySelector('#c8l3-cargar').addEventListener('click',preparar);
+  async function ejecutar(){
+    const run=raiz.querySelector('#c8l3-run');
+    if(!py||run.disabled)return;
+    run.disabled=true;estado('Entrenando en tu navegador…');
+    await new Promise(r=>setTimeout(r,30));
+    try{const r=await PY.correr(py,'08-lab-3',cod.value);mostrar(r,false);estado('Listo · ejecutado en tu navegador','ok');}
+    catch(e){mostrar({error:String(e)},false);estado('Python se detuvo; recarga la página si no responde','warn');}
+    run.disabled=false;
+  }
+  raiz.querySelector('#c8l3-run').addEventListener('click',ejecutar);
+  cod.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();ejecutar();}});
+  cargarEjemplo();
+})();
+</script>
+</body>
+</html>

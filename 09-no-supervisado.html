@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No supervisado · Aprendizaje automático · Aprendizaje automático</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, con scikit-learn corriendo en la página.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="no-supervisado">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>automático</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+<header class="page-head"><span class="num">CAPÍTULO 09 DE 12</span><h1>Aprendizaje no supervisado: agrupar y reducir dimensión</h1><p class="lede">Sin una etiqueta que predecir, el aprendizaje busca estructura: grupos de clientes parecidos, unas pocas direcciones que resumen muchas variables y los casos que no se parecen a nadie. Este capítulo recorre k-means, el agrupamiento jerárquico, DBSCAN, PCA, t-SNE, UMAP y la detección de anomalías con los clientes de Retención, y muestra cómo juzgar un resultado que no tiene respuesta correcta.</p></header>
+<section><h2>Agrupar sin etiquetas: qué es un buen grupo</h2><div class="prose"><p>El modelo de boosting ya dice a quién llamar. Fernando Aguilar tiene ahora otra pregunta: «Marisol les ofrece a todos el mismo descuento. ¿Qué tipos de clientes tenemos? A lo mejor no todos necesitan lo mismo». Esta vez no hay nada que predecir. Nadie etiquetó a los clientes por tipo; Ximena tiene que descubrir los tipos en los datos.</p><p>Ese es el terreno del <b>aprendizaje no supervisado</b> (<i>unsupervised learning</i>), que el capítulo 01 presentó: hay variables, pero no hay etiqueta. La tarea más común es el <b>agrupamiento</b> (<i>clustering</i>): formar grupos, o <b>clústeres</b> (<i>clusters</i>), de casos parecidos entre sí y distintos de los demás. Las otras dos de este capítulo son reducir la dimensión y encontrar casos raros.</p></div><div class="analogia"><b>Imagínalo así</b><p>Te regalan una caja con mil botones mezclados y te piden ordenarlos. Nadie te dice cuántos tipos hay. Puedes agruparlos por color, por tamaño o por número de agujeros, y cada criterio da grupos distintos, todos razonables. Un buen orden es uno en que los botones de cada montón se parecen mucho entre sí, los montones se distinguen a simple vista y, sobre todo, te sirve para lo que necesitabas: coser una camisa.</p></div><div class="prose"><p>Un buen grupo cumple dos condiciones que se pueden medir:</p><ul><li><b>Cohesión</b> (<i>cohesion</i>): sus miembros están cerca entre sí.</li><li><b>Separación</b> (<i>separation</i>): está lejos de los otros grupos.</li></ul><p>Las dos dependen de qué significa «cerca», y aquí está la decisión más importante de todo el capítulo. Casi todos los métodos miden la <b>distancia euclidiana</b> (<i>Euclidean distance</i>), la de la regla, entre los clientes. Si una variable va de 0 a 1.000 GB y otra de 0 a 11 reclamos, la primera decide sola quién está cerca de quién. Por eso, antes de agrupar, las variables se <b>estandarizan</b> (<i>standardize</i>): a cada una se le resta su media y se la divide por su desviación estándar, para que todas pesen parecido. Ximena usa diez variables de comportamiento de los clientes, estandarizadas, y deja afuera la etiqueta <code>cancela</code>.</p></div><figure class="fig fig-esquema" id="09-diagrama-1"><div class="lienzo"><svg viewBox="0 0 900 470" style="min-width:720px" role="img" aria-label="A la izquierda, diez clientes en tres grupos: los puntos de un mismo grupo están cerca entre sí (distancia a) y lejos de los otros grupos (distancia b); la silueta compara las dos. A la derecha, el dendrograma del agrupamiento jerárquico de los mismos diez clientes: las uniones bajas juntan clientes parecidos, y una línea de corte horizontal deja tres grupos">
+<text x="40" y="34" class="t t-b">UN BUEN GRUPO: CERCA ADENTRO, LEJOS AFUERA</text>
+<text x="40" y="54" class="t t-s t-m">diez clientes con dos variables estandarizadas</text>
+<rect x="40" y="70" width="420" height="280" rx="8" class="caja"/>
+<ellipse cx="122.1" cy="297.3" rx="75.7" ry="48.3" style="fill:var(--d-casa);fill-opacity:.08;stroke:var(--d-casa);stroke-dasharray:4 3"/>
+<ellipse cx="384.3" cy="238.4" rx="94.5" ry="60.3" style="fill:var(--c-tra);fill-opacity:.08;stroke:var(--c-tra);stroke-dasharray:4 3"/>
+<ellipse cx="263.4" cy="118.5" rx="57.0" ry="36.4" style="fill:var(--c-red);fill-opacity:.08;stroke:var(--c-red);stroke-dasharray:4 3"/>
+<line x1="164.1" y1="286.7" x2="99.2" y2="317.1" style="stroke:var(--ink);stroke-width:1.5"/>
+<line x1="164.1" y1="286.7" x2="393.2" y2="278.8" style="stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="278.6" y="274.7" class="t t-s t-b" text-anchor="middle">b</text>
+<text x="121.6" y="317.9" class="t t-s t-b">a</text>
+<circle cx="99.2" cy="317.1" r="7" style="fill:var(--d-casa)"/>
+<text x="109.2" y="309.1" class="t t-xs t-b">A</text>
+<circle cx="117.3" cy="280.0" r="7" style="fill:var(--d-casa)"/>
+<text x="127.3" y="272.0" class="t t-xs t-b">B</text>
+<circle cx="164.1" cy="286.7" r="7" style="fill:var(--d-casa)"/>
+<text x="174.1" y="278.7" class="t t-xs t-b">C</text>
+<circle cx="107.8" cy="305.6" r="7" style="fill:var(--d-casa)"/>
+<text x="117.8" y="297.6" class="t t-xs t-b">D</text>
+<circle cx="408.5" cy="217.9" r="7" style="fill:var(--c-tra)"/>
+<text x="418.5" y="209.9" class="t t-xs t-b">E</text>
+<circle cx="393.2" cy="278.8" r="7" style="fill:var(--c-tra)"/>
+<text x="403.2" y="270.8" class="t t-xs t-b">F</text>
+<circle cx="351.2" cy="218.5" r="7" style="fill:var(--c-tra)"/>
+<text x="361.2" y="210.5" class="t t-xs t-b">G</text>
+<circle cx="275.8" cy="131.5" r="7" style="fill:var(--c-red)"/>
+<text x="285.8" y="123.5" class="t t-xs t-b">H</text>
+<circle cx="266.2" cy="119.3" r="7" style="fill:var(--c-red)"/>
+<text x="276.2" y="111.3" class="t t-xs t-b">I</text>
+<circle cx="248.1" cy="104.7" r="7" style="fill:var(--c-red)"/>
+<text x="258.1" y="96.7" class="t t-xs t-b">J</text>
+<text x="40" y="380" class="t t-s"><tspan class="t-b">a</tspan> = distancia media de C a los de su grupo (cohesión)</text>
+<text x="40" y="398" class="t t-s"><tspan class="t-b">b</tspan> = distancia media de C al grupo vecino más cercano (separación)</text>
+<text x="40" y="420" class="t t-mono t-s">silueta de C = (b − a) / máx(a, b)</text>
+<text x="40" y="440" class="t t-s t-m">cerca de 1: bien ubicado · 0: en la frontera · negativa: en el grupo equivocado</text>
+<text x="560" y="34" class="t t-b">EL DENDROGRAMA DE LOS MISMOS CLIENTES</text>
+<text x="560" y="54" class="t t-s t-m">método de Ward: une primero a los más parecidos</text>
+<polyline points="564.0,320.0 564.0,312.2 596.7,312.2 596.7,320.0" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="629.3,320.0 629.3,301.3 662.0,301.3 662.0,320.0" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="580.3,312.2 580.3,287.7 645.7,287.7 645.7,301.3" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="727.3,320.0 727.3,311.6 760.0,311.6 760.0,320.0" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="694.7,320.0 694.7,302.0 743.7,302.0 743.7,311.6" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="825.3,320.0 825.3,297.5 858.0,297.5 858.0,320.0" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="792.7,320.0 792.7,276.2 841.7,276.2 841.7,297.5" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="719.2,302.0 719.2,166.9 817.2,166.9 817.2,276.2" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<polyline points="613.0,287.7 613.0,81.9 768.2,81.9 768.2,166.9" class="ln" style="stroke:var(--d-casa);stroke-width:2;fill:none"/>
+<text x="564.0" y="336" class="t t-s t-b" text-anchor="middle">A</text>
+<text x="596.7" y="336" class="t t-s t-b" text-anchor="middle">D</text>
+<text x="629.3" y="336" class="t t-s t-b" text-anchor="middle">B</text>
+<text x="662.0" y="336" class="t t-s t-b" text-anchor="middle">C</text>
+<text x="694.7" y="336" class="t t-s t-b" text-anchor="middle">J</text>
+<text x="727.3" y="336" class="t t-s t-b" text-anchor="middle">H</text>
+<text x="760.0" y="336" class="t t-s t-b" text-anchor="middle">I</text>
+<text x="792.7" y="336" class="t t-s t-b" text-anchor="middle">F</text>
+<text x="825.3" y="336" class="t t-s t-b" text-anchor="middle">E</text>
+<text x="858.0" y="336" class="t t-s t-b" text-anchor="middle">G</text>
+<line x1="554" y1="221.5" x2="868" y2="221.5" style="stroke:var(--warm);stroke-width:1.8;stroke-dasharray:6 4"/>
+<text x="560" y="215.5" class="t t-xs k-warm">CORTE AQUÍ: 3 GRUPOS</text>
+<text x="548" y="210" class="t t-xs t-m" text-anchor="middle" transform="rotate(-90 548 210)">ALTURA DE LA UNIÓN →</text>
+<text x="560" y="380" class="t t-s">Se lee de abajo hacia arriba: A y D se unen primero,</text>
+<text x="560" y="398" class="t t-s">los grupos grandes se unen al final y muy arriba.</text>
+<text x="560" y="420" class="t t-s">Cortar con una línea horizontal decide cuántos grupos:</text>
+<text x="560" y="438" class="t t-s">un salto alto antes de unir es un buen lugar para cortar.</text>
+</svg></div><figcaption><b>Un buen grupo y el dendrograma.</b> A la izquierda, diez clientes en tres grupos. Para el cliente C, la línea sólida mide la distancia a su propio grupo (a, la cohesión) y la punteada, la distancia al grupo vecino más cercano (b, la separación); con las dos se calcula su silueta. A la derecha, el agrupamiento jerárquico de los mismos diez clientes: se lee de abajo hacia arriba, y la altura de cada unión dice cuán distintos eran los grupos que se unieron. La línea roja punteada corta el árbol en tres grupos.</figcaption></figure><div class="prose"><p>La medida que combina las dos condiciones se llama <b>silueta</b> (<i>silhouette</i>). Para cada punto, <span class="math">a</span> es su distancia media a los de su grupo y <span class="math">b</span>, su distancia media a los del grupo vecino más cercano. Su silueta es <span class="math">(b - a)/\max(a, b)</span>: cerca de 1 si está bien ubicado, cerca de 0 si está en la frontera entre dos grupos y negativa si estaría mejor en otro. La silueta de un agrupamiento es el promedio de la de todos los puntos.</p><p>Hay una tercera condición que no mide ninguna fórmula: que el grupo <b>sirva</b>. El capítulo 07 del curso de <a href="https://aaramirez.github.io/ciencia-de-datos/temario.html" target="_blank" rel="noopener">Ciencia de datos</a> segmenta clientes con reglas fijadas a mano (RFM) y propone cuatro preguntas para validar un segmento con el negocio: tamaño útil, distinto de los demás, estable en el tiempo y con una acción asociada. Valen igual para los grupos de un algoritmo.</p></div></section>
+<section><h2>k-means y cómo elegir k: codo y silueta</h2><div class="prose"><p>El método de agrupamiento más usado es <b>k-means</b> (<i>k medias</i>). Pide de antemano el número de grupos, <span class="math">k</span>, y representa cada grupo por su <b>centro</b> o <b>centroide</b> (<i>centroid</i>): el promedio de sus miembros.</p></div><div class="analogia"><b>Imagínalo así</b><p>Una cadena quiere abrir tres bodegas para abastecer a sus tiendas. Pone tres alfileres al azar en el mapa, asigna cada tienda a la bodega más cercana, y después mueve cada alfiler al centro de las tiendas que le tocaron. Con los alfileres en otro lugar, algunas tiendas quedan más cerca de otra bodega, así que reasigna. Repite hasta que nada cambia. Eso es k-means.</p></div><div class="prose"><p>El algoritmo, que se conoce como <b>algoritmo de Lloyd</b> (<i>Lloyd's algorithm</i>), alterna dos pasos:</p><ol class="steps"><li><span><b>Asignar:</b> cada punto se va con el centro más cercano.</span></li><li><span><b>Mover:</b> cada centro se coloca en el promedio de los puntos que le tocaron.</span></li></ol><p>Se repite hasta que ningún punto cambia de grupo. Cada vuelta baja la <b>inercia</b> (<i>inertia</i>), la suma de las distancias al cuadrado de cada punto a su centro, así que el algoritmo siempre termina. Lo que no garantiza es llegar a la mejor solución posible: según dónde caigan los centros iniciales, puede quedarse en una peor. Por eso scikit-learn elige los centros iniciales con <b>k-means++</b>, que los reparte lejos unos de otros, y repite todo varias veces (<code>n_init</code>) para quedarse con la menor inercia.</p></div><div class="lab" id="09-lab-1"><div class="lab-title"><span class="tag">Laboratorio</span><h3>k-means paso a paso: asigna, mueve los centros y repite hasta que se estabilicen</h3></div><p class="hint">Trescientos clientes al azar, con su antigüedad y su consumo del último mes. Pulsa «1 · Asignar» y «2 · Mover los centros» varias veces y mira la línea punteada que deja cada centro. Después pulsa «Repetir hasta que se estabilice» y lee la forma de los grupos. Ahora activa «Estandarizar las dos variables» y repite. Termina probando «Otros centros iniciales».</p><style>
+[id="09-lab-1"] .c9l1-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="09-lab-1"] canvas{border:1px solid var(--line);max-width:640px;margin:0 auto}
+[id="09-lab-1"] .c9l1-paso{font:600 .82rem var(--f-mono);color:var(--ink);background:var(--d-casa-s);border-left:4px solid var(--d-casa);border-radius:0 6px 6px 0;padding:6px 10px}
+</style>
+<div class="ctls">
+  <label class="ctl">Número de grupos k <output id="c9l1-k-o"></output>
+    <input id="c9l1-k" type="range" min="2" max="6" step="1" value="3"></label>
+</div>
+<div class="btns" role="group" aria-label="Pasos del algoritmo">
+  <button type="button" id="c9l1-asig" class="primary">1 · Asignar</button>
+  <button type="button" id="c9l1-mov">2 · Mover los centros</button>
+  <button type="button" id="c9l1-fin">Repetir hasta que se estabilice</button>
+  <button type="button" id="c9l1-azar">Otros centros iniciales</button>
+</div>
+<div class="btns" role="group" aria-label="Escala de las variables">
+  <button type="button" id="c9l1-esc" aria-pressed="false">Estandarizar las dos variables</button>
+</div>
+<div class="c9l1-paso" id="c9l1-paso" aria-live="polite"></div>
+<canvas id="c9l1-cv" role="img" aria-label="Trescientos clientes en el plano de antigüedad y consumo, coloreados según el grupo al que los asigna k-means, con los centros marcados con una cruz y su recorrido"></canvas>
+<div class="legend"><span>cada color: un grupo</span><span>✕ centro del grupo · línea fina: su recorrido</span></div>
+<div class="readout texto" id="c9l1-out" aria-live="polite"></div></div><div class="prose"><p>k-means tiene supuestos que conviene conocer. Como cada punto se va con el centro más cercano, la frontera entre dos grupos es una recta a mitad de camino entre sus centros: los grupos salen <b>convexos</b> (<i>convex</i>, sin entrantes) y de tamaños parecidos, como manchas redondas. Si los grupos verdaderos tienen forma de luna, de anillo o tamaños muy distintos, k-means los parte mal. Y siempre asigna todos los puntos a algún grupo, incluso los que no se parecen a nadie.</p><p>Queda la pregunta de cuántos grupos pedir. Hay dos herramientas clásicas:</p><ul><li><b>El codo</b> (<i>elbow method</i>): se entrena k-means con distintos valores de <span class="math">k</span> y se grafica la inercia. Siempre baja, porque con más centros cada punto queda más cerca de uno, pero si hay grupos reales, la curva cae fuerte hasta el <span class="math">k</span> correcto y después se aplana. Ese quiebre es el codo.</li><li><b>La silueta media</b> para cada <span class="math">k</span>: se elige el que la hace más alta.</li></ul></div><figure class="fig fig-comparacion" id="09-diagrama-3"><div class="lienzo"><svg viewBox="0 0 900 400" style="min-width:720px" role="img" aria-label="Dos criterios para elegir el número de grupos k, de 2 a 8. A la izquierda, la inercia relativa: en datos simulados con cuatro manchas la curva cae fuerte hasta k = 4 y después se aplana (un codo claro); en los 20.000 clientes baja de forma suave, sin codo. A la derecha, la silueta media: alta en k = 4 para las manchas simuladas y cerca de 0,1 para todos los k en los clientes">
+<text x="20" y="30" class="t t-b">ELEGIR k: EL CODO Y LA SILUETA</text>
+<text x="20" y="50" class="t t-s t-m">k-means con diez variables de comportamiento estandarizadas, k de 2 a 8</text>
+<text x="60" y="72" class="t t-xs t-b t-m">INERCIA (RELATIVA A k = 2)</text>
+<text x="520" y="72" class="t t-xs t-b t-m">SILUETA MEDIA</text>
+<line x1="60" y1="320.0" x2="390" y2="320.0" class="ln" style="stroke:var(--grid)"/><text x="54" y="324.0" class="t t-xs t-m" text-anchor="end">0 %</text>
+<line x1="60" y1="262.9" x2="390" y2="262.9" class="ln" style="stroke:var(--grid)"/><text x="54" y="266.9" class="t t-xs t-m" text-anchor="end">25 %</text>
+<line x1="60" y1="205.7" x2="390" y2="205.7" class="ln" style="stroke:var(--grid)"/><text x="54" y="209.7" class="t t-xs t-m" text-anchor="end">50 %</text>
+<line x1="60" y1="148.6" x2="390" y2="148.6" class="ln" style="stroke:var(--grid)"/><text x="54" y="152.6" class="t t-xs t-m" text-anchor="end">75 %</text>
+<line x1="60" y1="91.4" x2="390" y2="91.4" class="ln" style="stroke:var(--grid)"/><text x="54" y="95.4" class="t t-xs t-m" text-anchor="end">100 %</text>
+<text x="60.0" y="336" class="t t-xs t-m" text-anchor="middle">2</text>
+<text x="115.0" y="336" class="t t-xs t-m" text-anchor="middle">3</text>
+<text x="170.0" y="336" class="t t-xs t-m" text-anchor="middle">4</text>
+<text x="225.0" y="336" class="t t-xs t-m" text-anchor="middle">5</text>
+<text x="280.0" y="336" class="t t-xs t-m" text-anchor="middle">6</text>
+<text x="335.0" y="336" class="t t-xs t-m" text-anchor="middle">7</text>
+<text x="390.0" y="336" class="t t-xs t-m" text-anchor="middle">8</text>
+<polyline points="60.0,91.4 115.0,213.8 170.0,295.4 225.0,295.9 280.0,296.4 335.0,296.9 390.0,297.4" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4"/>
+<polyline points="60.0,91.4 115.0,113.8 170.0,128.3 225.0,139.6 280.0,147.8 335.0,155.6 390.0,161.5" style="fill:none;stroke:var(--d-casa);stroke-width:3"/>
+<circle cx="60.0" cy="91.4" r="4" style="fill:var(--d-casa)"/>
+<circle cx="115.0" cy="113.8" r="4" style="fill:var(--d-casa)"/>
+<circle cx="170.0" cy="128.3" r="4" style="fill:var(--d-casa)"/>
+<circle cx="225.0" cy="139.6" r="4" style="fill:var(--d-casa)"/>
+<circle cx="280.0" cy="147.8" r="4" style="fill:var(--d-casa)"/>
+<circle cx="335.0" cy="155.6" r="4" style="fill:var(--d-casa)"/>
+<circle cx="390.0" cy="161.5" r="4" style="fill:var(--d-casa)"/>
+<text x="178.0" y="313.4" class="t t-xs t-m">CODO CLARO: 4 MANCHAS SIMULADAS</text>
+<text x="225.0" y="127.6" class="t t-xs k-casa">LOS 20.000 CLIENTES: SIN CODO</text>
+<line x1="520" y1="320.0" x2="850" y2="320.0" class="ln" style="stroke:var(--grid)"/><text x="514" y="324.0" class="t t-xs t-m" text-anchor="end">0,0</text>
+<line x1="520" y1="260.0" x2="850" y2="260.0" class="ln" style="stroke:var(--grid)"/><text x="514" y="264.0" class="t t-xs t-m" text-anchor="end">0,2</text>
+<line x1="520" y1="200.0" x2="850" y2="200.0" class="ln" style="stroke:var(--grid)"/><text x="514" y="204.0" class="t t-xs t-m" text-anchor="end">0,4</text>
+<line x1="520" y1="140.0" x2="850" y2="140.0" class="ln" style="stroke:var(--grid)"/><text x="514" y="144.0" class="t t-xs t-m" text-anchor="end">0,6</text>
+<line x1="520" y1="80.0" x2="850" y2="80.0" class="ln" style="stroke:var(--grid)"/><text x="514" y="84.0" class="t t-xs t-m" text-anchor="end">0,8</text>
+<rect x="506.0" y="128.3" width="12" height="191.7" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="522.0" y="262.7" width="12" height="57.3" style="fill:var(--d-casa)"/>
+<text x="520.0" y="336" class="t t-xs t-m" text-anchor="middle">2</text>
+<rect x="561.0" y="108.5" width="12" height="211.5" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="577.0" y="283.1" width="12" height="36.9" style="fill:var(--d-casa)"/>
+<text x="575.0" y="336" class="t t-xs t-m" text-anchor="middle">3</text>
+<rect x="616.0" y="91.2" width="12" height="228.8" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="632.0" y="284.9" width="12" height="35.1" style="fill:var(--d-casa)"/>
+<text x="630.0" y="336" class="t t-xs t-m" text-anchor="middle">4</text>
+<rect x="671.0" y="144.4" width="12" height="175.6" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="687.0" y="286.4" width="12" height="33.6" style="fill:var(--d-casa)"/>
+<text x="685.0" y="336" class="t t-xs t-m" text-anchor="middle">5</text>
+<rect x="726.0" y="194.6" width="12" height="125.4" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="742.0" y="290.0" width="12" height="30.0" style="fill:var(--d-casa)"/>
+<text x="740.0" y="336" class="t t-xs t-m" text-anchor="middle">6</text>
+<rect x="781.0" y="247.4" width="12" height="72.6" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="797.0" y="290.0" width="12" height="30.0" style="fill:var(--d-casa)"/>
+<text x="795.0" y="336" class="t t-xs t-m" text-anchor="middle">7</text>
+<rect x="836.0" y="296.4" width="12" height="23.6" style="fill:var(--muted);fill-opacity:.35;stroke:var(--muted)"/>
+<rect x="852.0" y="289.1" width="12" height="30.9" style="fill:var(--d-casa)"/>
+<text x="850.0" y="336" class="t t-xs t-m" text-anchor="middle">8</text>
+<text x="225.0" y="356" class="t t-s t-m" text-anchor="middle">número de grupos k</text>
+<text x="685.0" y="356" class="t t-s t-m" text-anchor="middle">número de grupos k</text>
+<text x="520" y="380" class="t t-s"><tspan style="fill:var(--muted)">▮</tspan> 4 manchas simuladas   <tspan style="fill:var(--d-casa)">▮</tspan> los clientes</text>
+<text x="60" y="380" class="t t-s">En los clientes, ningún k se destaca: lo decide el negocio.</text>
+</svg></div><figcaption><b>El codo y la silueta, con y sin grupos reales.</b> A la izquierda, la inercia relativa a k = 2: la línea gris punteada viene de datos simulados con cuatro manchas y tiene un codo claro en k = 4; la línea verde azulada son los 20.000 clientes y baja suave, sin codo. A la derecha, la silueta media para cada k: las manchas simuladas llegan a 0,76 en k = 4; los clientes rondan 0,1 para cualquier k.</figcaption></figure><div class="prose"><p>Con los clientes de Retención, la figura da una lección incómoda. No hay codo, y la silueta más alta es 0,19 con <span class="math">k = 2</span> y luego queda cerca de 0,12. Los clientes no vienen en manchas separadas: forman una nube continua, con zonas más y menos pobladas. k-means igual la parte, y la partición puede ser útil, pero el número de grupos no lo dicta la estadística. Ximena eligió <span class="math">k = 4</span> porque Retención puede manejar cuatro campañas distintas, y porque los cuatro grupos se pueden describir:</p><div class="tbl"><table><thead><tr><th>Grupo</th><th>Clientes</th><th>Lo que lo distingue</th><th>Cancela</th></tr></thead><tbody><tr><td>Nuevos y de plan barato</td><td>8.330</td><td>15 meses de antigüedad y US$ 27 de plan, en promedio</td><td>16 %</td></tr><tr><td>Con problemas técnicos</td><td>2.697</td><td>2,2 reclamos, 3 llamadas a soporte y 1,7 caídas en 90 días; velocidad del 85 %</td><td>27 %</td></tr><tr><td>Antiguos con más servicios</td><td>4.337</td><td>57 meses de antigüedad y 1,75 servicios extra</td><td>5 %</td></tr><tr><td>Plan caro y mucho consumo</td><td>4.636</td><td>US$ 50 de plan y 388 GB al mes</td><td>10 %</td></tr></tbody></table></div><p>La última columna usa la etiqueta, que k-means nunca vio. Que los grupos cancelen tan distinto, del 5 % al 27 %, es una buena señal: un grupo útil se nota en algo que no se usó para formarlo.</p></div><div class="ml"><b>En la práctica</b><p><b>Cuatro grupos, cuatro conversaciones.</b> Ximena presentó la tabla a Fernando y a Marisol. El grupo de los problemas técnicos cambió la discusión: a esos clientes un descuento no les arregla nada; necesitan una visita técnica, y quien la decide no es Retención. Fernando propuso derivarlos al área técnica antes de llamarlos. Para los antiguos con más servicios, Marisol sugirió no llamar con descuentos: cancelan poco y la llamada cuesta US$ 35. Los nuevos de plan barato son el grupo más grande y el del aniversario del capítulo 07. Nadie pidió cambiar el modelo de boosting: los grupos no predicen mejor, pero ayudan a decidir qué decir en cada llamada.</p></div></section>
+<section><h2>Agrupamiento jerárquico y dendrogramas</h2><div class="prose"><p>k-means da una partición plana. El <b>agrupamiento jerárquico</b> (<i>hierarchical clustering</i>) da toda una familia de particiones anidadas, desde un grupo por cliente hasta un solo grupo con todos, y deja elegir después dónde cortar.</p><p>La versión más usada es la <b>aglomerativa</b> (<i>agglomerative</i>): empieza con cada punto en su propio grupo y, en cada paso, une los dos grupos más parecidos. Lo que cambia entre variantes es cómo se mide la distancia entre dos grupos, el <b>enlace</b> (<i>linkage</i>):</p><ul><li><b>Simple</b> (<i>single</i>): la distancia entre sus puntos más cercanos. Sigue formas alargadas, pero encadena grupos a través de puntos sueltos.</li><li><b>Completo</b> (<i>complete</i>): la distancia entre sus puntos más lejanos. Da grupos compactos.</li><li><b>Promedio</b> (<i>average</i>): el promedio de todas las distancias entre pares.</li><li><b>Ward:</b> une los dos grupos que menos aumentan la varianza interna. Busca lo mismo que k-means y es el enlace por omisión de <code>AgglomerativeClustering</code> en scikit-learn.</li></ul><p>El resultado se dibuja como un <b>dendrograma</b> (<i>dendrogram</i>), el árbol de la derecha de la primera figura. Cada unión es una línea horizontal a la altura de la distancia entre los grupos que se unen. Cortar el dendrograma con una línea horizontal decide cuántos grupos quedan; un buen lugar es justo debajo de un salto alto, donde dos grupos muy distintos estaban por unirse.</p><p>El precio es la memoria: el método aglomerativo necesita las distancias entre todos los pares de puntos, unos 200 millones de pares con 20.000 clientes. En la práctica se usa con muestras o con datos chicos. Ximena lo corrió con una muestra de 2.000 clientes y <span class="math">k = 4</span>, y lo comparó con k-means usando el <b>índice de Rand ajustado</b> (<i>adjusted Rand index</i>, ARI), que vale 1 cuando dos agrupamientos coinciden del todo y 0 cuando coinciden como al azar. Dio 0,16: coinciden poco. En una nube sin manchas claras, cada algoritmo corta por otro lugar. Los grupos no son una propiedad de los datos, sino de cómo se los corta.</p></div></section>
+<section><h2>DBSCAN: grupos por densidad y ruido</h2><div class="prose"><p><b>DBSCAN</b> (<i>Density-Based Spatial Clustering of Applications with Noise</i>, agrupamiento espacial por densidad con ruido), de Ester, Kriegel, Sander y Xu, de 1996, cambia la idea de grupo: un grupo es una zona densa de puntos, separada de otras por zonas vacías, tenga la forma que tenga.</p></div><div class="analogia"><b>Imagínalo así</b><p>Mira una ciudad de noche desde un avión. Los barrios son manchas de luces apretadas, unidas por calles iluminadas, y entre ellos hay campo oscuro. Nadie te dijo cuántos barrios hay ni qué forma tienen: los ves porque las luces están juntas. Las casas solas en medio del campo no pertenecen a ningún barrio.</p></div><div class="prose"><p>DBSCAN tiene dos parámetros: un radio, <code>eps</code> (<span class="math">\varepsilon</span>), y un número mínimo de vecinos, <code>min_samples</code>. Con ellos clasifica cada punto:</p><ul><li><b>Núcleo</b> (<i>core</i>): tiene al menos <code>min_samples</code> puntos, contándose, dentro de su radio.</li><li><b>Borde</b> (<i>border</i>): no tiene vecinos suficientes, pero está dentro del radio de un núcleo.</li><li><b>Ruido</b> (<i>noise</i>): no está cerca de ningún núcleo. scikit-learn le pone la etiqueta −1.</li></ul><p>Un grupo crece de núcleo en núcleo: si dos núcleos se alcanzan, están en el mismo grupo.</p></div><figure class="fig fig-esquema" id="09-diagrama-2"><div class="lienzo"><svg viewBox="0 0 900 420" style="min-width:720px" role="img" aria-label="DBSCAN con radio épsilon y cuatro vecinos mínimos. Los puntos núcleo tienen al menos cuatro vecinos dentro de su círculo; los de borde están dentro del círculo de un núcleo pero no tienen vecinos suficientes; el ruido no está cerca de ningún núcleo. Se forman dos grupos y seis puntos quedan como ruido">
+<text x="30" y="30" class="t t-b">DBSCAN: ε = 0,95 Y 4 VECINOS MÍNIMOS (CONTANDO AL PROPIO PUNTO)</text>
+<rect x="20" y="44" width="588" height="360" rx="10" class="caja"/>
+<circle cx="199.4" cy="235.6" r="55.1" style="fill:none;stroke:var(--ink);stroke-width:1.3;stroke-dasharray:5 4"/>
+<circle cx="278.6" cy="227.8" r="55.1" style="fill:none;stroke:var(--ink);stroke-width:1.3;stroke-dasharray:5 4"/>
+<circle cx="531.4" cy="342.6" r="55.1" style="fill:none;stroke:var(--ink);stroke-width:1.3;stroke-dasharray:5 4"/>
+<circle cx="284.1" cy="287.5" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<circle cx="199.4" cy="235.6" r="7" style="fill:var(--d-casa)"/>
+<circle cx="154.0" cy="226.4" r="7" style="fill:var(--d-casa)"/>
+<circle cx="72.2" cy="226.9" r="6" style="fill:var(--card);stroke:var(--d-casa);stroke-width:2.5"/>
+<circle cx="132.4" cy="134.1" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<circle cx="189.4" cy="230.0" r="7" style="fill:var(--d-casa)"/>
+<circle cx="162.9" cy="238.2" r="7" style="fill:var(--d-casa)"/>
+<circle cx="122.5" cy="231.0" r="7" style="fill:var(--d-casa)"/>
+<circle cx="202.8" cy="227.0" r="7" style="fill:var(--d-casa)"/>
+<circle cx="227.6" cy="226.0" r="7" style="fill:var(--d-casa)"/>
+<circle cx="178.9" cy="180.5" r="7" style="fill:var(--d-casa)"/>
+<circle cx="206.1" cy="234.0" r="7" style="fill:var(--d-casa)"/>
+<circle cx="168.1" cy="206.7" r="7" style="fill:var(--d-casa)"/>
+<circle cx="278.6" cy="227.8" r="6" style="fill:var(--card);stroke:var(--d-casa);stroke-width:2.5"/>
+<circle cx="164.9" cy="194.6" r="7" style="fill:var(--d-casa)"/>
+<circle cx="131.3" cy="228.4" r="7" style="fill:var(--d-casa)"/>
+<circle cx="423.6" cy="182.3" r="7" style="fill:var(--c-tra)"/>
+<circle cx="400.7" cy="178.1" r="7" style="fill:var(--c-tra)"/>
+<circle cx="316.0" cy="161.8" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<circle cx="370.2" cy="286.6" r="7" style="fill:var(--c-tra)"/>
+<circle cx="406.0" cy="176.7" r="7" style="fill:var(--c-tra)"/>
+<circle cx="385.1" cy="259.1" r="7" style="fill:var(--c-tra)"/>
+<circle cx="398.8" cy="211.6" r="7" style="fill:var(--c-tra)"/>
+<circle cx="438.8" cy="174.5" r="7" style="fill:var(--c-tra)"/>
+<circle cx="403.6" cy="157.6" r="7" style="fill:var(--c-tra)"/>
+<circle cx="392.0" cy="252.2" r="7" style="fill:var(--c-tra)"/>
+<circle cx="414.9" cy="182.2" r="7" style="fill:var(--c-tra)"/>
+<circle cx="391.8" cy="245.5" r="7" style="fill:var(--c-tra)"/>
+<circle cx="287.8" cy="336.8" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<circle cx="299.4" cy="87.4" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<circle cx="531.4" cy="342.6" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<text x="199.4" y="174.5" class="t t-s t-b" text-anchor="middle">núcleo</text>
+<text x="278.6" y="166.7" class="t t-s t-b" text-anchor="middle">borde</text>
+<text x="531.4" y="281.5" class="t t-s t-b" text-anchor="middle">ruido</text>
+<g transform="translate(624,60)">
+<circle cx="12" cy="10" r="7" style="fill:var(--d-casa)"/>
+<text x="30" y="14" class="t t-b">Núcleo</text>
+<text x="30" y="34" class="t t-s">tiene al menos 4 puntos dentro de</text>
+<text x="30" y="50" class="t t-s">su círculo de radio ε. Es el corazón</text>
+<text x="30" y="66" class="t t-s">de un grupo.</text>
+<circle cx="12" cy="100" r="6" style="fill:var(--card);stroke:var(--d-casa);stroke-width:2.5"/>
+<text x="30" y="104" class="t t-b">Borde</text>
+<text x="30" y="124" class="t t-s">está dentro del círculo de un núcleo,</text>
+<text x="30" y="140" class="t t-s">pero no tiene vecinos suficientes:</text>
+<text x="30" y="156" class="t t-s">entra al grupo, sin hacerlo crecer.</text>
+<circle cx="12" cy="190" r="6" style="fill:var(--card);stroke:var(--muted);stroke-width:2"/>
+<text x="30" y="194" class="t t-b">Ruido</text>
+<text x="30" y="214" class="t t-s">no está cerca de ningún núcleo.</text>
+<text x="30" y="230" class="t t-s">No se le asigna grupo (etiqueta −1).</text>
+<line x1="0" y1="252" x2="260" y2="252" class="ln"/>
+<text x="0" y="276" class="t t-s">Un grupo crece de núcleo en núcleo:</text>
+<text x="0" y="294" class="t t-s">si dos núcleos se alcanzan, están en</text>
+<text x="0" y="312" class="t t-s">el mismo grupo. Nadie dice cuántos</text>
+<text x="0" y="330" class="t t-s">grupos hay: aquí salen <tspan style="fill:var(--d-casa)" class="t-b">2</tspan>, con</text>
+<text x="0" y="348" class="t t-s">formas libres, y 6 puntos de ruido.</text>
+</g>
+</svg></div><figcaption><b>Núcleo, borde y ruido.</b> Treinta y un puntos con radio 0,95 y cuatro vecinos mínimos. Los círculos punteados muestran el radio alrededor de tres puntos: el núcleo tiene muchos vecinos adentro; el borde tiene un núcleo dentro de su radio, pero pocos vecinos; el ruido no alcanza a ningún núcleo. Se forman dos grupos de formas distintas y seis puntos quedan como ruido.</figcaption></figure><div class="prose"><p>Sus ventajas son las debilidades de k-means: no pide el número de grupos, encuentra formas arbitrarias y separa el ruido en vez de forzarlo dentro de un grupo. Su debilidad es que usa un solo radio para todo el espacio: si un grupo es apretado y otro disperso, ningún <code>eps</code> sirve para los dos.</p></div><div class="lab" id="09-lab-2"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Los mismos datos con k-means y DBSCAN: dónde acierta y dónde falla cada uno</h3></div><p class="hint">Cinco formas de datos inventados, con los dos algoritmos lado a lado. Empieza con «Tres manchas»: los dos aciertan. Pasa a «Dos lunas» y «Anillos», y busca un radio con el que DBSCAN acierte. Prueba «Manchas con ruido» y mira qué hace cada uno con los puntos sueltos. Termina con «Densidades distintas»: ¿hay algún radio que sirva?</p><style>
+[id="09-lab-2"] .c9l2-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="09-lab-2"] .c9l2-grupo{display:grid;gap:6px}
+[id="09-lab-2"] .c9l2-par{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
+[id="09-lab-2"] .c9l2-col{display:grid;gap:8px;align-content:start}
+[id="09-lab-2"] .c9l2-tit{font:700 .9rem var(--f-display);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+[id="09-lab-2"] .c9l2-tit b{font:600 .8rem var(--f-mono);color:var(--accent)}
+[id="09-lab-2"] canvas{border:1px solid var(--line)}
+</style>
+<div class="c9l2-grupo"><span class="c9l2-rot">Datos</span>
+  <div class="btns" id="c9l2-datos" role="group" aria-label="Forma de los datos">
+    <button type="button" data-v="manchas" aria-pressed="true">Tres manchas</button>
+    <button type="button" data-v="lunas" aria-pressed="false">Dos lunas</button>
+    <button type="button" data-v="anillos" aria-pressed="false">Anillos</button>
+    <button type="button" data-v="ruido" aria-pressed="false">Manchas con ruido</button>
+    <button type="button" data-v="dens" aria-pressed="false">Densidades distintas</button>
+  </div></div>
+<div class="c9l2-par">
+  <div class="c9l2-col">
+    <div class="c9l2-tit">k-means <b id="c9l2-ka"></b></div>
+    <div class="ctls"><label class="ctl">Número de grupos k <output id="c9l2-k-o"></output>
+      <input id="c9l2-k" type="range" min="2" max="6" step="1" value="3"></label></div>
+    <canvas id="c9l2-ck" role="img" aria-label="Los puntos coloreados según el grupo que les asigna k-means, con una cruz en cada centro"></canvas>
+  </div>
+  <div class="c9l2-col">
+    <div class="c9l2-tit">DBSCAN <b id="c9l2-da"></b></div>
+    <div class="ctls"><label class="ctl">Radio ε <output id="c9l2-e-o"></output>
+      <input id="c9l2-e" type="range" min="2" max="20" step="1" value="7"></label>
+      <label class="ctl">Vecinos mínimos <output id="c9l2-m-o"></output>
+      <input id="c9l2-m" type="range" min="2" max="15" step="1" value="5"></label></div>
+    <canvas id="c9l2-cd" role="img" aria-label="Los puntos coloreados según el grupo que les asigna DBSCAN; el ruido en gris con borde"></canvas>
+  </div>
+</div>
+<div class="legend"><span><b style="color:var(--muted)">○</b> ruido (solo DBSCAN)</span><span>✕ centro de k-means</span><span>círculo punteado: el radio ε alrededor de un punto</span></div>
+<div class="readout texto" id="c9l2-out" aria-live="polite"></div></div><div class="prose"><p>Con los clientes de Retención, DBSCAN da la misma respuesta que la silueta, por otro camino: con un radio chico salen veinte grupitos en los bordes y miles de clientes como ruido; con uno más grande, casi todos caen en un solo grupo gigante. Nunca aparecen varios grupos grandes y separados, porque no los hay.</p></div></section>
+<section><h2>PCA: reducir dimensión conservando la varianza</h2><div class="prose"><p>Ximena describe a cada cliente con diez variables. No se pueden graficar diez dimensiones, y muchas variables dicen casi lo mismo: los reclamos y las llamadas a soporte tienen una correlación de 0,66. <b>Reducir la dimensión</b> (<i>dimensionality reduction</i>) es resumir muchas variables en pocas, perdiendo lo menos posible.</p></div><div class="analogia"><b>Imagínalo así</b><p>La sombra de una tetera en la pared depende de dónde pongas la lámpara. Desde arriba, la sombra es un círculo y no se distingue de una taza. De costado, se ven el pico y el asa, y la reconoces enseguida. Las dos sombras son planas, pero una conserva mucho más de la forma. PCA busca la posición de la lámpara que da la sombra más informativa.</p></div><div class="prose"><p>El <b>análisis de componentes principales</b> (<i>principal component analysis</i>, PCA) busca nuevas direcciones en el espacio de las variables, llamadas <b>componentes principales</b> (<i>principal components</i>), con dos condiciones. La primera componente es la dirección en que los datos están más dispersos: la que conserva más <b>varianza</b> (<i>variance</i>). La segunda es la de más varianza entre las perpendiculares a la primera, y así sucesivamente. Cada componente es una combinación lineal de las variables originales, con pesos llamados <b>cargas</b> (<i>loadings</i>). PCA es una rotación: con todas las componentes no se pierde nada; la reducción viene de quedarse con las primeras. La teoría, con autovalores y la descomposición en valores singulares, está en <a href="https://aaramirez.github.io/mate-multivariante/temario.html" target="_blank" rel="noopener">Multivariante</a>.</p></div><div class="lab" id="09-lab-3"><div class="lab-title"><span class="tag">Laboratorio</span><h3>PCA en vivo: gira los datos y mira cuánta varianza explica cada componente</h3></div><p class="hint">Una nube de puntos de dos variables estandarizadas. Gira el eje verde y mira las sombras de los puntos sobre él: cuanto más estiradas, más varianza conserva. Busca el ángulo que la hace máxima y compáralo con «Ir a la primera componente». Después baja la correlación a 0 y súbela a 0,95: ¿cuánto resume la primera componente en cada caso?</p><style>
+[id="09-lab-3"] canvas{border:1px solid var(--line)}
+[id="09-lab-3"] .c9l3-barras{display:grid;gap:6px}
+[id="09-lab-3"] .c9l3-fila{display:grid;grid-template-columns:minmax(0,8.5rem) minmax(0,1fr) 4.2rem;gap:8px;align-items:center;font:500 .82rem var(--f-display)}
+[id="09-lab-3"] .c9l3-pista{height:16px;background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+[id="09-lab-3"] .c9l3-pista i{display:block;height:100%;background:var(--accent-soft);border-right:2px solid var(--accent)}
+[id="09-lab-3"] .c9l3-pista i.dos{background:var(--warm-soft);border-right-color:var(--warm)}
+[id="09-lab-3"] .c9l3-pista i.tu{background:var(--good-soft);border-right-color:var(--good)}
+[id="09-lab-3"] .c9l3-fila b{font:600 .8rem var(--f-mono);text-align:right}
+</style>
+<div class="ctls">
+  <label class="ctl">Gira el eje <output id="c9l3-a-o"></output>
+    <input id="c9l3-a" type="range" min="0" max="179" step="1" value="0"></label>
+  <label class="ctl">Correlación entre las dos variables <output id="c9l3-r-o"></output>
+    <input id="c9l3-r" type="range" min="0" max="95" step="5" value="65"></label>
+</div>
+<div class="btns"><button type="button" id="c9l3-pc1">Ir a la primera componente</button><button type="button" id="c9l3-pc2">Ir a la segunda</button></div>
+<canvas id="c9l3-c" role="img" aria-label="Nube de puntos estandarizada con un eje que gira; cada punto se proyecta sobre el eje y la sombra en el eje muestra cuánta dispersión conserva"></canvas>
+<div class="legend"><span><i style="background:var(--good)"></i>tu eje y las sombras de los puntos sobre él</span><span><i style="background:var(--accent)"></i>primera componente</span><span><i style="background:var(--warm)"></i>segunda componente</span></div>
+<div class="c9l3-barras" id="c9l3-barras" aria-hidden="true"></div>
+<div class="readout texto" id="c9l3-out" aria-live="polite"></div></div><div class="prose"><p>Con las diez variables estandarizadas de los clientes, la primera componente explica el 19,5 % de la varianza, las dos primeras el 34,6 %, y hacen falta siete para pasar del 80 %. Es lo que pasa cuando las variables están poco correlacionadas: no hay atajo. Las cargas dicen qué resume cada componente: la primera pesa sobre todo reclamos, llamadas y caídas, una especie de «índice de problemas técnicos»; la segunda, antigüedad, servicios, consumo y precio, «el tamaño de la relación con la empresa». Graficar a los clientes en esas dos componentes separa al grupo de los problemas técnicos del resto.</p><p>PCA se usa para visualizar, para comprimir variables muy correlacionadas antes de un modelo y para quitar ruido. Igual que k-means, depende de la escala: sin estandarizar, la primera componente sería casi solo el consumo, la variable con más varianza en sus unidades.</p></div></section>
+<section><h2>t-SNE y UMAP para ver datos de muchas dimensiones</h2><div class="prose"><p>PCA es lineal: solo puede rotar y proyectar. Si la estructura de los datos es curva, una proyección plana la aplasta. Los métodos de <b>aprendizaje de variedades</b> (<i>manifold learning</i>) buscan un mapa en dos dimensiones que conserve quién es vecino de quién, aunque deforme todo lo demás.</p></div><div class="analogia"><b>Imagínalo así</b><p>El mapa del metro de una gran ciudad no respeta las distancias ni las curvas reales de las vías: estaciones lejanas aparecen cerca y las líneas se dibujan rectas. Pero conserva lo que importa para viajar: qué estación sigue a cuál y dónde se combinan las líneas. t-SNE y UMAP dibujan mapas de metro de los datos.</p></div><div class="prose"><ul><li><b>t-SNE</b> (<i>t-distributed Stochastic Neighbor Embedding</i>), de van der Maaten y Hinton, de 2008, calcula para cada punto qué tan probable es que otro sea su vecino, en el espacio original y en el mapa, y acomoda el mapa para que las dos se parezcan. Su parámetro principal, la <b>perplejidad</b> (<i>perplexity</i>), es aproximadamente cuántos vecinos considera cada punto. Está en scikit-learn como <code>TSNE</code>.</li><li><b>UMAP</b> (<i>Uniform Manifold Approximation and Projection</i>), de McInnes, Healy y Melville, de 2018, sigue una idea parecida con otra base matemática; es mucho más rápido con muchos puntos y suele conservar mejor la estructura global. Está en la biblioteca <code>umap-learn</code>, fuera de scikit-learn.</li></ul><p>Los dos sirven para mirar, no para medir. En un mapa de t-SNE, el tamaño de los grupos y las distancias entre ellos no significan casi nada, y con otra perplejidad o con otra semilla el dibujo cambia. Un mapa con islas bien separadas no prueba que haya grupos: t-SNE puede dibujar islas en datos sin estructura. Por eso se usan para explorar y generar hipótesis, que después se comprueban con otras herramientas, y casi nunca como variables de entrada de un modelo.</p></div></section>
+<section><h2>Detección de anomalías</h2><div class="prose"><p>La última tarea no busca grupos sino lo contrario: los casos que no se parecen a ningún grupo. Una <b>anomalía</b> (<i>anomaly</i>), también llamada valor atípico (<i>outlier</i>), es un caso tan distinto del resto que hace sospechar de otro origen: un fraude, una falla, un error de carga o, simplemente, un cliente muy poco común.</p></div><div class="caso"><b>Un caso real</b><p>Un conjunto de datos público muy usado para estudiar fraude tiene 284.807 transacciones con tarjeta de crédito hechas por clientes europeos en dos días de septiembre de 2013, que el grupo de aprendizaje automático de la Universidad Libre de Bruselas publicó en la plataforma Kaggle. Solo 492 son fraudes, el 0,172 %. Con tan pocos ejemplos de la clase que importa, y con defraudadores que cambian de táctica, muchos sistemas no esperan a tener etiquetas: marcan las transacciones que se apartan del comportamiento habitual de cada tarjeta y las mandan a revisar. Es detección de anomalías: no sabe qué es un fraude, solo qué es lo normal.</p></div><div class="prose"><p>Los tres métodos más conocidos en scikit-learn:</p><ul><li><b>Isolation Forest</b> (bosque de aislamiento), de Liu, Ting y Zhou, de 2008: arma árboles con preguntas al azar y mide cuántas preguntas hacen falta para aislar a cada punto. Los raros se aíslan con muy pocas, porque están solos en su zona. Es rápido y funciona bien con muchas variables.</li><li><b>LOF</b> (<i>Local Outlier Factor</i>, factor de anomalía local): compara la densidad alrededor de cada punto con la de sus vecinos. Detecta puntos raros dentro de su vecindario, aunque no lo sean en el conjunto.</li><li><b>SVM de una clase</b> (<code>OneClassSVM</code>): la SVM del capítulo 08 adaptada para envolver a los datos normales con una frontera; lo que queda afuera es anómalo.</li></ul><p>Todos necesitan que alguien diga qué proporción se espera de anomalías, el parámetro <code>contamination</code>, o un umbral sobre su puntaje. Ximena marcó el 1 % más raro de los clientes con Isolation Forest: 200 clientes con medianas de 4 reclamos, 5 llamadas a soporte y 3 caídas en 90 días, cuando el cliente típico tiene 0, 0 y 1, y con la velocidad por debajo del 80 %. Cancelan el 27,5 %, el doble que el total. Anómalo solo quiere decir poco común: antes de llamarlo fraude o error, alguien tiene que mirar el caso.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Grupos, componentes y casos raros de los clientes</h3></div><p>Vas a elegir k con el codo y la silueta, describir cuatro grupos de k-means, ver cuánta varianza explica PCA y marcar el 1 % de clientes más raros; después dibujarás un mapa con PCA y t-SNE. Entra a <code>datos-churn</code> y activa el entorno; no hace falta instalar nada nuevo.</p><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>cd $HOME\datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>.venv\Scripts\activate</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>cd ~/datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>source .venv/bin/activate</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps"><li><span>Guarda este programa como <code>segmentar.py</code> dentro de <code>datos-churn</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Grupos de clientes, PCA y casos raros, sin usar la etiqueta (capítulo 09)."""</span>
+<span class="ln">import pandas as pd</span>
+<span class="ln">from sklearn.cluster import KMeans</span>
+<span class="ln">from sklearn.decomposition import PCA</span>
+<span class="ln">from sklearn.ensemble import IsolationForest</span>
+<span class="ln">from sklearn.metrics import silhouette_score</span>
+<span class="ln">from sklearn.preprocessing import StandardScaler</span>
+<span class="ln"></span>
+<span class="ln">VARS = ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct",</span>
+<span class="ln">        "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m", "uso_app_30d"]</span>
+<span class="ln">df = pd.read_csv("datos/clientes.csv")</span>
+<span class="ln">X = StandardScaler().fit_transform(df[VARS])     # media 0 y desviación 1: todas pesan igual</span>
+<span class="ln"></span>
+<span class="ln"># 1. Elegir k: inercia (codo) y silueta</span>
+<span class="ln">print("k   inercia   silueta")</span>
+<span class="ln">for k in range(2, 9):</span>
+<span class="ln">    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X)</span>
+<span class="ln">    sil = silhouette_score(X, km.labels_, sample_size=4000, random_state=42)</span>
+<span class="ln">    print(f"{k}  {km.inertia_:9.0f}   {sil:.3f}")</span>
+<span class="ln"></span>
+<span class="ln"># 2. Cuatro grupos, descritos con los promedios; la etiqueta se mira recién al final</span>
+<span class="ln">df["grupo"] = KMeans(n_clusters=4, n_init=10, random_state=42).fit_predict(X)</span>
+<span class="ln">perfil = df.groupby("grupo")[VARS + ["cancela"]].mean()</span>
+<span class="ln">perfil.insert(0, "clientes", df.grupo.value_counts().sort_index())</span>
+<span class="ln">pd.set_option("display.width", 160)</span>
+<span class="ln">print("\nPerfil de los grupos:")</span>
+<span class="ln">print(perfil.T.round(2))</span>
+<span class="ln"></span>
+<span class="ln"># 3. PCA: cuánta varianza explican las componentes</span>
+<span class="ln">pca = PCA().fit(X)</span>
+<span class="ln">print("\nVarianza explicada acumulada (%):", (100 * pca.explained_variance_ratio_.cumsum()).round(1))</span>
+<span class="ln">df[["pc1", "pc2"]] = pca.transform(X)[:, :2]</span>
+<span class="ln"></span>
+<span class="ln"># 4. Casos raros: el 1 % más fácil de aislar</span>
+<span class="ln">df["raro"] = IsolationForest(contamination=0.01, random_state=42).fit_predict(X) == -1</span>
+<span class="ln">print(f"\n{df.raro.sum()} clientes raros; cancelan el {df[df.raro].cancela.mean():.1%} "</span>
+<span class="ln">      f"(el total, {df.cancela.mean():.1%})")</span>
+<span class="ln">df[["cliente_id", "grupo", "pc1", "pc2", "raro"]].to_csv("datos/segmentos.csv", index=False)</span>
+<span class="ln">print("Guardado datos/segmentos.csv")</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 39 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Guarda este segundo programa como <code>mapa.py</code>, que dibuja 2.000 clientes con PCA y con t-SNE, coloreados por grupo:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""PCA y t-SNE de 2.000 clientes, coloreados por grupo (capítulo 09). Requiere segmentos.csv."""</span>
+<span class="ln">import matplotlib</span>
+<span class="ln">matplotlib.use("Agg")</span>
+<span class="ln">import matplotlib.pyplot as plt</span>
+<span class="ln">import pandas as pd</span>
+<span class="ln">from sklearn.manifold import TSNE</span>
+<span class="ln">from sklearn.preprocessing import StandardScaler</span>
+<span class="ln"></span>
+<span class="ln">VARS = ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct",</span>
+<span class="ln">        "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m", "uso_app_30d"]</span>
+<span class="ln">df = pd.read_csv("datos/clientes.csv").merge(pd.read_csv("datos/segmentos.csv"), on="cliente_id")</span>
+<span class="ln">m = df.sample(2000, random_state=42)</span>
+<span class="ln">xy = TSNE(n_components=2, perplexity=30, random_state=42).fit_transform(StandardScaler().fit_transform(m[VARS]))</span>
+<span class="ln">fig, ejes = plt.subplots(1, 2, figsize=(11, 5))</span>
+<span class="ln">ejes[0].scatter(m.pc1, m.pc2, c=m.grupo, cmap="tab10", s=6)</span>
+<span class="ln">ejes[0].set_title("PCA: dos componentes")</span>
+<span class="ln">ejes[1].scatter(xy[:, 0], xy[:, 1], c=m.grupo, cmap="tab10", s=6)</span>
+<span class="ln">ejes[1].set_title("t-SNE (perplejidad 30)")</span>
+<span class="ln">fig.savefig("mapa_clientes.png", dpi=110, bbox_inches="tight")</span>
+<span class="ln">print("Guardado mapa_clientes.png")</span></code></pre><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Córrelos en orden (el primero tarda unos segundos; t-SNE, alrededor de medio minuto) y abre <code>mapa_clientes.png</code>:</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python segmentar.py</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>python mapa.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 segmentar.py</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>python3 mapa.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="4" style="counter-reset:st 3"><li><span>Cambia <code>perplexity=30</code> por <code>5</code> y luego por <code>100</code>, y compara los mapas.</span></li></ol><p><b>Qué observar:</b> la inercia baja de 175.338 a 121.578 sin un codo claro, y la silueta queda entre 0,10 y 0,19: no hay grupos naturales. Los cuatro grupos coinciden con la tabla del capítulo, y sus tasas de cancelación van del 5 % al 27 % aunque k-means nunca vio la etiqueta. Las dos primeras componentes suman el 34,6 % de la varianza. Los 200 clientes raros cancelan el 27,5 %. En el mapa, PCA separa al grupo de los problemas técnicos a lo largo del eje horizontal; t-SNE dibuja zonas más definidas, y su forma cambia con la perplejidad, mientras que los datos son los mismos. Con otras versiones de scikit-learn, las cifras pueden variar en el tercer decimal y el mapa de t-SNE puede verse distinto.</p></div><div class="lab" id="09-lab-4"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Agrupar, reducir y encontrar raros con scikit-learn, en la página</h3></div><p class="hint">El código del capítulo corriendo en tu navegador sobre los 20.000 clientes: cuatro grupos de k-means con su perfil, el codo y la silueta, las componentes de PCA, el agrupamiento jerárquico en una muestra, DBSCAN y los clientes raros con Isolation Forest. Prueba cambiar el número de grupos o las variables de <code>VARS</code> y mira cómo cambian los perfiles.</p><style>
+[id="09-lab-4"] .c9l4-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="09-lab-4"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="09-lab-4"] .c9l4-estado{font:500 .85rem var(--f-display);color:var(--muted)}
+[id="09-lab-4"] .c9l4-estado.ok{color:var(--good)} [id="09-lab-4"] .c9l4-estado.warn{color:var(--warm)}
+[id="09-lab-4"] .c9l4-lado{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
+[id="09-lab-4"] textarea{width:100%;box-sizing:border-box;min-height:230px;font:.8rem/1.5 var(--f-mono);padding:8px;border:1px solid var(--line);border-left:5px solid var(--d-casa);border-radius:6px;background:var(--card);color:var(--ink);resize:vertical;tab-size:4}
+[id="09-lab-4"] pre.c9l4-salida{margin:0;font:.78rem/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+[id="09-lab-4"] .c9l4-tabla{overflow-x:auto;max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;margin-top:6px}
+[id="09-lab-4"] .c9l4-tabla:empty{display:none}
+[id="09-lab-4"] .c9l4-tabla table{font-size:.78rem;margin:0}
+[id="09-lab-4"] .c9l4-tabla th small{font:500 .66rem var(--f-mono);color:var(--muted)}
+[id="09-lab-4"] .c9l4-tabla .hint{margin:4px 8px}
+[id="09-lab-4"] .opciones{grid-template-columns:minmax(0,1fr);max-width:560px}
+[id="09-lab-4"] .c9l4-sello{font:700 .66rem var(--f-display);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--mark)}
+[id="09-lab-4"] details pre{font:.75rem/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:6px 0 0}
+[id="09-lab-4"] details summary{cursor:pointer;font:600 .85rem var(--f-display)}
+[id="09-lab-4"] .ae-valor{margin:6px 8px;font:.8rem/1.45 var(--f-mono);white-space:pre-wrap}
+</style>
+<div class="opciones"><label>Ejemplo
+  <select id="c9l4-ej"></select></label></div>
+<div class="btns">
+  <button type="button" class="primary" id="c9l4-cargar">Cargar Python con scikit-learn (unos 40 MB · tarda unos segundos)</button>
+  <span class="c9l4-estado" id="c9l4-estado" aria-live="polite">Python sin cargar · mientras tanto ves el resultado guardado</span>
+</div>
+<details><summary>Qué hay en <code>preparar_09.py</code> (se crea solo al cargar)</summary><pre id="c9l4-prep"></pre></details>
+<div class="c9l4-lado">
+  <div>
+    <label class="c9l4-rot" for="c9l4-cod">Código (puedes editarlo)</label>
+    <textarea id="c9l4-cod" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div class="btns"><button type="button" id="c9l4-run" disabled>Ejecutar (Ctrl+Enter)</button>
+      <button type="button" id="c9l4-rest">Restaurar el ejemplo</button></div>
+  </div>
+  <div>
+    <span class="c9l4-rot">Resultado</span> <span class="c9l4-sello" id="c9l4-sello">guardado</span>
+    <pre class="c9l4-salida" id="c9l4-salida" hidden></pre>
+    <div class="c9l4-tabla" id="c9l4-tabla"></div>
+  </div>
+</div>
+<div class="readout texto" id="c9l4-out" aria-live="polite"></div></div></section>
+<section><h2>La idea clave</h2><div class="prose"><p>Sin etiqueta, aprender es descubrir estructura, y el resultado se juzga por su cohesión, su separación y, sobre todo, por si sirve para decidir. k-means alterna asignar y mover centros hasta estabilizarse; pide k, prefiere grupos redondos y depende de la escala, así que primero se estandariza. El codo y la silueta ayudan a elegir k cuando hay grupos reales; cuando no los hay, lo decide el negocio. El agrupamiento jerárquico da un dendrograma que se corta donde convenga, y DBSCAN encuentra grupos de cualquier forma y separa el ruido. PCA resume muchas variables en pocas direcciones que conservan la mayor varianza; t-SNE y UMAP dibujan mapas que sirven para mirar, no para medir. Y la detección de anomalías marca lo poco común para que una persona lo revise.</p></div></section>
+<section><h2>Pruébate</h2><div class="quiz"><h3>Pruébate</h3><details><summary>¿Por qué hay que estandarizar las variables antes de k-means?</summary><p>Porque k-means mide distancias euclidianas, y una variable con números grandes, como el consumo en GB, dominaría la distancia. Estandarizadas, todas pesan parecido.</p></details><details><summary>En k-means, ¿por qué el resultado puede cambiar si cambian los centros iniciales, y qué hace scikit-learn para evitarlo?</summary><p>Porque el algoritmo baja la inercia paso a paso y puede quedarse en una solución peor que la mejor posible. scikit-learn reparte los centros iniciales con k-means++ y repite el algoritmo <code>n_init</code> veces, quedándose con la menor inercia.</p></details><details><summary>Un punto tiene a = 2 y b = 3. ¿Cuánto vale su silueta y qué significa?</summary><p><span class="math">(3 - 2)/3 \approx 0{,}33</span>: está más cerca de su grupo que del vecino, pero no por mucho.</p></details><details><summary>¿Qué hace DBSCAN con un cliente que no está cerca de ningún núcleo, y qué haría k-means con el mismo cliente?</summary><p>DBSCAN lo marca como ruido (etiqueta −1) y no lo pone en ningún grupo; k-means lo asigna igual al centro más cercano, y ese cliente corre el centro.</p></details><details><summary>La primera componente principal de los clientes pesa sobre todo reclamos, llamadas y caídas. ¿Cómo la interpretarías?</summary><p>Como un índice de problemas técnicos del servicio: los clientes con valores altos en esa componente reclaman, llaman a soporte y sufren cortes más que el resto.</p></details><details><summary>¿Por qué no conviene sacar conclusiones de las distancias entre islas en un mapa de t-SNE?</summary><p>Porque t-SNE solo intenta conservar quién es vecino de quién; las distancias entre grupos y sus tamaños en el mapa no reflejan las del espacio original y cambian con la perplejidad y la semilla.</p></details></div></section>
+<section><h2>Para investigar</h2><div class="investiga"><h3>Para investigar</h3><p class="hint">Estas preguntas no se responden en el capítulo: búscalas por tu cuenta.</p><ol><li>¿Qué es HDBSCAN y cómo resuelve el problema de DBSCAN con grupos de densidades distintas?<small>Pista: busca <code>HDBSCAN</code> en la documentación de scikit-learn.</small></li><li>¿Qué son los modelos de mezcla gaussiana y en qué se diferencia una asignación «blanda», con probabilidades, de la de k-means?<small>Pista: busca <code>GaussianMixture</code> y el algoritmo EM.</small></li><li>¿Qué es la maldición de la dimensionalidad y por qué las distancias entre puntos se parecen todas cuando hay cientos de variables?</li><li>¿Qué es el estadístico de la brecha (<i>gap statistic</i>) para elegir k y qué compara?<small>Pista: busca el artículo de Tibshirani, Walther y Hastie (2001).</small></li><li>¿Cómo combina el PCA con kernel (<i>Kernel PCA</i>) las ideas de este capítulo y del anterior?<small>Pista: busca <code>KernelPCA</code> en la documentación de scikit-learn.</small></li></ol></div></section>
+<section><h2>Para saber más</h2><div class="vids"><span>Para saber más</span><a class="vid" href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank" rel="noopener">scikit-learn: Clustering <small>k-means, jerárquico, DBSCAN y una tabla que compara todos los métodos sobre las mismas formas, en inglés</small></a><a class="vid" href="https://scikit-learn.org/stable/modules/outlier_detection.html" target="_blank" rel="noopener">scikit-learn: Novelty and Outlier Detection <small>Isolation Forest, LOF y la SVM de una clase, en inglés</small></a><a class="vid" href="https://distill.pub/2016/misread-tsne/" target="_blank" rel="noopener">How to Use t-SNE Effectively <small>Wattenberg, Viégas y Johnson muestran, con ejemplos interactivos, cómo engaña un mapa de t-SNE, en inglés</small></a><a class="vid" href="https://umap-learn.readthedocs.io/" target="_blank" rel="noopener">UMAP: documentación <small>cómo funciona UMAP y cómo usarlo desde Python, en inglés</small></a><a class="vid" href="https://www.statlearning.com/" target="_blank" rel="noopener">An Introduction to Statistical Learning <small>el capítulo 12 trata PCA y agrupamiento, en inglés</small></a></div></section>
+<label class="got"><input type="checkbox" id="got"> Lo tengo claro</label>
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-estadistico" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-estadistico</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="09-lab-1"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  /* ---- 300 clientes al azar del generador del curso (semilla 42): antiguedad_meses, consumo_gb ---- */
+  const RAW='19,398.7;48,482.9;5,319.5;14,217.6;14,428.9;5,333.6;96,290.4;11,319.1;1,49.8;2,109;10,196.7;31,422.9;7,205.1;3,193.3;14,201.5;19,671.5;7,284.6;51,389.1;21,244.1;1,60.9;8,356.8;23,359.5;3,219.5;13,296.7;31,241.2;96,205.1;74,282;19,253;6,162.2;18,304.6;15,221.8;96,391.4;16,271;3,90.6;1,80.6;18,330.2;96,195.3;15,446.2;9,268.5;60,245.4;96,338.7;59,262.5;14,191.1;3,246.7;7,116.6;54,433.6;27,305.9;25,589.5;3,113.2;9,194;51,504.6;1,118.8;44,409.7;22,369.8;48,582.6;13,263.3;25,412.1;40,337.8;11,207;1,53.8;6,494.4;30,141.3;93,267.7;26,176.7;80,414.3;42,232.3;31,262.4;11,528.6;41,287.9;9,277.5;6,128.6;28,330.1;8,392.5;18,230.6;14,341.1;62,324.1;8,270.3;47,369.7;23,451.6;52,437.4;23,432.3;43,245.9;2,91.1;59,339.9;19,221.6;29,397.5;32,417.7;9,192;61,567.3;7,157.1;53,232;21,289.5;6,178.6;31,324.7;13,292.3;11,179.7;7,359.4;3,185.8;26,300.6;3,115.8;38,300.9;27,407;8,303.8;55,320;36,131;6,197.7;14,296.1;4,84.1;5,288.8;80,363.6;33,153.7;7,440.4;21,427.5;27,371.2;48,328.5;20,268.4;21,513.3;12,246.9;15,355.7;27,280.9;15,274.3;18,238.7;51,146.6;96,172.7;11,108.1;18,146.2;27,397.6;58,139.6;3,77.4;64,298.8;29,442.5;22,204.1;15,424;13,436.5;2,187.4;37,346.4;96,346.8;5,202.8;48,361.4;11,297.1;19,523.2;13,296.5;9,343.6;27,349.3;3,119.7;29,474.5;45,264.1;42,279.9;20,420.7;31,379;25,226.2;17,292.7;19,171.5;14,364.3;30,384.9;8,178.9;7,206.1;4,115.6;9,261.4;28,488.1;10,154.3;31,279.2;33,260.9;69,293.7;14,232.3;22,209.9;29,254.7;12,152.2;4,41.4;7,208.6;9,270.8;6,313.5;23,682.2;9,757.2;71,233.1;26,231.3;35,300.3;12,272;12,293.1;90,318.5;20,727.7;96,665.5;96,262.5;37,428.7;8,323.5;10,339.7;35,158.5;3,256.8;49,609.2;48,349;66,353.5;34,172.5;43,302.6;29,374.6;7,143.6;82,432.1;62,175.2;33,367;36,310.2;4,139.1;33,125.1;28,261.8;96,401.8;96,462.9;31,325.3;22,519.7;61,401.1;15,123.7;51,235;80,351.4;29,437.4;25,255.4;9,145.3;12,189.5;45,317.6;69,399.5;20,132.4;69,292.6;3,175.3;65,215;36,167.3;3,259.5;10,633.2;20,195.9;52,176.9;8,299.4;51,234.1;38,373;27,105.5;6,307.1;1,22.2;14,142.6;96,408.6;19,263.1;59,238.3;11,280.6;43,123.1;27,449.8;31,276.1;4,74.9;17,340.4;7,415.2;80,191;6,143.2;14,324.4;3,163.8;1,66.8;1,77.7;52,310.5;37,378.7;36,244.8;23,249;22,331.9;22,275.3;71,410.9;5,113.2;9,233.8;45,1021.5;1,53.6;27,552.4;10,361.5;21,233.4;17,153.2;3,199.9;6,353.9;35,449.8;4,286.3;20,242.3;34,275.4;26,142.8;9,380.5;68,215.3;7,253.1;23,388;10,204.5;12,229.3;47,193.6;40,379.7;10,238;23,428.5;5,191.8;2,154;24,372.3;7,164.1;52,155;30,369.8;25,232.5;17,325;19,377.2;16,452.5;1,41.7;36,291.8;9,274.3;35,266;96,232;6,354.4;80,186.6;18,172.1;10,400.3;1,66'.split(';').map(r=>r.split(',').map(Number));
+  const media=k=>RAW.reduce((s,p)=>s+p[k],0)/RAW.length;
+  const desv=k=>{const m=media(k);return Math.sqrt(RAW.reduce((s,p)=>s+(p[k]-m)**2,0)/RAW.length);};
+  const MU=[media(0),media(1)],SD=[desv(0),desv(1)];
+  const sK=q('#c9l1-k'),bEsc=q('#c9l1-esc');
+  const COL=['--d-casa','--c-red','--c-tra','--c-fis','--c-enl','--c-apl'];
+  let st={esc:false,semilla:1,C:[],L:[],ruta:[],iter:0,fase:'inicio',cambios:0};
+  /* el espacio donde k-means mide distancias: crudo o estandarizado */
+  const esp=p=>st.esc?[(p[0]-MU[0])/SD[0],(p[1]-MU[1])/SD[1]]:[p[0],p[1]];
+  const crudo=c=>st.esc?[c[0]*SD[0]+MU[0],c[1]*SD[1]+MU[1]]:c;
+  const d2=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2;
+  function iniciar(){
+    const r=rnd(st.semilla),k=+sK.value,usados=new Set();st.C=[];
+    while(st.C.length<k){const i=Math.floor(r()*RAW.length);if(usados.has(i))continue;usados.add(i);st.C.push(esp(RAW[i]));}
+    st.L=new Array(RAW.length).fill(-1);st.ruta=st.C.map(c=>[crudo(c)]);st.iter=0;st.fase='inicio';st.cambios=0;
+  }
+  function asignar(){let c=0;RAW.forEach((p,i)=>{const x=esp(p);let b=0,bd=Infinity;st.C.forEach((cc,j)=>{const d=d2(x,cc);if(d<bd){bd=d;b=j;}});if(st.L[i]!==b){st.L[i]=b;c++;}});st.cambios=c;st.fase='asignado';}
+  function mover(){st.C=st.C.map((cc,j)=>{let sx=0,sy=0,n=0;RAW.forEach((p,i)=>{if(st.L[i]===j){const x=esp(p);sx+=x[0];sy+=x[1];n++;}});return n?[sx/n,sy/n]:cc;});
+    st.C.forEach((c,j)=>st.ruta[j].push(crudo(c)));st.iter++;st.fase='movido';}
+  const inercia=()=>RAW.reduce((s,p,i)=>st.L[i]<0?s:s+d2(esp(p),st.C[st.L[i]]),0);
+  const dib=canvasWidget(q('#c9l1-cv'),w=>w<520?.95:.7,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);
+    const p={l:56,r:10,t:10,b:34},pw=w-p.l-p.r,ph=h-p.t-p.b,X=x=>p.l+x/96*pw,Y=y=>p.t+(1-y/1100)*ph;
+    ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');ctx.strokeStyle=tok('--grid');ctx.lineWidth=1;
+    for(let v=0;v<=1000;v+=200){ctx.beginPath();ctx.moveTo(p.l,Y(v));ctx.lineTo(p.l+pw,Y(v));ctx.stroke();ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(nf(v),p.l-4,Y(v));}
+    ctx.textAlign='center';ctx.textBaseline='top';for(let v=0;v<=96;v+=12){ctx.beginPath();ctx.moveTo(X(v),p.t);ctx.lineTo(X(v),p.t+ph);ctx.stroke();ctx.fillText(v,X(v),p.t+ph+4);}
+    ctx.fillText('antigüedad (meses) →',p.l+pw/2,p.t+ph+18);
+    ctx.save();ctx.translate(9,p.t+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText('consumo del último mes (GB) →',0,0);ctx.restore();
+    const cols=COL.map(tok);
+    RAW.forEach((pt,i)=>{ctx.beginPath();ctx.arc(X(pt[0]),Y(pt[1]),3.2,0,2*Math.PI);
+      if(st.L[i]<0){ctx.fillStyle=tok('--muted');ctx.globalAlpha=.55;}else{ctx.fillStyle=cols[st.L[i]];ctx.globalAlpha=.85;}ctx.fill();ctx.globalAlpha=1;});
+    st.ruta.forEach((r,j)=>{ctx.strokeStyle=tok('--ink');ctx.lineWidth=1.2;ctx.setLineDash([3,3]);ctx.beginPath();r.forEach((c,i)=>i?ctx.lineTo(X(c[0]),Y(c[1])):ctx.moveTo(X(c[0]),Y(c[1])));ctx.stroke();ctx.setLineDash([]);
+      const c=r[r.length-1],x=X(c[0]),y=Y(c[1]);
+      ctx.strokeStyle=tok('--card');ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x-8,y-8);ctx.lineTo(x+8,y+8);ctx.moveTo(x+8,y-8);ctx.lineTo(x-8,y+8);ctx.stroke();
+      ctx.strokeStyle=cols[j];ctx.lineWidth=3;ctx.stroke();});
+  });
+  function leer(){
+    const k=+sK.value;q('#c9l1-k-o').textContent=k;
+    const paso={inicio:'Inicio: '+k+' centros elegidos al azar entre los clientes. Todavía nadie tiene grupo. Pulsa «1 · Asignar».',
+      asignado:'Paso 1 · Asignar: cada cliente se va con el centro más cercano. '+(st.cambios?st.cambios+' clientes cambiaron de grupo.':'Nadie cambió de grupo: el algoritmo convergió.')+' Ahora pulsa «2 · Mover los centros».',
+      movido:'Paso 2 · Mover: cada centro se va al promedio de sus clientes (vuelta '+st.iter+'). Vuelve a asignar: con los centros en otro lugar, algunos clientes quedan más cerca de otro.'}[st.fase];
+    q('#c9l1-paso').textContent=paso;
+    dib();
+    if(st.fase==='inicio'){q('#c9l1-out').innerHTML='<span class="big">'+RAW.length+' clientes · '+k+' centros</span><span>'+(st.esc?'Variables estandarizadas: un mes de antigüedad y un GB de consumo pesan según cuánto varía cada uno.':'Variables en sus unidades: el consumo va de 0 a más de 1.000 GB y la antigüedad de 1 a 96 meses.')+'</span>';return;}
+    const tam=st.C.map((c,j)=>st.L.filter(l=>l===j).length);
+    const desc=st.C.map((c,j)=>{const cc=crudo(c);return '<b style="color:var('+COL[j]+')">grupo '+(j+1)+'</b>: '+tam[j]+' clientes, '+nf(cc[0])+' meses y '+nf(cc[1])+' GB en promedio';});
+    let txt='';
+    if(st.fase==='asignado'&&st.cambios===0)txt='<span class="ok">Convergió en '+st.iter+' vueltas.</span> ';
+    if(!st.esc)txt+='Mira la forma de los grupos: franjas horizontales. Sin estandarizar, una diferencia de 100 GB pesa como 100 meses de antigüedad, así que k-means agrupa casi solo por consumo. Pulsa «Estandarizar».';
+    else txt+='Estandarizadas, las dos variables pesan parecido y los grupos combinan antigüedad y consumo. Prueba «Otros centros iniciales»: a veces el resultado cambia. Por eso scikit-learn repite el inicio varias veces (<code>n_init</code>) y se queda con la menor inercia.';
+    q('#c9l1-out').innerHTML='<span class="big">Inercia '+nf(inercia(),st.esc?1:0)+' · vuelta '+st.iter+'</span><span>'+desc.join(' · ')+'</span><span>'+txt+'</span>'+
+      '<span class="hint">La inercia es la suma de las distancias al cuadrado de cada cliente a su centro: k-means la baja en cada paso y nunca la sube.</span>';
+  }
+  q('#c9l1-asig').addEventListener('click',()=>{asignar();leer();});
+  q('#c9l1-mov').addEventListener('click',()=>{if(st.fase==='inicio')asignar();mover();leer();});
+  q('#c9l1-fin').addEventListener('click',()=>{if(st.fase==='inicio')asignar();for(let i=0;i<100;i++){mover();asignar();if(!st.cambios)break;}leer();});
+  q('#c9l1-azar').addEventListener('click',()=>{st.semilla++;iniciar();leer();});
+  bEsc.addEventListener('click',()=>{st.esc=!st.esc;bEsc.setAttribute('aria-pressed',st.esc);iniciar();leer();});
+  sK.addEventListener('input',()=>{iniciar();leer();});
+  iniciar();leer();
+})();
+</script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="09-lab-2"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  /* Cada punto: [x, y, grupo verdadero] en el cuadrado [0,1]×[0,1]; grupo −1 = ruido */
+  function generar(tipo){
+    const r=rnd(7),P=[];
+    const mancha=(cx,cy,s,n,g)=>{for(let i=0;i<n;i++)P.push([cx+s*gauss(r),cy+s*gauss(r),g]);};
+    if(tipo==='manchas'){mancha(.25,.7,.07,70,0);mancha(.72,.72,.07,70,1);mancha(.5,.25,.07,70,2);}
+    else if(tipo==='lunas'){for(let i=0;i<110;i++){const a=Math.PI*r();P.push([.33+.25*Math.cos(a)+.025*gauss(r),.42+.25*Math.sin(a)+.025*gauss(r),0]);}
+      for(let i=0;i<110;i++){const a=Math.PI*r();P.push([.58-.25*Math.cos(a)+.025*gauss(r),.55-.25*Math.sin(a)+.025*gauss(r),1]);}}
+    else if(tipo==='anillos'){for(let i=0;i<70;i++){const a=2*Math.PI*r(),rr=.1+.02*gauss(r);P.push([.5+rr*Math.cos(a),.5+rr*Math.sin(a),0]);}
+      for(let i=0;i<150;i++){const a=2*Math.PI*r(),rr=.36+.02*gauss(r);P.push([.5+rr*Math.cos(a),.5+rr*Math.sin(a),1]);}}
+    else if(tipo==='ruido'){mancha(.27,.68,.06,60,0);mancha(.72,.7,.06,60,1);mancha(.5,.27,.06,60,2);for(let i=0;i<45;i++)P.push([.03+.94*r(),.03+.94*r(),-1]);}
+    else{mancha(.28,.62,.035,80,0);mancha(.72,.55,.13,80,1);mancha(.3,.2,.035,40,2);}
+    return P;
+  }
+  const dist2=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2;
+  /* k-means con inicio k-means++ (semilla fija) y el algoritmo de Lloyd hasta que nada cambia */
+  function kmeans(P,k){
+    const r=rnd(11),C=[P[Math.floor(r()*P.length)].slice(0,2)];
+    while(C.length<k){const d=P.map(p=>Math.min(...C.map(c=>dist2(p,c))));const tot=d.reduce((a,b)=>a+b,0);let u=r()*tot,i=0;while(u>d[i]&&i<P.length-1){u-=d[i];i++;}C.push(P[i].slice(0,2));}
+    let L=new Array(P.length).fill(-1);
+    for(let it=0;it<100;it++){
+      let cambio=false;
+      P.forEach((p,i)=>{let b=0,bd=Infinity;C.forEach((c,j)=>{const d=dist2(p,c);if(d<bd){bd=d;b=j;}});if(L[i]!==b){L[i]=b;cambio=true;}});
+      C.forEach((c,j)=>{let sx=0,sy=0,n=0;P.forEach((p,i)=>{if(L[i]===j){sx+=p[0];sy+=p[1];n++;}});if(n){c[0]=sx/n;c[1]=sy/n;}});
+      if(!cambio)break;
+    }
+    return {L,C};
+  }
+  /* DBSCAN: núcleo si tiene al menos minPts vecinos (contándose) a distancia ≤ eps; los grupos crecen de núcleo en núcleo */
+  function dbscan(P,eps,minPts){
+    const e2=eps*eps,n=P.length,L=new Array(n).fill(undefined),vec=P.map(p=>{const v=[];P.forEach((o,j)=>{if(dist2(p,o)<=e2)v.push(j);});return v;});
+    const nucleo=vec.map(v=>v.length>=minPts);let g=0;
+    for(let i=0;i<n;i++){
+      if(L[i]!==undefined||!nucleo[i])continue;
+      L[i]=g;const cola=[...vec[i]];
+      while(cola.length){const j=cola.pop();if(L[j]===-1)L[j]=g;if(L[j]!==undefined)continue;L[j]=g;if(nucleo[j])cola.push(...vec[j]);}
+      g++;
+    }
+    for(let i=0;i<n;i++)if(L[i]===undefined)L[i]=-1;
+    return {L,nucleo,g};
+  }
+  /* Índice de Rand ajustado: 1 = los mismos grupos que la verdad; 0 = como repartir al azar */
+  function ari(a,b){
+    const n=a.length,t={},ra={},rb={};
+    for(let i=0;i<n;i++){const k=a[i]+'|'+b[i];t[k]=(t[k]||0)+1;ra[a[i]]=(ra[a[i]]||0)+1;rb[b[i]]=(rb[b[i]]||0)+1;}
+    const c2=x=>x*(x-1)/2,s=o=>Object.values(o).reduce((acc,x)=>acc+c2(x),0);
+    const sij=s(t),sa=s(ra),sb=s(rb),esp=sa*sb/c2(n),max=(sa+sb)/2;
+    return max===esp?1:(sij-esp)/(max-esp);
+  }
+  const st={datos:'manchas'};
+  const bs=[...raiz.querySelectorAll('#c9l2-datos button')];
+  bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b));st.datos=b.dataset.v;calcular();}));
+  const sk=q('#c9l2-k'),se=q('#c9l2-e'),sm=q('#c9l2-m');
+  let P=[],KM=null,DB=null;
+  const COL=['--d-casa','--c-red','--c-tra','--c-fis','--c-enl','--c-apl'];
+  function pintar(ctx,w,h,L,extra){
+    ctx.clearRect(0,0,w,h);
+    const m=8,S=Math.min(w,h)-2*m,ox=(w-S)/2,X=x=>ox+x*S,Y=y=>m+(1-y)*S;
+    ctx.fillStyle=tok('--paper');ctx.fillRect(ox,m,S,S);
+    const cols=COL.map(tok),mut=tok('--muted');
+    P.forEach((p,i)=>{
+      ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),L[i]<0?3:4,0,2*Math.PI);
+      if(L[i]<0){ctx.fillStyle=tok('--card');ctx.fill();ctx.lineWidth=1.3;ctx.strokeStyle=mut;ctx.stroke();}
+      else{ctx.fillStyle=cols[L[i]%cols.length];ctx.fill();}
+    });
+    if(extra)extra(ctx,X,Y,S);
+  }
+  const rk=canvasWidget(q('#c9l2-ck'),1,(ctx,w,h)=>{if(!KM)return;pintar(ctx,w,h,KM.L,(c,X,Y)=>{
+    KM.C.forEach(cc=>{const x=X(cc[0]),y=Y(cc[1]);c.strokeStyle=tok('--card');c.lineWidth=5;c.beginPath();c.moveTo(x-7,y-7);c.lineTo(x+7,y+7);c.moveTo(x+7,y-7);c.lineTo(x-7,y+7);c.stroke();
+      c.strokeStyle=tok('--ink');c.lineWidth=2.5;c.stroke();});});});
+  const rd=canvasWidget(q('#c9l2-cd'),1,(ctx,w,h)=>{if(!DB)return;pintar(ctx,w,h,DB.L,(c,X,Y,S)=>{
+    let i0=DB.nucleo.findIndex(v=>v);if(i0<0)i0=0;const p=P[i0];
+    c.setLineDash([4,4]);c.strokeStyle=tok('--ink');c.lineWidth=1.3;c.beginPath();c.arc(X(p[0]),Y(p[1]),(+se.value/100)*S,0,2*Math.PI);c.stroke();c.setLineDash([]);});});
+  function calcular(){
+    P=generar(st.datos);
+    const k=+sk.value,eps=+se.value/100,mp=+sm.value;
+    q('#c9l2-k-o').textContent=k;q('#c9l2-e-o').textContent=nf(eps,2);q('#c9l2-m-o').textContent=mp;
+    KM=kmeans(P,k);DB=dbscan(P,eps,mp);
+    const verdad=P.map(p=>p[2]);
+    const aK=ari(verdad,KM.L),aD=ari(verdad,DB.L);
+    const ruido=DB.L.filter(v=>v<0).length,ruidoV=verdad.filter(v=>v<0).length,gV=new Set(verdad.filter(v=>v>=0)).size;
+    q('#c9l2-ka').textContent='ARI '+nf(aK,2);q('#c9l2-da').textContent='ARI '+nf(aD,2);
+    rk();rd();
+    const NOTA={
+      manchas:'Manchas redondas y del mismo tamaño: es el caso para el que se diseñó k-means. Con k = 3 los dos encuentran los tres grupos; DBSCAN, además, deja como ruido algunos puntos del borde.',
+      lunas:'k-means corta las lunas con una recta, porque cada grupo es «lo más cerca de un centro». DBSCAN sigue la forma: un grupo es una región densa conectada, tenga la forma que tenga.',
+      anillos:'Ningún centro puede representar un anillo: k-means parte el plano en pedazos. DBSCAN separa el anillo de adentro del de afuera si ε es menor que el espacio entre los dos.',
+      ruido:'k-means obliga a cada punto suelto a pertenecer a algún grupo y los centros se corren. DBSCAN los deja como ruido: puntos que no tienen suficientes vecinos.',
+      dens:'Una mancha apretada y otra dispersa: con un solo ε, DBSCAN o parte la dispersa en ruido o junta las apretadas. k-means sufre menos aquí. Ningún algoritmo gana siempre.'};
+    const mejor=Math.abs(aK-aD)<0.03?'Empatan.':aK>aD?'Aquí gana k-means.':'Aquí gana DBSCAN.';
+    q('#c9l2-out').innerHTML='<span class="big">k-means ARI '+nf(aK,2)+' · DBSCAN ARI '+nf(aD,2)+'</span>'+
+      '<span>DBSCAN encontró '+DB.g+' grupo'+(DB.g===1?'':'s')+' y '+ruido+' punto'+(ruido===1?'':'s')+' de ruido (los datos tienen '+gV+' grupos'+(ruidoV?' y '+ruidoV+' puntos sueltos':'')+'). '+mejor+'</span>'+
+      '<span>'+NOTA[st.datos]+'</span>'+
+      '<span class="hint">El ARI (índice de Rand ajustado) compara los grupos encontrados con los verdaderos: 1 es igual, 0 es como repartir al azar. En un problema real no hay grupos verdaderos con qué comparar: aquí los conocemos porque los datos son inventados.</span>';
+  }
+  [sk,se,sm].forEach(s=>s.addEventListener('input',calcular));
+  calcular();
+})();
+</script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="09-lab-3"]');
+  const q=s=>raiz.querySelector(s);
+  const VX='variable 1 (estandarizada)',VY='variable 2 (estandarizada)';
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const sA=q('#c9l3-a'),sR=q('#c9l3-r');
+  let P=[],ev=null;
+  /* 120 puntos con la correlación pedida, estandarizados (media 0, desviación 1) */
+  function generar(rho){
+    const r=rnd(21),A=[];
+    for(let i=0;i<120;i++){const a=gauss(r),b=gauss(r);A.push([a,rho*a+Math.sqrt(1-rho*rho)*b]);}
+    for(const k of [0,1]){const m=A.reduce((s,p)=>s+p[k],0)/A.length,sd=Math.sqrt(A.reduce((s,p)=>s+(p[k]-m)**2,0)/(A.length-1));A.forEach(p=>p[k]=(p[k]-m)/sd);}
+    return A;
+  }
+  /* Covarianza 2×2 y sus vectores propios (fórmula cerrada) */
+  function pca(A){
+    const n=A.length-1;let a=0,b=0,c=0;A.forEach(([x,y])=>{a+=x*x;b+=x*y;c+=y*y;});a/=n;b/=n;c/=n;
+    const tr=a+c,det=a*c-b*b,disc=Math.sqrt(tr*tr/4-det),l1=tr/2+disc,l2=tr/2-disc;
+    let ang=Math.abs(b)<1e-12?(a>=c?0:Math.PI/2):Math.atan2(l1-a,b);
+    ang=((ang%Math.PI)+Math.PI)%Math.PI;
+    return {l1,l2,tot:tr,ang};
+  }
+  const varEje=t=>{const u=[Math.cos(t),Math.sin(t)],n=P.length-1;return P.reduce((s,p)=>s+(p[0]*u[0]+p[1]*u[1])**2,0)/n;};
+  const dib=canvasWidget(q('#c9l3-c'),w=>w<520?.95:.62,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);if(!ev)return;
+    const R=3.4,S=Math.min(w,h)/(2*R),cx=w/2,cy=h/2,X=x=>cx+x*S,Y=y=>cy-y*S;
+    ctx.strokeStyle=tok('--grid');ctx.lineWidth=1;
+    for(let k=-6;k<=6;k++){ctx.beginPath();ctx.moveTo(X(k),0);ctx.lineTo(X(k),h);ctx.stroke();ctx.beginPath();ctx.moveTo(0,Y(k));ctx.lineTo(w,Y(k));ctx.stroke();}
+    ctx.strokeStyle=tok('--muted');ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.moveTo(cx,0);ctx.lineTo(cx,h);ctx.stroke();
+    const L=Math.hypot(w,h)/S;
+    const eje=(t,col,lw,dash)=>{ctx.setLineDash(dash||[]);ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(X(-L*Math.cos(t)),Y(-L*Math.sin(t)));ctx.lineTo(X(L*Math.cos(t)),Y(L*Math.sin(t)));ctx.stroke();ctx.setLineDash([]);};
+    eje(ev.ang,tok('--accent'),1.5,[6,5]);eje(ev.ang+Math.PI/2,tok('--warm'),1.5,[6,5]);
+    const t=+sA.value*Math.PI/180,u=[Math.cos(t),Math.sin(t)],g=tok('--good');
+    /* residuos: del punto a su sombra */
+    ctx.strokeStyle=tok('--muted');ctx.globalAlpha=.45;ctx.lineWidth=1;
+    P.forEach(p=>{const s=p[0]*u[0]+p[1]*u[1];ctx.beginPath();ctx.moveTo(X(p[0]),Y(p[1]));ctx.lineTo(X(s*u[0]),Y(s*u[1]));ctx.stroke();});
+    ctx.globalAlpha=1;eje(t,g,2.5);
+    P.forEach(p=>{ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),3,0,2*Math.PI);ctx.fillStyle=tok('--ink');ctx.globalAlpha=.75;ctx.fill();ctx.globalAlpha=1;});
+    P.forEach(p=>{const s=p[0]*u[0]+p[1]*u[1];ctx.beginPath();ctx.arc(X(s*u[0]),Y(s*u[1]),2.6,0,2*Math.PI);ctx.fillStyle=g;ctx.fill();});
+    ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(VX+' →',w-6,cy-4);
+    ctx.save();ctx.translate(cx+4,6);ctx.rotate(-Math.PI/2);ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText(VY+' →',0,0);ctx.restore();
+  });
+  const grados=t=>Math.round(((t*180/Math.PI)%180+180)%180);
+  function todo(nuevo){
+    if(nuevo){P=generar(+sR.value/100);ev=pca(P);}
+    const t=+sA.value*Math.PI/180,v=varEje(t),pt=100*v/ev.tot,p1=100*ev.l1/ev.tot,p2=100*ev.l2/ev.tot;
+    q('#c9l3-a-o').textContent=sA.value+'°';q('#c9l3-r-o').textContent=nf(+sR.value/100,2);
+    dib();
+    q('#c9l3-barras').innerHTML=[['Tu eje ('+sA.value+'°)',pt,'tu'],['1.ª componente ('+grados(ev.ang)+'°)',p1,''],['2.ª componente',p2,'dos']]
+      .map(([n,x,c])=>'<div class="c9l3-fila"><span>'+n+'</span><div class="c9l3-pista"><i class="'+c+'" style="width:'+x.toFixed(1)+'%"></i></div><b>'+nf(x,1)+' %</b></div>').join('');
+    const dif=Math.abs(pt-p1);
+    let txt=dif<.3?'<span class="ok">Estás sobre la primera componente principal:</span> ningún otro eje conserva tanta dispersión de los puntos. Las sombras verdes quedan lo más separadas posible y las líneas grises (lo que se pierde) son, en conjunto, lo más cortas posible.'
+      :Math.abs(pt-p2)<.3?'Este es el eje que <b>menos</b> dispersión conserva: la segunda componente, perpendicular a la primera. Lo que queda aquí es lo que la primera no explica.'
+      :'Tu eje conserva el '+nf(pt,1)+' % de la varianza total; la primera componente conserva el '+nf(p1,1)+' %. Gira el eje hasta que las sombras verdes queden lo más estiradas posible.';
+    q('#c9l3-out').innerHTML='<span class="big">Varianza conservada en tu eje: '+nf(pt,1)+' %</span><span>'+txt+'</span>'+
+      '<span class="hint">Con correlación '+nf(+sR.value/100,2)+', la primera componente resume el '+nf(p1,1)+' % de la información de las dos variables. Baja la correlación a 0: la nube se vuelve redonda, ningún eje gana y reducir de dos a una dimensión ya no sirve.</span>';
+  }
+  sA.addEventListener('input',()=>todo(false));
+  sR.addEventListener('input',()=>todo(true));
+  q('#c9l3-pc1').addEventListener('click',()=>{sA.value=grados(ev.ang);todo(false);});
+  q('#c9l3-pc2').addEventListener('click',()=>{sA.value=grados(ev.ang+Math.PI/2);todo(false);});
+  todo(true);
+})();
+</script>
+<script>
+(function(){
+  const {$}=window.Lab;
+  const raiz=document.querySelector('[id="09-lab-4"]');
+  /* ---- Componente Pyodide común del curso «Aprendizaje automático» (copiar tal cual) ----
+     Pyodide 314.0.7 (Python 3.14.2; numpy 2.4.6, pandas 3.0.2, scikit-learn 1.8.0).
+     Se descarga solo al pulsar el botón y se comparte entre todos los labs de la página (window.aePy).
+     PY.generador(py) escribe generar_clientes.py (el del capítulo 01) y crea datos/clientes.csv con semilla 42. */
+  const PY=window.aePy||(window.aePy=(function(){
+    const VER='314.0.7',BASE='https://cdn.jsdelivr.net/pyodide/v'+VER+'/full/';
+    let base=null;const listos={};
+    const GEN="\"\"\"Clientes sintéticos para el curso «Aprendizaje automático»: quién cancela el servicio.\n\nFabrica una muestra de clientes de una empresa ficticia de servicios por suscripción,\ntal como estaban el 1 de julio de 2026 (la fecha de corte), y si cancelaron o no en los\n90 días siguientes (columna cancela). Todo es inventado.\n\n    clientes.csv   un cliente por fila, foto del 1 de julio de 2026\n    historial.csv  fotos mensuales de julio de 2025 a junio de 2026: el mismo cliente\n                   aparece en varios meses (sirve para partir por cliente y en el tiempo)\n\nUso: python generar_clientes.py [--n 20000] [--semilla 42] [--carpeta datos]\n\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport numpy as np\nimport pandas as pd\n\nCORTE = pd.Timestamp(\"2026-07-01\")\nREGIONES = [\"Norte\", \"Centro\", \"Sur\", \"Oriente\"]\nPLANES = [\"Básico\", \"Estándar\", \"Plus\", \"Premium\"]\nPRECIO = {\"Básico\": 20.0, \"Estándar\": 30.0, \"Plus\": 45.0, \"Premium\": 60.0}\nMBPS = {\"Básico\": 100, \"Estándar\": 300, \"Plus\": 600, \"Premium\": 1000}\nMETODOS = [\"debito\", \"tarjeta\", \"efectivo\", \"transferencia\", \"billetera\"]\n\n\ndef perfil(rng, n):\n    \"\"\"Lo que no cambia de un mes a otro: quién es el cliente y qué contrató.\"\"\"\n    negocio = rng.random(n) < 0.18\n    p_plan = np.where(negocio[:, None], [0.10, 0.30, 0.35, 0.25], [0.32, 0.41, 0.18, 0.09])\n    plan = np.array(PLANES)[(rng.random(n)[:, None] > p_plan.cumsum(1)).sum(1)]\n    return pd.DataFrame({\n        \"tipo_cliente\": np.where(negocio, \"negocio\", \"hogar\"),\n        \"region\": rng.choice(REGIONES, n, p=[0.30, 0.32, 0.20, 0.18]),\n        \"plan\": plan,\n        \"metodo_pago\": rng.choice(METODOS, n, p=[0.30, 0.25, 0.25, 0.12, 0.08]),\n        \"personas_hogar\": np.where(negocio, 0, rng.choice([1, 2, 3, 4, 5, 6], n,\n                                                          p=[0.18, 0.27, 0.23, 0.19, 0.09, 0.04])),\n        \"dia_facturacion\": rng.choice([1, 10, 20], n),\n        \"riesgo\": rng.normal(0, 1, n),        # la situación de cada cliente: nadie la ve\n        \"propension_reclamo\": rng.gamma(2.0, 0.5, n),\n        \"u_contrato\": rng.random(n), \"u_extra\": rng.random(n),\n        \"extra_base\": rng.poisson(0.5 + 0.3 * negocio),\n        \"f_consumo\": rng.lognormal(0, 0.22, n), \"f_velocidad\": rng.normal(0, 1, n),\n    })\n\n\ndef foto(rng, p, antiguedad):\n    \"\"\"Lo que se mide en una fecha: uso, calidad, reclamos y el riesgo de cancelar.\"\"\"\n    n = len(p)\n    negocio = (p.tipo_cliente == \"negocio\").to_numpy()\n    precio = p.plan.map(PRECIO).to_numpy()\n    mbps = p.plan.map(MBPS).to_numpy()\n    anual = p.u_contrato.to_numpy() < np.clip(0.25 + 0.25 * negocio + 0.004 * antiguedad, 0, 0.8)\n    extra = np.minimum(p.extra_base.to_numpy() + (p.u_extra.to_numpy() < 0.012 * antiguedad), 3)\n    rampa = 1 - np.exp(-antiguedad / 4)          # los primeros meses se usa menos\n    consumo = ((60 + 70 * p.personas_hogar.to_numpy() + 0.12 * mbps + 150 * negocio\n                + 0.10 * mbps * negocio) * rampa * p.f_consumo.to_numpy() * rng.lognormal(0, 0.1, n)).round(1)\n    sur = (p.region == \"Sur\").to_numpy()\n    vel = np.clip(91 - 6 * sur + 6.5 * p.f_velocidad.to_numpy() + rng.normal(0, 2.5, n), 45, 100).round(1)\n    caidas = rng.poisson(0.5 + 0.03 * (100 - vel))\n    reclamos = rng.poisson(p.propension_reclamo.to_numpy() * (0.25 + 0.3 * caidas\n                                                              + 0.6 * (vel < 80)))\n    llamadas = rng.poisson(0.4 + 0.9 * reclamos)\n    tarde = rng.poisson(np.exp(-0.9 + 0.6 * p.riesgo.to_numpy()).clip(0, 8))\n    app = rng.poisson(np.exp(1.4 - 0.25 * p.riesgo.to_numpy() + 0.3 * negocio))\n    promo = (antiguedad <= 13) & (rng.random(n) < 0.45) | (rng.random(n) < 0.05)\n    fin_promo = promo & (rng.random(n) < 0.35)\n    mensual = ~anual\n    basico_lleno = (precio == 20) & (consumo > 320)   # el plan ya le queda chico\n    aniversario = (antiguedad >= 11) & (antiguedad <= 13)  # se cumple el primer año\n    logit = (-2.25 + 1.0 * mensual - 0.75 * np.log1p(antiguedad / 6) + 0.7 * aniversario\n             + 0.40 * np.minimum(reclamos, 3) + 0.20 * caidas + 1.0 * (vel < 80)\n             + 0.4 * fin_promo + 1.1 * (fin_promo & mensual)\n             + 1.3 * (sur & (precio <= 30)) + 1.0 * basico_lleno\n             - 0.32 * extra - 0.10 * app\n             + 0.012 * (precio - 30) + 0.12 * tarde - 0.35 * negocio\n             + 0.35 * (p.metodo_pago == \"efectivo\").to_numpy()\n             - 0.30 * (p.metodo_pago == \"debito\").to_numpy()\n             + 0.45 * p.riesgo.to_numpy())\n    return pd.DataFrame({\n        \"antiguedad_meses\": antiguedad, \"contrato\": np.where(anual, \"anual\", \"mensual\"),\n        \"precio_plan\": precio, \"velocidad_mbps\": mbps, \"servicios_extra\": extra,\n        \"consumo_gb\": consumo, \"velocidad_pct\": vel, \"caidas_90d\": caidas,\n        \"reclamos_90d\": reclamos, \"llamadas_soporte_90d\": llamadas,\n        \"facturas_tarde_12m\": tarde, \"uso_app_30d\": app, \"fin_promo_60d\": fin_promo.astype(int),\n    }), logit\n\n\ndef clientes(n, semilla):\n    rng = np.random.default_rng(semilla)\n    p = perfil(rng, n)\n    antiguedad = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)\n    f, logit = foto(rng, p, antiguedad)\n    cancela = (rng.random(n) < 1 / (1 + np.exp(-(logit + rng.normal(0, 0.6, n))))).astype(int)\n    # Encuesta de satisfacción (0 a 10): la contesta solo una parte, y menos los descontentos\n    nota = np.clip(np.round(8.2 - 0.9 * f.reclamos_90d - 0.5 * p.riesgo - 1.2 * cancela\n                            + rng.normal(0, 1.3, n)), 0, 10)\n    contesta = rng.random(n) < np.clip(0.45 - 0.08 * f.reclamos_90d, 0.1, 0.6)\n    # FUGAS DE DATOS: las dos se registran DESPUÉS de la fecha de corte\n    gestion = np.where(cancela == 1, rng.random(n) < 0.55, rng.random(n) < 0.03).astype(int)\n    sin_pago = np.where(cancela == 1, rng.integers(12, 90, n),\n                        np.clip(rng.integers(0, 31, n) + 7 * f.facturas_tarde_12m, 0, 80))\n    alta = CORTE - pd.to_timedelta(antiguedad * 30.4 + rng.integers(0, 28, n), unit=\"D\")\n    df = pd.concat([p.iloc[:, :6], f], axis=1)   # sin las columnas ocultas\n    df.insert(0, \"cliente_id\", np.arange(100001, 100001 + n))\n    df.insert(1, \"fecha_alta\", alta.strftime(\"%Y-%m-%d\"))\n    df[\"satisfaccion\"] = np.where(contesta, nota, np.nan)\n    df[\"gestion_retencion\"] = gestion\n    df[\"dias_sin_pago\"] = sin_pago\n    df[\"cancela\"] = cancela\n    orden = [\"cliente_id\", \"fecha_alta\", \"antiguedad_meses\", \"tipo_cliente\", \"region\", \"plan\",\n             \"precio_plan\", \"velocidad_mbps\", \"contrato\", \"metodo_pago\", \"dia_facturacion\",\n             \"personas_hogar\", \"servicios_extra\", \"consumo_gb\", \"velocidad_pct\", \"caidas_90d\",\n             \"reclamos_90d\", \"llamadas_soporte_90d\", \"facturas_tarde_12m\", \"uso_app_30d\",\n             \"fin_promo_60d\", \"satisfaccion\", \"gestion_retencion\", \"dias_sin_pago\", \"cancela\"]\n    return df[orden]\n\n\ndef historial(n, semilla):\n    \"\"\"Fotos mensuales de una población que se mueve: entran clientes nuevos y otros se van.\"\"\"\n    rng = np.random.default_rng(semilla + 1)\n    meses = pd.date_range(\"2025-07-01\", \"2026-09-01\", freq=\"MS\")\n    p = perfil(rng, n)\n    antig = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)\n    activo = np.ones(n, bool)\n    sale = np.full(n, -1)\n    filas = []\n    for i, mes in enumerate(meses):\n        nuevos = rng.binomial(n, 0.025) if i else 0       # altas del mes\n        if nuevos:\n            p = pd.concat([p, perfil(rng, nuevos)], ignore_index=True)\n            antig = np.concatenate([antig, np.ones(nuevos, int)])\n            activo = np.concatenate([activo, np.ones(nuevos, bool)])\n            sale = np.concatenate([sale, np.full(nuevos, -1)])\n        f, logit = foto(rng, p, antig)\n        idx = np.flatnonzero(activo)\n        if mes <= pd.Timestamp(\"2026-06-01\"):\n            filas.append(f.iloc[idx].assign(cliente_id=300001 + idx, mes_corte=mes.strftime(\"%Y-%m\"),\n                                            _i=i, _pos=idx).join(p.iloc[idx][[\"tipo_cliente\", \"region\",\n                                                                               \"plan\", \"metodo_pago\"]]))\n        # probabilidad de irse este mes (aprox. un tercio del riesgo a 90 días)\n        prob = 1 / (1 + np.exp(-(logit[idx] - 1.25 + rng.normal(0, 0.6, len(idx)))))\n        se_va = idx[rng.random(len(idx)) < prob]\n        activo[se_va] = False\n        sale[se_va] = i\n        antig = antig + 1\n    h = pd.concat(filas, ignore_index=True)\n    s = sale[h._pos.to_numpy()]\n    h[\"cancela\"] = ((s >= h._i) & (s <= h._i + 2)).astype(int)\n    orden = [\"cliente_id\", \"mes_corte\", \"antiguedad_meses\", \"tipo_cliente\", \"region\", \"plan\",\n             \"precio_plan\", \"contrato\", \"metodo_pago\", \"servicios_extra\", \"consumo_gb\",\n             \"velocidad_pct\", \"caidas_90d\", \"reclamos_90d\", \"llamadas_soporte_90d\",\n             \"facturas_tarde_12m\", \"uso_app_30d\", \"fin_promo_60d\", \"cancela\"]\n    return h[orden].sort_values([\"mes_corte\", \"cliente_id\"], ignore_index=True)\n\n\nif __name__ == \"__main__\":\n    a = argparse.ArgumentParser(description=__doc__.splitlines()[0])\n    a.add_argument(\"--n\", type=int, default=20000, help=\"clientes de la muestra (20000)\")\n    a.add_argument(\"--semilla\", type=int, default=42)\n    a.add_argument(\"--carpeta\", default=\"datos\")\n    a = a.parse_args()\n    carpeta = Path(a.carpeta)\n    carpeta.mkdir(parents=True, exist_ok=True)\n    c = clientes(a.n, a.semilla)\n    c.to_csv(carpeta / \"clientes.csv\", index=False)\n    print(f\"{carpeta / 'clientes.csv'}: {len(c):,} clientes, cancela el {c.cancela.mean():.1%}\")\n    h = historial(a.n // 4, a.semilla)\n    h.to_csv(carpeta / \"historial.csv\", index=False)\n    print(f\"{carpeta / 'historial.csv'}: {len(h):,} filas de {h.cliente_id.nunique():,} clientes, \"\n          f\"cancela el {h.cancela.mean():.1%}\")\n";
+    const AYUDA="import ast, io, json, sys\n_ae_espacios = {}\ndef _ae_limpio(v):\n    if v is None: return None\n    if hasattr(v, \"item\") and not isinstance(v, (str, bytes)):\n        try: v = v.item()\n        except Exception: v = str(v)\n    if isinstance(v, float) and v != v: return None\n    if isinstance(v, (bool, int, float, str)): return v\n    return str(v)\ndef _ae_tabla(x, n=12):\n    mod = type(x).__module__.split(\".\")[0]\n    if mod == \"pandas\":\n        import pandas as pd\n        if isinstance(x, pd.Series): x = x.to_frame()\n        if not isinstance(x, pd.DataFrame): return {\"valor\": repr(x)}\n        h = x.head(n); filas = h.astype(object).values.tolist()\n        indice = [str(i) for i in h.index]\n        cols = [str(c) for c in h.columns]; tipos = [str(t) for t in h.dtypes]\n    elif x is None: return None\n    else: return {\"valor\": repr(x)}\n    return {\"columnas\": cols, \"tipos\": tipos, \"indice\": indice, \"forma\": list(x.shape), \"motor\": mod,\n            \"filas\": [[_ae_limpio(v) for v in f] for f in filas]}\ndef _ae_correr(lab, codigo):\n    import warnings\n    warnings.filterwarnings(\"ignore\")\n    ns = _ae_espacios.setdefault(lab, {\"__name__\": \"__main__\"})\n    buf, viejo = io.StringIO(), sys.stdout\n    sys.stdout = buf\n    try:\n        arbol = ast.parse(codigo); ultimo = None\n        if arbol.body and isinstance(arbol.body[-1], ast.Expr):\n            exp = ast.Expression(arbol.body.pop().value)\n            exec(compile(arbol, \"<lab>\", \"exec\"), ns)\n            ultimo = eval(compile(exp, \"<lab>\", \"eval\"), ns)\n        else:\n            exec(compile(arbol, \"<lab>\", \"exec\"), ns)\n        return json.dumps({\"salida\": buf.getvalue(), \"tabla\": _ae_tabla(ultimo)})\n    except BaseException as e:\n        return json.dumps({\"salida\": buf.getvalue(), \"error\": type(e).__name__ + \": \" + str(e)})\n    finally:\n        sys.stdout = viejo\ndef _ae_generador():\n    import os, sys\n    if os.getcwd() not in sys.path: sys.path.insert(0, os.getcwd())\n    import generar_clientes as g\n    os.makedirs(\"datos\", exist_ok=True)\n    if not os.path.exists(\"datos/clientes.csv\"):\n        g.clientes(20000, 42).to_csv(\"datos/clientes.csv\", index=False)\n";
+    function script(){return new Promise((ok,mal)=>{
+      if(window.loadPyodide)return ok();
+      const s=document.createElement('script');s.src=BASE+'pyodide.js';
+      s.onload=ok;s.onerror=()=>mal(new Error('No se pudo descargar Pyodide'));document.head.appendChild(s);});}
+    return {VER,
+      /* paquetes: ['pandas','scikit-learn']; aviso(texto) recibe el estado */
+      cargar(paquetes,aviso){
+        if(!base){aviso&&aviso('Descargando Python (Pyodide '+VER+')…');
+          base=script().then(()=>loadPyodide({indexURL:BASE})).then(py=>{py.runPython(AYUDA);return py;});
+          base.catch(()=>{base=null;});}
+        return base.then(async py=>{
+          const faltan=paquetes.filter(p=>!listos[p]);
+          if(faltan.length){aviso&&aviso('Instalando '+faltan.join(' y ')+'…');
+            await py.loadPackage(faltan);faltan.forEach(p=>listos[p]=1);}
+          return py;});
+      },
+      /* escribe el generador del curso y crea datos/clientes.csv (20.000 clientes, semilla 42) */
+      generador(py){py.FS.writeFile('generar_clientes.py',GEN);py.runPython('_ae_generador()');},
+      /* archivos: {'nombre.py': 'texto…'}; se escriben en la carpeta de trabajo de Python */
+      archivos(py,archivos){for(const k in archivos)py.FS.writeFile(k,archivos[k]);},
+      async correr(py,lab,codigo){
+        py.globals.set('_ae_codigo',codigo);
+        return JSON.parse(py.runPython('_ae_correr('+JSON.stringify(lab)+', _ae_codigo)'));}
+    };
+  })());
+  /* Dibuja la tabla que devuelve PY.correr (r.tabla) dentro de un elemento */
+  function pintarTabla(el,t){
+    const nfx=(v,dec)=>{if(typeof v!=='number')return v===null?'<i>nulo</i>':String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      let s=Math.abs(v).toFixed(Number.isInteger(v)&&!dec?0:3).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').split('.');
+      s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (v<0?'−':'')+s.join(',');};
+    if(!t){el.innerHTML='';return;}
+    if(t.valor!==undefined){el.innerHTML='<pre class="ae-valor">'+nfx(t.valor)+'</pre>';return;}
+    const idx=t.indice&&!t.indice.every((v,i)=>v===String(i));
+    let h='<table class="tbl"><thead><tr>'+(idx?'<th></th>':'')+t.columnas.map((c,i)=>'<th>'+nfx(c)+'<br><small>'+t.tipos[i]+'</small></th>').join('')+'</tr></thead><tbody>';
+    t.filas.forEach((f,j)=>{h+='<tr>'+(idx?'<th>'+nfx(t.indice[j])+'</th>':'')+f.map((v,i)=>'<td'+(typeof v==='number'?' style="text-align:right"':'')+'>'+(/(^|_)id$/i.test(String(t.columnas[i]))&&typeof v==='number'?String(v):nfx(v,/float/i.test(t.tipos[i])))+'</td>').join('')+'</tr>';});
+    const n=t.forma[0];
+    el.innerHTML=h+'</tbody></table><p class="hint">'+(n>t.filas.length?'Primeras '+t.filas.length+' de ':'')+nfx(n)+' filas × '+t.forma[1]+' columnas</p>';
+  }
+  /* ---- fin del componente ---- */
+  const PREP="\"\"\"Preparación común del laboratorio: las variables de comportamiento, estandarizadas. Sin la etiqueta.\"\"\"\nimport pandas as pd\nfrom sklearn import set_config\nfrom sklearn.preprocessing import StandardScaler\n\nset_config(working_memory=128)   # el navegador tiene poca memoria\ndf = pd.read_csv(\"datos/clientes.csv\")\nVARS = [\"antiguedad_meses\", \"precio_plan\", \"servicios_extra\", \"consumo_gb\", \"velocidad_pct\",\n        \"caidas_90d\", \"reclamos_90d\", \"llamadas_soporte_90d\", \"facturas_tarde_12m\", \"uso_app_30d\"]\nX = StandardScaler().fit_transform(df[VARS])   # media 0 y desviación 1 en cada columna\n", PREPNOMBRE="preparar_09.py";
+  const EJ=[{"t": "Cuatro grupos de clientes con k-means", "c": "from preparar_09 import df, VARS, X\nimport pandas as pd\nfrom sklearn.cluster import KMeans\n\nkm = KMeans(n_clusters=4, n_init=10, random_state=42).fit(X)\ndf[\"grupo\"] = km.labels_\n# La etiqueta no entró al algoritmo: la miramos recién ahora, para describir los grupos\nperfil = df.groupby(\"grupo\")[VARS + [\"cancela\"]].mean().round(2)\nperfil.insert(0, \"clientes\", df.grupo.value_counts().sort_index())\nperfil.T", "x": ["Cada columna es un grupo y cada fila, el promedio de una variable. Para leerlos, busca lo que distingue a cada uno: uno con muchos reclamos, llamadas y caídas; uno de clientes antiguos con más servicios; uno de planes caros y mucho consumo; y el más grande, de clientes nuevos con planes baratos.", "La última fila usa la etiqueta que k-means nunca vio: el grupo de los problemas técnicos cancela el 27 % y el de los antiguos, el 5 %. Un buen grupo se nota en algo que no se usó para formarlo."]}, {"t": "Elegir k: el codo y la silueta", "c": "from preparar_09 import X\nimport pandas as pd\nfrom sklearn.cluster import KMeans\nfrom sklearn.metrics import silhouette_score\n\nfilas = []\nfor k in range(2, 9):\n    km = KMeans(n_clusters=k, n_init=5, random_state=42).fit(X)\n    sil = silhouette_score(X, km.labels_, sample_size=3000, random_state=42)\n    filas.append({\"k\": k, \"inercia\": round(km.inertia_), \"silueta\": round(sil, 3)})\npd.DataFrame(filas).set_index(\"k\")", "x": ["La inercia baja siempre al agregar grupos; el «codo» es donde deja de bajar mucho. Aquí la curva es suave y no hay un codo claro.", "La silueta va de −1 a 1 y aquí ronda 0,12: los clientes no vienen en manchas separadas, sino en una nube continua. k-means igual los parte, y la elección de k la decide el uso (cuántas campañas puede manejar Retención), no la estadística."]}, {"t": "PCA: cuánta varianza explica cada componente", "c": "from preparar_09 import VARS, X\nimport pandas as pd\nfrom sklearn.decomposition import PCA\n\npca = PCA().fit(X)\nprint(\"Varianza explicada:\", (100 * pca.explained_variance_ratio_).round(1))\nprint(\"Acumulada:         \", (100 * pca.explained_variance_ratio_.cumsum()).round(1))\npd.DataFrame(pca.components_[:3].T, index=VARS, columns=[\"PC1\", \"PC2\", \"PC3\"]).round(2)", "x": ["La primera componente explica el 19,5 % de la varianza y las dos primeras, el 34,6 %. Con diez variables poco correlacionadas no hay atajo: hacen falta siete componentes para pasar del 80 %.", "Las cargas dicen qué resume cada componente: PC1 pesa reclamos, llamadas y caídas (los problemas técnicos); PC2, antigüedad, servicios, consumo y precio (el tamaño de la relación con la empresa)."]}, {"t": "Agrupamiento jerárquico en una muestra", "c": "from preparar_09 import df, X\nimport numpy as np\nimport pandas as pd\nfrom sklearn.cluster import AgglomerativeClustering, KMeans\nfrom sklearn.metrics import adjusted_rand_score\n\nrng = np.random.default_rng(42)\ni = rng.choice(len(X), size=2000, replace=False)   # el jerárquico guarda todas las distancias: muestra chica\njer = AgglomerativeClustering(n_clusters=4, linkage=\"ward\").fit(X[i])\nkm = KMeans(n_clusters=4, n_init=10, random_state=42).fit(X)\nprint(\"Coincidencia con k-means (ARI):\", round(adjusted_rand_score(km.labels_[i], jer.labels_), 2))\npd.crosstab(pd.Series(jer.labels_, name=\"jerárquico\"), pd.Series(km.labels_[i], name=\"k-means\"))", "x": ["El método de Ward une, en cada paso, los dos grupos que menos aumentan la varianza interna: es la versión jerárquica de lo que busca k-means.", "La tabla cruza los dos resultados y coinciden poco (ARI 0,16; 1 sería idéntico). En una nube sin manchas claras, cada algoritmo corta por otro lugar: los grupos no son una propiedad de los datos, sino de cómo se los corta."]}, {"t": "DBSCAN en los clientes", "c": "from preparar_09 import X\nimport pandas as pd\nfrom sklearn.cluster import DBSCAN\nfrom sklearn.decomposition import PCA\n\nZ = PCA(n_components=2).fit_transform(X)       # en dos dimensiones, para que la densidad tenga sentido\nfilas = []\nfor eps in [0.1, 0.2, 0.3, 0.5]:\n    et = DBSCAN(eps=eps, min_samples=20).fit(Z).labels_\n    filas.append({\"eps\": eps, \"grupos\": len(set(et)) - (-1 in et), \"ruido\": int((et == -1).sum()),\n                  \"el grupo más grande\": int(pd.Series(et[et >= 0]).value_counts().max())})\npd.DataFrame(filas).set_index(\"eps\")", "x": ["Con eps 0,1 salen 20 grupitos en los bordes y 3.573 clientes como ruido; desde eps 0,2, casi todos caen en un solo grupo gigante, más algún islote. Nunca aparecen varios grupos grandes y separados.", "No es una falla de DBSCAN: es una respuesta. Dice que estos clientes forman una nube continua, lo mismo que la silueta baja. DBSCAN brilla cuando hay grupos densos de forma rara, como en el laboratorio de las lunas."]}, {"t": "Clientes raros con Isolation Forest", "c": "from preparar_09 import df, VARS, X\nimport pandas as pd\nfrom sklearn.ensemble import IsolationForest\n\niso = IsolationForest(contamination=0.01, random_state=42).fit(X)\ndf[\"raro\"] = iso.predict(X) == -1                # −1 = anomalía\nprint(f\"{df.raro.sum()} clientes marcados como raros (1 %)\")\npd.DataFrame({\"raros\": df[df.raro][VARS].median(), \"todos\": df[VARS].median()}).round(1)", "x": ["Isolation Forest arma árboles al azar y mide cuántas preguntas hacen falta para aislar a cada cliente: a los raros se los aísla con muy pocas.", "Los 200 marcados tienen medianas muy distintas del resto: 4 reclamos, 5 llamadas y 3 caídas en 90 días (el cliente típico: 0, 0 y 1) y la velocidad por debajo de 80 %. Antes de llamarlos fraude o error, alguien tiene que mirarlos: anómalo solo quiere decir poco común."]}];
+  const GUARDADO=[{"salida": "", "tabla": {"columnas": ["0", "1", "2", "3"], "tipos": ["float64", "float64", "float64", "float64"], "indice": ["clientes", "antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct", "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m", "uso_app_30d", "cancela"], "forma": [12, 4], "motor": "pandas", "filas": [[8330.0, 2697.0, 4337.0, 4636.0], [15.1, 24.45, 57.17, 23.15], [27.36, 33.19, 30.66, 49.74], [0.5, 0.81, 1.75, 0.77], [216.57, 276.91, 303.69, 387.83], [90.33, 85.49, 89.92, 90.09], [0.65, 1.74, 0.7, 0.67], [0.26, 2.23, 0.32, 0.28], [0.52, 3.01, 0.61, 0.56], [0.48, 0.47, 0.47, 0.48], [4.24, 4.39, 4.48, 4.86], [0.16, 0.27, 0.05, 0.1]]}}, {"salida": "", "tabla": {"columnas": ["inercia", "silueta"], "tipos": ["int64", "float64"], "indice": ["2", "3", "4", "5", "6", "7", "8"], "forma": [7, 2], "motor": "pandas", "filas": [[175339, 0.191], [158152, 0.123], [147085, 0.117], [138415, 0.112], [132110, 0.1], [126082, 0.1], [121578, 0.103]]}}, {"salida": "Varianza explicada: [19.5 15.1 11.7 11.3  9.9  8.5  7.7  7.4  5.8  3.3]\nAcumulada:          [ 19.5  34.6  46.2  57.5  67.4  75.9  83.6  90.9  96.7 100. ]\n", "tabla": {"columnas": ["PC1", "PC2", "PC3"], "tipos": ["float64", "float64", "float64"], "indice": ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct", "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m", "uso_app_30d"], "forma": [10, 3], "motor": "pandas", "filas": [[-0.01, 0.57, -0.27], [-0.01, 0.35, 0.36], [-0.01, 0.49, -0.26], [-0.02, 0.55, 0.11], [-0.3, -0.01, 0.02], [0.44, 0.0, 0.0], [0.62, 0.02, 0.0], [0.58, 0.02, 0.02], [0.0, -0.04, -0.57], [-0.01, 0.11, 0.63]]}}, {"salida": "Coincidencia con k-means (ARI): 0.16\n", "tabla": {"columnas": ["0", "1", "2", "3"], "tipos": ["int64", "int64", "int64", "int64"], "indice": ["0", "1", "2", "3"], "forma": [4, 4], "motor": "pandas", "filas": [[197, 266, 89, 53], [352, 11, 19, 146], [97, 5, 305, 221], [140, 6, 17, 76]]}}, {"salida": "", "tabla": {"columnas": ["grupos", "ruido", "el grupo más grande"], "tipos": ["int64", "int64", "int64"], "indice": ["0.1", "0.2", "0.3", "0.5"], "forma": [4, 3], "motor": "pandas", "filas": [[20, 3573, 15861], [1, 981, 19019], [4, 469, 19485], [1, 141, 19859]]}}, {"salida": "200 clientes marcados como raros (1 %)\n", "tabla": {"columnas": ["raros", "todos"], "tipos": ["float64", "float64"], "indice": ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct", "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m", "uso_app_30d"], "forma": [10, 2], "motor": "pandas", "filas": [[36.5, 20.0], [37.5, 30.0], [1.0, 1.0], [334.2, 265.9], [79.6, 89.8], [3.0, 1.0], [4.0, 0.0], [5.0, 0.0], [1.0, 0.0], [4.0, 4.0]]}}];
+  let py=null;
+  const sel=raiz.querySelector('#c9l4-ej'),cod=raiz.querySelector('#c9l4-cod');
+  raiz.querySelector('#c9l4-prep').textContent=PREP;
+  sel.innerHTML=EJ.map((e,i)=>'<option value="'+i+'">'+e.t+'</option>').join('');
+  function estado(t,c){const e=raiz.querySelector('#c9l4-estado');e.textContent=t;e.className='c9l4-estado'+(c?' '+c:'');}
+  function mostrar(r,guardado){
+    raiz.querySelector('#c9l4-sello').textContent=guardado?'guardado':'en vivo';
+    const s=raiz.querySelector('#c9l4-salida');s.hidden=!(r.salida||r.error);
+    s.textContent=(r.salida||'')+(r.error?(r.salida?'\n':'')+'Error: '+r.error:'');
+    s.style.color=r.error?'var(--warm)':'';
+    pintarTabla(raiz.querySelector('#c9l4-tabla'),r.error?null:r.tabla);
+    const e=EJ[sel.value];
+    raiz.querySelector('#c9l4-out').innerHTML=r.error?'<span class="warn">El código falló: lee el mensaje de error, que dice el tipo de problema y dónde.</span><span>Corrígelo o pulsa «Restaurar el ejemplo».</span>':
+      '<span class="big">'+e.t+'</span>'+e.x.map(p=>'<span>'+p+'</span>').join('')+(guardado?'':'<span>Si cambiaste el código, las cifras de arriba son las tuyas: compáralas con las del texto.</span>');
+  }
+  function cargarEjemplo(){cod.value=EJ[sel.value].c;mostrar(GUARDADO[sel.value],true);}
+  sel.addEventListener('change',cargarEjemplo);
+  raiz.querySelector('#c9l4-rest').addEventListener('click',cargarEjemplo);
+  async function preparar(){
+    const b=raiz.querySelector('#c9l4-cargar');b.disabled=true;
+    try{
+      py=await PY.cargar(['pandas','scikit-learn'],t=>estado(t));
+      estado('Generando los 20.000 clientes con la semilla 42…');
+      await new Promise(r=>setTimeout(r,30));
+      PY.generador(py);PY.archivos(py,{[PREPNOMBRE]:PREP});
+      estado('Listo: Python 3.14 con scikit-learn 1.8 · edita el código y pulsa Ejecutar','ok');
+      raiz.querySelector('#c9l4-run').disabled=false;b.hidden=true;
+    }catch(e){
+      estado('No se pudo cargar Python. Revisa tu conexión y vuelve a intentar; el resultado guardado sigue abajo.','warn');
+      b.disabled=false;
+    }
+  }
+  raiz.querySelector('#c9l4-cargar').addEventListener('click',preparar);
+  async function ejecutar(){
+    const run=raiz.querySelector('#c9l4-run');
+    if(!py||run.disabled)return;
+    run.disabled=true;estado('Entrenando en tu navegador…');
+    await new Promise(r=>setTimeout(r,30));
+    try{const r=await PY.correr(py,'09-lab-4',cod.value);mostrar(r,false);estado('Listo · ejecutado en tu navegador','ok');}
+    catch(e){mostrar({error:String(e)},false);estado('Python se detuvo; recarga la página si no responde','warn');}
+    run.disabled=false;
+  }
+  raiz.querySelector('#c9l4-run').addEventListener('click',ejecutar);
+  cod.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();ejecutar();}});
+  cargarEjemplo();
+})();
+</script>
+</body>
+</html>

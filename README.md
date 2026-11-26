@@ -4,7 +4,7 @@ Cómo aprende una máquina de los datos: regresión, clasificación, validación
 
 **Ver en línea:** https://aaramirez.github.io/aprendizaje-estadistico/
 
-Este repositorio solo tiene el sitio generado. El curso está en preparación: la tabla de contenido ya está publicada para revisión.
+Este repositorio solo tiene el sitio generado. Curso completo: 12 capítulos con laboratorios interactivos (algunos entrenan con scikit-learn en el navegador), diagramas y prácticas.
 
 | # | Capítulo |
 |---|---|

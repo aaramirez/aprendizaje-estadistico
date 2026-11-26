@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Qué es aprender · Aprendizaje automático · Aprendizaje automático</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, con scikit-learn corriendo en la página.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="que-es-aprender">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>automático</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+<header class="page-head"><span class="num">CAPÍTULO 01 DE 12</span><h1>Qué es aprender de los datos</h1><p class="lede">Aprender, para una máquina, es encontrar en ejemplos del pasado una regla que sirva para casos que todavía no vio. Este capítulo distingue los tipos de aprendizaje y de problema, muestra la diferencia entre memorizar y generalizar, recorre el flujo de un proyecto y presenta el problema que acompaña todo el curso: los clientes que cancelan.</p></header>
+<section><h2>Programar reglas frente a aprender de ejemplos</h2><div class="prose"><p>Ximena Robles trabaja como analista de datos en el área de Retención de una empresa que vende un servicio por suscripción a hogares y pequeños negocios: instala, mantiene y factura cada mes a unos 150.000 clientes. Cada mes, unos cuantos de esos clientes llaman para darse de baja. Retención tiene un equipo de doce agentes, que supervisa Marisol Cárdenas, que llama a clientes con riesgo de irse y les ofrece un descuento. La pregunta de cada mes es a quién llamar.</p><p>Hoy la respuesta es una regla. Fernando Aguilar, el gerente de Retención, la escribió hace dos años: «llamar a los clientes con dos o más reclamos en los últimos 90 días». Tiene sentido: quien reclama está molesto. Pero Fernando sospecha que se le escapan muchos, y Ximena tiene a mano algo que la regla no usa: los datos de miles de clientes del pasado, con lo que les pasó después. Unos cancelaron y otros no.</p></div><div class="analogia"><b>Imagínalo así</b><p>Piensa en cómo aprende un niño a reconocer un perro. Nadie le da una definición («cuadrúpedo, con pelo, que ladra»): con esa regla confundiría a un gato y no reconocería a un perro sin pelo. Le muestran perros, muchos y distintos, y le dicen «perro» cada vez. Al poco tiempo reconoce perros que nunca vio. No memorizó los perros de su barrio: encontró lo que tienen en común.</p></div><div class="prose"><p>Esa es la diferencia entre dos formas de resolver un problema con una computadora:</p><ul><li><b>Programar reglas.</b> Una persona piensa la regla y la escribe; la computadora la aplica. Funciona cuando la regla se conoce y es estable, como calcular una factura.</li><li><b>Aprender de ejemplos.</b> Se le dan a la computadora muchos casos del pasado junto con su respuesta, y un algoritmo busca por sí mismo la regla que mejor los explica. A esto se le llama <b>aprendizaje automático</b> (<i>machine learning</i>, ML): construir programas que mejoran su desempeño en una tarea a partir de la experiencia, es decir, de los datos.</li></ul><p>El resultado de aprender es un <b>modelo</b> (<i>model</i>): la regla encontrada, guardada como un conjunto de números. Los datos con que se describe cada caso se llaman <b>variables</b> (<i>features</i>, también «características» o «atributos»): para un cliente, su contrato, su antigüedad, sus reclamos. La respuesta conocida de cada caso del pasado es la <b>etiqueta</b> (<i>label</i>): si canceló o no. El proceso de buscar la regla se llama <b>entrenamiento</b> (<i>training</i>), y usar el modelo con un caso nuevo para obtener su respuesta probable, <b>predicción</b> (<i>prediction</i>).</p></div><figure class="fig fig-esquema" id="01-diagrama-1"><div class="lienzo"><svg viewBox="0 0 900 400" style="min-width:720px" role="img" aria-label="Arriba, programar reglas: una persona escribe la regla, el programa la aplica a los datos y salen respuestas. Abajo, aprender de ejemplos: datos y respuestas del pasado entran al algoritmo, que produce un modelo; el modelo recibe un cliente nuevo y devuelve una probabilidad">
+<defs>
+<marker id="c1d1-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker>
+</defs>
+<text x="16" y="24" class="t t-xs t-b t-m">1 · PROGRAMAR REGLAS (CÓMO SE HACE HOY EN RETENCIÓN)</text>
+<rect x="16" y="36" width="190" height="78" rx="10" class="caja" style="stroke:var(--warm);stroke-width:1.6"/>
+<text x="28" y="56" class="t t-xs t-b k-warm">LA REGLA (LA ESCRIBE FERNANDO)</text>
+<text x="28" y="78" class="t t-s">«Si tiene 2 o más reclamos</text>
+<text x="28" y="94" class="t t-s">en 90 días, llamarlo»</text>
+<rect x="16" y="124" width="190" height="44" rx="10" class="d-sis"/>
+<text x="28" y="144" class="t t-xs t-b k-sis">DATOS DE CADA CLIENTE</text>
+<text x="28" y="160" class="t t-s t-mono">reclamos_90d = 3</text>
+<path d="M206 75H262M206 146H240V100H262" class="ln" marker-end="url(#c1d1-m)"/>
+<rect x="266" y="62" width="170" height="80" rx="10" class="caja"/>
+<text x="280" y="84" class="t t-xs t-b t-m">PROGRAMA</text>
+<text x="280" y="106" class="t t-s">Aplica la regla tal</text>
+<text x="280" y="122" class="t t-s">como se escribió</text>
+<path d="M436 102H492" class="ln" marker-end="url(#c1d1-m)"/>
+<rect x="496" y="62" width="170" height="80" rx="10" class="caja"/>
+<text x="510" y="84" class="t t-xs t-b t-m">RESPUESTA</text>
+<text x="510" y="106" class="t t-b">Llamar</text>
+<text x="510" y="124" class="t t-s t-m">sí o no, sin matices</text>
+<text x="690" y="84" class="t t-s t-m">Si el mundo cambia,</text>
+<text x="690" y="100" class="t t-s t-m">alguien tiene que</text>
+<text x="690" y="116" class="t t-s t-m">reescribir la regla.</text>
+<path d="M16 192H884" class="ln ln-d"/>
+<text x="16" y="220" class="t t-xs t-b k-red">2 · APRENDER DE EJEMPLOS (APRENDIZAJE AUTOMÁTICO)</text>
+<rect x="16" y="232" width="190" height="60" rx="10" class="d-sis"/>
+<text x="28" y="252" class="t t-xs t-b k-sis">VARIABLES (EL PASADO)</text>
+<text x="28" y="270" class="t t-s">20.000 clientes el 1 de julio:</text>
+<text x="28" y="284" class="t t-s">contrato, reclamos…</text>
+<rect x="16" y="302" width="190" height="60" rx="10" class="d-sis"/>
+<text x="28" y="322" class="t t-xs t-b k-sis">ETIQUETAS (LO QUE PASÓ)</text>
+<text x="28" y="340" class="t t-s">¿Canceló en los 90 días</text>
+<text x="28" y="354" class="t t-s">siguientes? 1 o 0</text>
+<path d="M206 262H240V296H262M206 332H240V296" class="ln" marker-end="url(#c1d1-m)"/>
+<rect x="266" y="256" width="170" height="80" rx="10" class="c-red"/>
+<text x="280" y="278" class="t t-xs t-b k-red">ENTRENAR</text>
+<text x="280" y="300" class="t t-s">El algoritmo busca la</text>
+<text x="280" y="316" class="t t-s">regla que mejor separa</text>
+<path d="M436 296H492" class="ln" marker-end="url(#c1d1-m)"/>
+<rect x="496" y="256" width="170" height="80" rx="10" class="c-red" style="stroke-width:2"/>
+<text x="510" y="278" class="t t-xs t-b k-red">MODELO</text>
+<text x="510" y="300" class="t t-s">La regla aprendida:</text>
+<text x="510" y="316" class="t t-s">pesos para cada variable</text>
+<rect x="700" y="232" width="184" height="44" rx="10" class="d-sis"/>
+<text x="712" y="252" class="t t-xs t-b k-sis">CLIENTE NUEVO</text>
+<text x="712" y="268" class="t t-s">la foto de hoy</text>
+<path d="M792 276V300H670" class="ln" marker-end="url(#c1d1-m)"/>
+<path d="M666 316H700V330H760" class="ln" marker-end="url(#c1d1-m)"/>
+<rect x="764" y="306" width="120" height="56" rx="10" class="caja" style="stroke:var(--c-red)"/>
+<text x="776" y="326" class="t t-xs t-b k-red">PREDICCIÓN</text>
+<text x="776" y="348" class="t t-b">p = 0,31</text>
+<text x="266" y="386" class="t t-s t-m">Si el mundo cambia, se vuelve a entrenar con datos nuevos: nadie reescribe la regla a mano.</text>
+</svg></div><figcaption><b>Programar reglas frente a aprender de ejemplos.</b> Arriba, lo que hace hoy Retención: Fernando escribe la regla, el programa la aplica a los datos de cada cliente y sale un «llamar» o «no llamar». Abajo, el aprendizaje automático: entran las variables de 20.000 clientes del pasado y sus etiquetas (si cancelaron), el entrenamiento produce un modelo, y el modelo recibe la foto de un cliente nuevo y devuelve una probabilidad. La diferencia está en quién escribe la regla: arriba, una persona; abajo, el algoritmo, a partir de los ejemplos.</figcaption></figure><div class="prose"><p>El aprendizaje no reemplaza al conocimiento del negocio. La regla de Fernando contiene una intuición valiosa, y un buen modelo la va a usar: los reclamos serán una de sus variables. Lo que cambia es que el modelo puede combinar veinte señales a la vez, con el peso justo para cada una, y volver a calcular esos pesos cuando el mundo cambie.</p></div></section>
+<section><h2>Supervisado, no supervisado y por refuerzo</h2><div class="prose"><p>Según qué información tenga el algoritmo para aprender, se distinguen tres grandes familias.</p></div><div class="analogia"><b>Imagínalo así</b><p>Aprender a cocinar con un maestro que prueba cada plato y te dice «le falta sal» es aprendizaje supervisado: hay una respuesta correcta para cada intento. Ordenar la despensa sin que nadie te diga cómo, poniendo juntas las cosas parecidas, es no supervisado: tú descubres los grupos. Aprender a andar en bicicleta es por refuerzo: nadie te dice qué hacer con cada músculo, pero cada caída y cada metro recorrido te dicen si vas bien.</p></div><div class="prose"><div class="tbl"><table><thead><tr><th>Familia</th><th>Qué tiene para aprender</th><th>Qué busca</th><th>Ejemplo en la empresa</th></tr></thead><tbody><tr><td><b>Supervisado</b> (<i>supervised learning</i>)</td><td>Variables y una etiqueta para cada caso</td><td>Predecir la etiqueta de casos nuevos</td><td>¿Este cliente cancelará? ¿Cuántos GB consumirá?</td></tr><tr><td><b>No supervisado</b> (<i>unsupervised learning</i>)</td><td>Solo variables, sin etiqueta</td><td>Estructura: grupos, patrones, casos raros</td><td>Grupos de clientes que usan el servicio de forma parecida</td></tr><tr><td><b>Por refuerzo</b> (<i>reinforcement learning</i>)</td><td>Un agente que actúa y recibe recompensas o castigos</td><td>Una forma de actuar que acumule más recompensa</td><td>Qué oferta hacer en cada llamada para que el cliente se quede más tiempo</td></tr></tbody></table></div><p>Casi todo el curso trata del aprendizaje supervisado, porque es el que resuelve la mayoría de los problemas de una empresa: predecir algo que se va a saber después. El capítulo 09 está dedicado al no supervisado. El aprendizaje por refuerzo tiene su propio curso, <a href="https://aaramirez.github.io/aprendizaje-por-refuerzo/temario.html" target="_blank" rel="noopener">Aprendizaje por refuerzo</a>.</p></div></section>
+<section><h2>Regresión y clasificación</h2><div class="prose"><p>Dentro del aprendizaje supervisado, la forma de la etiqueta decide el tipo de problema:</p><ul><li><b>Regresión</b> (<i>regression</i>): la etiqueta es un número que puede tomar muchos valores. ¿Cuántos GB consumirá este cliente el próximo mes? ¿Cuántos minutos durará esta visita técnica?</li><li><b>Clasificación</b> (<i>classification</i>): la etiqueta es una de pocas categorías, llamadas <b>clases</b> (<i>classes</i>). ¿Cancela o se queda? ¿El correo es una queja, una consulta o un pedido de baja? Con dos clases se habla de clasificación <b>binaria</b> (<i>binary</i>); con más, de <b>multiclase</b> (<i>multiclass</i>).</li></ul><p>Del lado no supervisado, la tarea más común es el <b>agrupamiento</b> (<i>clustering</i>): formar grupos de casos parecidos sin que nadie haya dicho cuáles son los grupos.</p><p>La frontera entre regresión y clasificación es más delgada de lo que parece. Un modelo de clasificación como el de Ximena no responde solo «cancela» o «se queda»: casi siempre calcula primero una <b>probabilidad</b> (<i>probability</i>), un número entre 0 y 1, y después se decide a partir de qué valor se llama al cliente. Ese valor se llama <b>umbral</b> (<i>threshold</i>), y elegirlo bien vale dinero: el capítulo 05 lo calcula con los costos de Retención.</p></div><div class="lab" id="01-lab-2"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Clasifica diez problemas de negocio: ¿regresión, clasificación o agrupamiento?</h3></div><p class="hint">Para cada problema de la empresa, elige su tipo y pulsa «Revisar». Fíjate en la pregunta que decide: ¿la respuesta es un número, una de pocas clases, o no hay respuesta guardada y se buscan grupos?</p><style>
+[id="01-lab-2"] .c1l2-lista{display:grid;gap:8px;margin:0;padding:0;list-style:none;counter-reset:c1l2}
+[id="01-lab-2"] .c1l2-lista li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);display:grid;gap:6px;counter-increment:c1l2}
+[id="01-lab-2"] .c1l2-lista li>p{margin:0;font:500 .92rem/1.4 var(--f-display)}
+[id="01-lab-2"] .c1l2-lista li>p::before{content:counter(c1l2) ". ";font-weight:700;color:var(--muted)}
+[id="01-lab-2"] .btns{display:flex;flex-wrap:wrap;gap:6px}
+[id="01-lab-2"] .btns button{font-size:.8rem}
+[id="01-lab-2"] li.ok{border-color:var(--good);border-left:5px solid var(--good)}
+[id="01-lab-2"] li.mal{border-color:var(--warm);border-left:5px solid var(--warm)}
+[id="01-lab-2"] .c1l2-por{margin:0;font-size:.85rem;color:var(--muted)}
+[id="01-lab-2"] .c1l2-por b{color:var(--ink)}
+</style>
+<ol class="c1l2-lista" id="c1l2-lista"></ol>
+<div class="btns" style="margin-top:8px"><button type="button" class="primary" id="c1l2-rev">Revisar</button>
+  <button type="button" id="c1l2-otra">Empezar de nuevo</button></div>
+<div class="readout texto" id="c1l2-out" aria-live="polite"><span>Elige un tipo para cada problema y pulsa «Revisar».</span></div></div><div class="prose"><p>Elegir el tipo de problema es la primera decisión técnica de un proyecto, y conviene tomarla con quien va a usar el resultado. Fernando no necesita saber cuántos días faltan para que un cliente se vaya; necesita saber a quién llamar este mes. Eso es una clasificación.</p></div></section>
+<section><h2>Generalizar: el objetivo es acertar en datos que el modelo no vio</h2><div class="prose"><p>Un modelo vale por lo que acierta en casos que todavía no ocurrieron. Los clientes de julio ya cancelaron o no; lo que Fernando necesita es saber qué harán los de noviembre. A esa capacidad de acertar fuera de los ejemplos con que se aprendió se le llama <b>generalizar</b> (<i>generalization</i>).</p></div><div class="analogia"><b>Imagínalo así</b><p>Un estudiante consigue las respuestas del examen del año pasado y las memoriza. Si le toman las mismas preguntas, saca un diez. Si le cambian los números, no sabe por dónde empezar. Otro estudiante usa los exámenes viejos para practicar el método. Los dos sacan diez en el examen viejo; solo uno aprobará el nuevo. Un modelo se juzga con el examen nuevo.</p></div><div class="prose"><p>Como no se puede esperar al futuro para evaluar, se lo simula: antes de entrenar, se separa una parte de los datos y se guarda bajo llave. El modelo aprende solo con el resto, el <b>conjunto de entrenamiento</b> (<i>training set</i>), y al final se mide con los casos que nunca vio, el <b>conjunto de prueba</b> (<i>test set</i>). Si acierta allí, hay razones para creer que acertará con los clientes de noviembre.</p><p>Ximena separa así los 20.000 clientes del curso: 15.000 para entrenar y 5.000 para probar, cuidando que la proporción de clientes que cancelan sea la misma en las dos partes. El capítulo 04 agrega un tercer conjunto, el de <b>validación</b> (<i>validation set</i>), para elegir entre modelos sin gastar la prueba, y muestra particiones más finas: por cliente y en el tiempo.</p></div><div class="caso"><b>Un caso real</b><p>Entre 2008 y 2015, Google publicó Flu Trends, un modelo que estimaba los casos de gripe en Estados Unidos a partir de las búsquedas en internet. Los primeros años coincidía muy bien con los datos oficiales. En la temporada 2012-2013 llegó a estimar casi el doble de casos que los reales. Entre otras causas, el modelo había elegido, entre millones de búsquedas, las que coincidían con la gripe en los años de entrenamiento, y algunas solo coincidían por casualidad o por la estación del año. Acertaba en los datos con que se armó y fallaba en los nuevos. Un análisis muy citado de 2014, publicado en la revista <i>Science</i>, lo usó como advertencia: muchos datos no reemplazan la prueba honesta en datos que el modelo no vio.</p></div><div class="prose"><p>La prueba tiene una regla de oro: se usa una sola vez, al final. Si Ximena mira el resultado en la prueba, ajusta el modelo y vuelve a mirar, la prueba deja de ser «datos que el modelo no vio»: ella misma le está pasando información. Es como dejar que el estudiante vea el examen nuevo antes de rendirlo.</p></div></section>
+<section><h2>Sobreajuste y subajuste</h2><div class="prose"><p>Hay dos maneras de no generalizar, y son opuestas.</p><ul><li><b>Subajuste</b> (<i>underfitting</i>): el modelo es demasiado simple para el problema. No capta ni siquiera los patrones que hay en los datos de entrenamiento, así que se equivoca mucho en los dos conjuntos. Es como explicar la cancelación solo con el tipo de cliente.</li><li><b>Sobreajuste</b> (<i>overfitting</i>): el modelo es tan flexible que aprende también el ruido, las casualidades de los datos de entrenamiento. Acierta casi todo en entrenamiento y mucho menos en prueba. Memorizó.</li></ul><p>Lo que separa a uno del otro es la <b>complejidad</b> (<i>complexity</i>) o <b>capacidad</b> (<i>capacity</i>) del modelo: cuántas formas distintas puede tomar la regla que aprende. Una recta tiene poca; una curva que puede doblarse en cada punto, mucha. Con poca capacidad hay subajuste; con demasiada para los datos disponibles, sobreajuste.</p></div><figure class="fig fig-comparacion" id="01-diagrama-2"><div class="lienzo"><svg viewBox="0 0 900 360" style="min-width:720px" role="img" aria-label="Tres modelos sobre los mismos puntos: una recta que no sigue la curva (subajuste), una curva suave que sigue la tendencia (bien ajustado) y una línea que pasa por cada punto (sobreajuste); debajo, el error de cada uno con los datos que vio y con datos nuevos">
+<defs><clipPath id="c1d2-c"><rect x="0" y="0" width="260" height="160"/></clipPath></defs>
+<rect x="16" y="8" width="276" height="340" rx="12" class="caja"/>
+<text x="28" y="30" class="t t-xs t-b k-warm">SUBAJUSTE</text>
+<text x="101" y="30" class="t t-s t-m" style="font-style:italic">underfitting</text>
+<text x="28" y="48" class="t t-s">Una recta: demasiado simple</text>
+<g transform="translate(24 60)">
+<path d="M0 0V160H260" class="ln"/>
+<path d="M0 100 L260 32" class="ln s-red" style="stroke-width:2.4" clip-path="url(#c1d2-c)"/>
+<circle cx="10" cy="122.6" r="4" style="fill:var(--muted)"/>
+<circle cx="30" cy="80.7" r="4" style="fill:var(--muted)"/>
+<circle cx="50" cy="79.5" r="4" style="fill:var(--muted)"/>
+<circle cx="70" cy="52.1" r="4" style="fill:var(--muted)"/>
+<circle cx="90" cy="62.3" r="4" style="fill:var(--muted)"/>
+<circle cx="110" cy="39.0" r="4" style="fill:var(--muted)"/>
+<circle cx="130" cy="50.5" r="4" style="fill:var(--muted)"/>
+<circle cx="150" cy="30.2" r="4" style="fill:var(--muted)"/>
+<circle cx="170" cy="42.9" r="4" style="fill:var(--muted)"/>
+<circle cx="190" cy="28.2" r="4" style="fill:var(--muted)"/>
+<circle cx="215" cy="41.8" r="4" style="fill:var(--muted)"/>
+<circle cx="240" cy="26.8" r="4" style="fill:var(--muted)"/>
+</g>
+<text x="28" y="246" class="t t-xs t-b t-m">ERROR</text>
+<text x="28" y="268" class="t t-s">con lo que vio</text>
+<rect x="132" y="257" width="111" height="14" rx="3" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+<text x="28" y="294" class="t t-s">con datos nuevos</text>
+<rect x="132" y="283" width="118" height="14" rx="3" style="fill:var(--warm-soft);stroke:var(--warm)"/>
+<text x="28" y="330" class="t t-s t-b">Se equivoca igual en los dos</text>
+<rect x="312" y="8" width="276" height="340" rx="12" class="caja"/>
+<text x="324" y="30" class="t t-xs t-b k-red">BIEN AJUSTADO</text>
+<text x="324" y="48" class="t t-s">Sigue la tendencia, no el ruido</text>
+<g transform="translate(320 60)">
+<path d="M0 0V160H260" class="ln"/>
+<path d="M0 130.0 L10 114.6 L20 101.7 L30 90.7 L40 81.3 L50 73.5 L60 66.8 L70 61.1 L80 56.4 L90 52.3 L100 48.9 L110 46.0 L120 43.5 L130 41.5 L140 39.7 L150 38.2 L160 36.9 L170 35.9 L180 35.0 L190 34.2 L200 33.6 L210 33.0 L220 32.6 L230 32.2 L240 31.8 L250 31.6 L260 31.3" class="ln s-red" style="stroke-width:2.4" clip-path="url(#c1d2-c)"/>
+<circle cx="10" cy="122.6" r="4" style="fill:var(--muted)"/>
+<circle cx="30" cy="80.7" r="4" style="fill:var(--muted)"/>
+<circle cx="50" cy="79.5" r="4" style="fill:var(--muted)"/>
+<circle cx="70" cy="52.1" r="4" style="fill:var(--muted)"/>
+<circle cx="90" cy="62.3" r="4" style="fill:var(--muted)"/>
+<circle cx="110" cy="39.0" r="4" style="fill:var(--muted)"/>
+<circle cx="130" cy="50.5" r="4" style="fill:var(--muted)"/>
+<circle cx="150" cy="30.2" r="4" style="fill:var(--muted)"/>
+<circle cx="170" cy="42.9" r="4" style="fill:var(--muted)"/>
+<circle cx="190" cy="28.2" r="4" style="fill:var(--muted)"/>
+<circle cx="215" cy="41.8" r="4" style="fill:var(--muted)"/>
+<circle cx="240" cy="26.8" r="4" style="fill:var(--muted)"/>
+</g>
+<text x="324" y="246" class="t t-xs t-b t-m">ERROR</text>
+<text x="324" y="268" class="t t-s">con lo que vio</text>
+<rect x="428" y="257" width="52" height="14" rx="3" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+<text x="324" y="294" class="t t-s">con datos nuevos</text>
+<rect x="428" y="283" width="63" height="14" rx="3" style="fill:var(--warm-soft);stroke:var(--warm)"/>
+<text x="324" y="330" class="t t-s t-b">Error parecido en los dos</text>
+<rect x="608" y="8" width="276" height="340" rx="12" class="caja"/>
+<text x="620" y="30" class="t t-xs t-b k-warm">SOBREAJUSTE</text>
+<text x="707" y="30" class="t t-s t-m" style="font-style:italic">overfitting</text>
+<text x="620" y="48" class="t t-s">Pasa por cada punto</text>
+<g transform="translate(616 60)">
+<path d="M0 0V160H260" class="ln"/>
+<path d="M0 150 L10 122.6 L30 80.7 L50 79.5 L70 52.1 L90 62.3 L110 39.0 L130 50.5 L150 30.2 L170 42.9 L190 28.2 L215 41.8 L240 26.8 L260 5" class="ln s-red" style="stroke-width:2.4" clip-path="url(#c1d2-c)"/>
+<circle cx="10" cy="122.6" r="4" style="fill:var(--muted)"/>
+<circle cx="30" cy="80.7" r="4" style="fill:var(--muted)"/>
+<circle cx="50" cy="79.5" r="4" style="fill:var(--muted)"/>
+<circle cx="70" cy="52.1" r="4" style="fill:var(--muted)"/>
+<circle cx="90" cy="62.3" r="4" style="fill:var(--muted)"/>
+<circle cx="110" cy="39.0" r="4" style="fill:var(--muted)"/>
+<circle cx="130" cy="50.5" r="4" style="fill:var(--muted)"/>
+<circle cx="150" cy="30.2" r="4" style="fill:var(--muted)"/>
+<circle cx="170" cy="42.9" r="4" style="fill:var(--muted)"/>
+<circle cx="190" cy="28.2" r="4" style="fill:var(--muted)"/>
+<circle cx="215" cy="41.8" r="4" style="fill:var(--muted)"/>
+<circle cx="240" cy="26.8" r="4" style="fill:var(--muted)"/>
+</g>
+<text x="620" y="246" class="t t-xs t-b t-m">ERROR</text>
+<text x="620" y="268" class="t t-s">con lo que vio</text>
+<rect x="724" y="257" width="4" height="14" rx="3" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+<text x="620" y="294" class="t t-s">con datos nuevos</text>
+<rect x="724" y="283" width="144" height="14" rx="3" style="fill:var(--warm-soft);stroke:var(--warm)"/>
+<text x="620" y="330" class="t t-s t-b">Perfecto en lo visto, malo en lo nuevo</text>
+</svg></div><figcaption><b>Subajuste, buen ajuste y sobreajuste sobre los mismos datos.</b> Los tres paneles muestran los mismos puntos (gris) y la regla que aprende un modelo de distinta complejidad (línea azul). A la izquierda, una recta no sigue la curva: se equivoca igual con los datos que vio y con los nuevos. Al centro, una curva suave sigue la tendencia sin perseguir cada punto. A la derecha, una línea pasa por todos los puntos: su error con lo que vio es casi cero (barra azul) y con datos nuevos es el más alto (barra roja). La diferencia entre las dos barras es la señal del sobreajuste.</figcaption></figure><div class="prose"><p>La señal práctica del sobreajuste es la brecha entre el desempeño en entrenamiento y en prueba. La señal del subajuste es un desempeño pobre en los dos. Un modelo sano tiene un desempeño razonable en entrenamiento y parecido en prueba. El capítulo 06 convierte esta idea en curvas que dicen si conviene conseguir más datos o un modelo más potente.</p></div><div class="lab" id="01-lab-1"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Un modelo que memoriza y otro que generaliza: sube la complejidad y mira el error en datos nuevos</h3></div><p class="hint">El modelo-tabla divide el plano en casillas y, en cada casilla, predice lo que hizo la mayoría de los clientes con que aprendió. Sube el número de casillas y mira las dos curvas: aciertos con los clientes que vio y con 2.000 clientes nuevos. Busca el punto en que la curva roja empieza a caer y después cambia a 300 clientes para aprender.</p><style>
+[id="01-lab-1"] .c1l1-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="01-lab-1"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="01-lab-1"] .c1l1-graf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+[id="01-lab-1"] canvas{width:100%;display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;touch-action:pan-y}
+[id="01-lab-1"] .c1l1-ley{display:flex;flex-wrap:wrap;gap:4px 14px;font:500 .78rem var(--f-display);color:var(--muted);margin-top:4px}
+[id="01-lab-1"] .c1l1-ley i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:4px}
+[id="01-lab-1"] .c1l1-ley b{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
+</style>
+<div class="ctls">
+  <div class="ctl"><label for="c1l1-k">Complejidad: casillas por lado</label>
+    <input type="range" id="c1l1-k" min="1" max="40" value="3" step="1"><output id="c1l1-kv">3</output></div>
+</div>
+<div class="btns" role="group" aria-label="Clientes para aprender"><span class="c1l1-rot">Clientes para aprender</span>
+  <button type="button" data-n="100" aria-pressed="true">100</button>
+  <button type="button" data-n="300" aria-pressed="false">300</button>
+</div>
+<div class="c1l1-graf">
+  <div><span class="c1l1-rot">Lo que aprendió el modelo-tabla</span>
+    <canvas id="c1l1-plano" height="300" aria-label="Plano con antigüedad en el eje horizontal y velocidad entregada en el vertical; las casillas que el modelo marca como «cancela» se sombrean"></canvas>
+    <div class="c1l1-ley"><span><b style="background:var(--warm);clip-path:polygon(50% 0,100% 100%,0 100%)"></b>cancela</span><span><b style="background:var(--muted);border-radius:50%"></b>se queda</span><span><b style="background:var(--warm-soft);outline:1.5px solid var(--warm)"></b>casilla que predice «cancela»</span></div></div>
+  <div><span class="c1l1-rot">Aciertos según la complejidad</span>
+    <canvas id="c1l1-curva" height="300" aria-label="Aciertos en los clientes con que aprendió y en clientes nuevos, para cada complejidad"></canvas>
+    <div class="c1l1-ley"><span><i style="border-color:var(--accent);border-top-style:dashed"></i>con los que aprendió</span><span><i style="border-color:var(--warm)"></i>clientes nuevos</span><span><i style="border-color:var(--muted);border-top-style:dotted"></i>tirar una moneda</span></div></div>
+</div>
+<div class="readout texto" id="c1l1-out" aria-live="polite"></div></div><div class="prose"><p>La muestra del laboratorio está balanceada a propósito: la mitad cancela y la otra mitad se queda, para que el efecto se vea con claridad y la marca de referencia sea tirar una moneda (50 %). En los datos reales cancela el 13,7 %, y eso trae su propio problema, que aparece en la práctica de este capítulo y se resuelve en el capítulo 03.</p><p>Dos cosas protegen contra el sobreajuste, y el curso las usa todo el tiempo: tener más datos (con más ejemplos, memorizar el ruido se vuelve más difícil) y limitar o castigar la complejidad del modelo, que es lo que hace la <b>regularización</b> del capítulo 02.</p></div></section>
+<section><h2>El flujo de un proyecto de aprendizaje automático</h2><div class="prose"><p>Un modelo no empieza en el algoritmo. Empieza en una decisión del negocio y termina cuando alguien la toma mejor. En el medio hay un flujo de pasos que se repite en casi todos los proyectos, desde los de una empresa pequeña hasta los de una gran plataforma.</p></div><div class="analogia"><b>Imagínalo así</b><p>Construir una casa no empieza eligiendo la marca del cemento. Empieza por saber quién la va a habitar y cuánto se puede gastar, sigue con el terreno y los planos, y solo después llegan los materiales. Y antes de entregarla, alguien revisa que la puerta cierre. El algoritmo es el cemento: importa, pero no es lo primero.</p></div><div class="prose"><p>Los pasos, con lo que significan en Retención:</p><ol class="steps"><li><span><b>Problema y métrica.</b> Qué decisión se mejora (a quién llamar), qué se predice exactamente (cancelar en los 90 días siguientes a una fecha) y cómo se va a medir el éxito (cuánto dinero salva la lista, no cuántos aciertos tiene).</span></li><li><span><b>Datos.</b> Reunir la foto de cada cliente en la fecha de corte y su etiqueta. Aquí aparece uno de los errores más caros del oficio: la <b>fuga de datos</b> (<i>data leakage</i>), usar información que no estaría disponible en el momento de predecir. El capítulo 04 la persigue.</span></li><li><span><b>Partir.</b> Separar entrenamiento, validación y prueba antes de mirar nada.</span></li><li><span><b>Línea base.</b> El modelo más simple posible, que hay que superar: decir que nadie cancela, o la regla de Fernando. Se llama <b>línea base</b> (<i>baseline</i>).</span></li><li><span><b>Modelos.</b> Probar algoritmos de distintas familias: lineales, vecinos, árboles.</span></li><li><span><b>Validar y medir.</b> Comparar con la métrica correcta, elegir el umbral, diagnosticar.</span></li><li><span><b>Interpretar.</b> Entender qué aprendió el modelo y por qué marca a cada cliente.</span></li><li><span><b>Entregar.</b> Dejar el modelo listo para usarse cada mes, cosa que en este curso termina en una lista y en un pipeline. Llevarlo a <b>producción</b> (<i>production</i>), con versiones, monitoreo y reentrenamiento, es el tema del curso <a href="https://aaramirez.github.io/mlops/temario.html" target="_blank" rel="noopener">IA en producción (MLOps)</a>.</span></li></ol></div><figure class="fig fig-esquema" id="01-diagrama-3"><div class="lienzo"><svg viewBox="0 0 900 400" style="min-width:740px" role="img" aria-label="El flujo de un proyecto en ocho pasos, en forma de ese: problema y métrica, datos, partición, línea base, modelos, validar y medir, interpretar, y entregar; con el capítulo del curso que trata cada paso y una flecha de vuelta desde validar hacia los datos y los modelos">
+<defs>
+<marker id="c1d3-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-muted"/></marker>
+</defs>
+<rect x="16" y="30" width="200" height="118" rx="12" class="caja" style="stroke:var(--warm);stroke-width:1.6"/>
+<text x="30" y="52" class="t t-xs t-b k-warm">1 · PROBLEMA Y MÉTRICA</text>
+<text x="30" y="74" class="t t-s">¿Qué decisión mejora?</text>
+<text x="30" y="90" class="t t-s">¿Cuánto cuesta cada error?</text>
+<text x="30" y="106" class="t t-s">¿Qué predigo y cuándo?</text>
+<text x="30" y="136" class="t t-xs t-b t-m">CAPÍTULOS 01 Y 05</text>
+<path d="M216 89H234" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="238" y="30" width="200" height="118" rx="12" class="d-sis"/>
+<text x="252" y="52" class="t t-xs t-b k-sis">2 · DATOS</text>
+<text x="252" y="74" class="t t-s">Extraer la foto a la fecha</text>
+<text x="252" y="90" class="t t-s">de corte; revisar que nada</text>
+<text x="252" y="106" class="t t-s">venga del futuro (fuga)</text>
+<text x="252" y="136" class="t t-xs t-b t-m">CAPÍTULOS 01, 04 Y 10</text>
+<path d="M438 89H456" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="460" y="30" width="200" height="118" rx="12" class="d-sis"/>
+<text x="474" y="52" class="t t-xs t-b k-sis">3 · PARTIR</text>
+<text x="474" y="74" class="t t-s">Entrenamiento, validación</text>
+<text x="474" y="90" class="t t-s">y prueba. La prueba se</text>
+<text x="474" y="106" class="t t-s">guarda bajo llave</text>
+<text x="474" y="136" class="t t-xs t-b t-m">CAPÍTULOS 01 Y 04</text>
+<path d="M660 89H678" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="682" y="30" width="200" height="118" rx="12" class="caja"/>
+<text x="696" y="52" class="t t-xs t-b t-m">4 · LÍNEA BASE</text>
+<text x="696" y="74" class="t t-s">Lo más simple: «nadie</text>
+<text x="696" y="90" class="t t-s">cancela» o la regla de</text>
+<text x="696" y="106" class="t t-s">Fernando. Hay que ganarle</text>
+<text x="696" y="136" class="t t-xs t-b t-m">CAPÍTULOS 01 Y 12</text>
+<path d="M782 148V196" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="682" y="200" width="200" height="130" rx="12" class="c-red"/>
+<text x="696" y="222" class="t t-xs t-b k-red">5 · MODELOS</text>
+<rect x="696" y="234" width="80" height="20" rx="5" class="c-red"/><text x="702" y="248" class="t t-s">lineales 02-03</text>
+<rect x="782" y="234" width="86" height="20" rx="5" class="c-enl"/><text x="788" y="248" class="t t-s">vecinos 03</text>
+<rect x="696" y="260" width="80" height="20" rx="5" class="c-fis"/><text x="702" y="274" class="t t-s">Bayes 03</text>
+<rect x="782" y="260" width="86" height="20" rx="5" class="c-tra"/><text x="788" y="274" class="t t-s">árboles 07</text>
+<rect x="696" y="286" width="80" height="20" rx="5" class="c-apl"/><text x="702" y="300" class="t t-s">SVM 08</text>
+<rect x="782" y="286" width="86" height="20" rx="5" class="d-casa"/><text x="788" y="300" class="t t-s">sin etiq. 09</text>
+<text x="696" y="322" class="t t-xs t-b t-m">CAPÍTULOS 02, 03, 07-09</text>
+<path d="M682 265H664" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="460" y="200" width="200" height="130" rx="12" class="d-sis"/>
+<text x="474" y="222" class="t t-xs t-b k-sis">6 · VALIDAR Y MEDIR</text>
+<text x="474" y="244" class="t t-s">Validación cruzada, la</text>
+<text x="474" y="260" class="t t-s">métrica del negocio, el</text>
+<text x="474" y="276" class="t t-s">umbral, las curvas de</text>
+<text x="474" y="292" class="t t-s">sesgo y varianza</text>
+<text x="474" y="322" class="t t-xs t-b t-m">CAPÍTULOS 04, 05 Y 06</text>
+<path d="M460 265H442" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="238" y="200" width="200" height="130" rx="12" class="d-inet"/>
+<text x="252" y="222" class="t t-xs t-b k-inet">7 · INTERPRETAR</text>
+<text x="252" y="244" class="t t-s">¿Qué variables pesan?</text>
+<text x="252" y="260" class="t t-s">¿Por qué este cliente</text>
+<text x="252" y="276" class="t t-s">tiene riesgo alto?</text>
+<text x="252" y="322" class="t t-xs t-b t-m">CAPÍTULO 11</text>
+<path d="M238 265H220" class="ln" marker-end="url(#c1d3-m)"/>
+<rect x="16" y="200" width="200" height="130" rx="12" class="caja" style="stroke-dasharray:5 4"/>
+<text x="30" y="222" class="t t-xs t-b t-m">8 · ENTREGAR</text>
+<text x="30" y="244" class="t t-s">El pipeline completo, la</text>
+<text x="30" y="260" class="t t-s">lista para Marisol y el</text>
+<text x="30" y="276" class="t t-s">paso a producción</text>
+<text x="30" y="322" class="t t-xs t-b t-m">CAPÍTULO 12 → MLOPS</text>
+<path d="M540 330V368H227V174H338V152" class="ln ln-d" marker-end="url(#c1d3-m)"/>
+<text x="240" y="390" class="t t-s t-m">¿No alcanza? Vuelve a los datos o a los modelos: el flujo da vueltas</text>
+</svg></div><figcaption><b>El flujo de un proyecto de aprendizaje automático y los capítulos del curso.</b> Se lee como una ese: de izquierda a derecha en la fila de arriba (problema y métrica, datos, partición, línea base) y de derecha a izquierda en la de abajo (modelos, validar y medir, interpretar, entregar). Cada caja dice qué se hace en ese paso en Retención y qué capítulos lo tratan. La caja de modelos muestra las familias del curso con el color que usan en todas las figuras y laboratorios: azul para los lineales, verde para los vecinos, ámbar para Bayes ingenuo, morado para los árboles, rosa para las SVM y verde azulado para lo no supervisado. La flecha punteada es la vuelta más frecuente: cuando la validación no convence, se regresa a los datos o a los modelos.</figcaption></figure><div class="prose"><p>Este flujo se parece a <b>CRISP-DM</b> (<i>Cross-Industry Standard Process for Data Mining</i>, proceso estándar entre industrias para la minería de datos), una guía de 1999 que todavía se usa y que el curso de <a href="https://aaramirez.github.io/ciencia-de-datos/temario.html" target="_blank" rel="noopener">Ciencia de datos</a> presenta junto con el ciclo de un análisis. La diferencia de énfasis está en los pasos 3, 4 y 6: en aprendizaje automático, la mitad del oficio es no engañarse.</p></div></section>
+<section><h2>Los clientes que cancelan: el ejemplo que recorre el curso</h2><div class="prose"><p>Para que cada idea tenga un caso concreto, el curso resuelve un solo problema de punta a punta: predecir qué clientes van a <b>cancelar</b> el servicio. En la industria se le dice <b><i>churn</b></i> (abandono o rotación de clientes). Aquí importa el <b>abandono voluntario</b> (<i>voluntary churn</i>), el del cliente que decide irse; el involuntario, el que deja de pagar, es el del modelo de mora que el curso de <a href="https://aaramirez.github.io/mlops/temario.html" target="_blank" rel="noopener">IA en producción (MLOps)</a> lleva a producción. La empresa es la misma de ese curso. Todos los datos son inventados.</p><p>Las personas que aparecen:</p><ul><li><b>Ximena Robles</b>, analista de datos de Retención: viene de hacer análisis con Python y pandas, y en este curso da el salto a construir modelos.</li><li><b>Fernando Aguilar</b>, gerente de Retención: dueño del problema y del presupuesto de las ofertas; pide, pregunta y decide.</li><li><b>Joaquín Varela</b>, ingeniero de datos: conoce las tablas del <b>CRM</b> (<i>Customer Relationship Management</i>, gestión de la relación con clientes) y de facturación, y arma la extracción.</li><li><b>Marisol Cárdenas</b>, supervisora del equipo de retención: usa la lista cada mes y sabe cuánto cuesta cada llamada.</li></ul><p>Con Fernando, Ximena dejó escrita la definición del problema. Es la ficha que el curso usa en todos los capítulos:</p><div class="tbl"><table><thead><tr><th>Elemento</th><th>Definición</th></tr></thead><tbody><tr><td>Qué se predice</td><td><code>cancela</code> = 1 si el cliente cancela por decisión propia en los 90 días siguientes a la fecha de corte</td></tr><tr><td>Fecha de corte</td><td>1 de julio de 2026: las variables describen a cada cliente ese día</td></tr><tr><td>Datos</td><td>Una muestra al azar de 20.000 clientes activos en esa fecha; cancela el 13,7 % (2.747)</td></tr><tr><td>Acción</td><td>Marisol llama al cliente y le ofrece un descuento</td></tr><tr><td>Costos</td><td>Un cliente que se va vale US$ 360 (doce meses de margen); la llamada con oferta cuesta US$ 35 y convence a 4 de cada 10 de los que iban a cancelar</td></tr></tbody></table></div><p>Los costos parecen un detalle administrativo y son la mitad del problema. Llamar a alguien que se iba a quedar igual cuesta US$ 35 desperdiciados; no llamar a alguien que se va cuesta la parte de esos US$ 360 que la oferta habría salvado. El capítulo 05 convierte esas cifras en el umbral que da más ganancia.</p><p>La tabla de clientes que extrae Joaquín tiene 25 columnas. Estas son las principales:</p><div class="tbl"><table><thead><tr><th>Grupo</th><th>Columnas</th></tr></thead><tbody><tr><td>Quién es</td><td><code>cliente_id</code>, <code>fecha_alta</code>, <code>antiguedad_meses</code>, <code>tipo_cliente</code> (hogar o negocio), <code>region</code></td></tr><tr><td>Qué contrató</td><td><code>plan</code>, <code>precio_plan</code>, <code>velocidad_mbps</code>, <code>contrato</code> (mensual o anual), <code>metodo_pago</code>, <code>servicios_extra</code>, <code>fin_promo_60d</code> (su descuento de bienvenida vence pronto)</td></tr><tr><td>Cómo lo usa y cómo le va</td><td><code>consumo_gb</code>, <code>velocidad_pct</code> (velocidad entregada sobre la contratada), <code>caidas_90d</code>, <code>reclamos_90d</code>, <code>llamadas_soporte_90d</code>, <code>facturas_tarde_12m</code>, <code>uso_app_30d</code>, <code>satisfaccion</code> (encuesta, muchas veces vacía)</td></tr><tr><td>Lo que pasó después</td><td><code>cancela</code></td></tr></tbody></table></div><p>Y dos columnas más, <code>gestion_retencion</code> y <code>dias_sin_pago</code>, que Joaquín agregó porque «estaban en la base». Parecen inocentes. No lo son, y el capítulo 04 explica por qué; por ahora, ningún modelo del curso las usa.</p><p>Los datos salen de un <b>generador de datos sintéticos</b> (<i>synthetic data generator</i>), un programa que fabrica clientes realistas pero inventados a partir de una <b>semilla</b> (<i>random seed</i>), el número que fija la secuencia de azar. La misma semilla da siempre los mismos clientes, así que tus cifras serán las del curso. El generador esconde a propósito los efectos que un buen modelo debería encontrar, y también algunas trampas.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Crea los datos de los clientes</h3></div><p>Vas a crear la carpeta del curso, un entorno virtual con las bibliotecas que se usan en todos los capítulos, y los datos. Necesitas Python 3.10 o más reciente; la instalación pesa unos 250 MB.</p><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>mkdir $HOME\datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>cd $HOME\datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>python -m venv .venv</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>.venv\Scripts\activate</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>pip install numpy pandas scikit-learn matplotlib</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>mkdir -p ~/datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>cd ~/datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>python3 -m venv .venv</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>source .venv/bin/activate</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>pip install numpy pandas scikit-learn matplotlib</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps"><li><span>Guarda este programa como <code>generar_clientes.py</code> dentro de <code>datos-churn</code>. Es el generador de todo el curso.</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Clientes sintéticos para el curso «Aprendizaje automático»: quién cancela el servicio.</span>
+<span class="ln"></span>
+<span class="ln">Fabrica una muestra de clientes de una empresa ficticia de servicios por suscripción,</span>
+<span class="ln">tal como estaban el 1 de julio de 2026 (la fecha de corte), y si cancelaron o no en los</span>
+<span class="ln">90 días siguientes (columna cancela). Todo es inventado.</span>
+<span class="ln"></span>
+<span class="ln">    clientes.csv   un cliente por fila, foto del 1 de julio de 2026</span>
+<span class="ln">    historial.csv  fotos mensuales de julio de 2025 a junio de 2026: el mismo cliente</span>
+<span class="ln">                   aparece en varios meses (sirve para partir por cliente y en el tiempo)</span>
+<span class="ln"></span>
+<span class="ln">Uso: python generar_clientes.py [--n 20000] [--semilla 42] [--carpeta datos]</span>
+<span class="ln">"""</span>
+<span class="ln">import argparse</span>
+<span class="ln">from pathlib import Path</span>
+<span class="ln"></span>
+<span class="ln">import numpy as np</span>
+<span class="ln">import pandas as pd</span>
+<span class="ln"></span>
+<span class="ln">CORTE = pd.Timestamp("2026-07-01")</span>
+<span class="ln">REGIONES = ["Norte", "Centro", "Sur", "Oriente"]</span>
+<span class="ln">PLANES = ["Básico", "Estándar", "Plus", "Premium"]</span>
+<span class="ln">PRECIO = {"Básico": 20.0, "Estándar": 30.0, "Plus": 45.0, "Premium": 60.0}</span>
+<span class="ln">MBPS = {"Básico": 100, "Estándar": 300, "Plus": 600, "Premium": 1000}</span>
+<span class="ln">METODOS = ["debito", "tarjeta", "efectivo", "transferencia", "billetera"]</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def perfil(rng, n):</span>
+<span class="ln">    """Lo que no cambia de un mes a otro: quién es el cliente y qué contrató."""</span>
+<span class="ln">    negocio = rng.random(n) &lt; 0.18</span>
+<span class="ln">    p_plan = np.where(negocio[:, None], [0.10, 0.30, 0.35, 0.25], [0.32, 0.41, 0.18, 0.09])</span>
+<span class="ln">    plan = np.array(PLANES)[(rng.random(n)[:, None] &gt; p_plan.cumsum(1)).sum(1)]</span>
+<span class="ln">    return pd.DataFrame({</span>
+<span class="ln">        "tipo_cliente": np.where(negocio, "negocio", "hogar"),</span>
+<span class="ln">        "region": rng.choice(REGIONES, n, p=[0.30, 0.32, 0.20, 0.18]),</span>
+<span class="ln">        "plan": plan,</span>
+<span class="ln">        "metodo_pago": rng.choice(METODOS, n, p=[0.30, 0.25, 0.25, 0.12, 0.08]),</span>
+<span class="ln">        "personas_hogar": np.where(negocio, 0, rng.choice([1, 2, 3, 4, 5, 6], n,</span>
+<span class="ln">                                                          p=[0.18, 0.27, 0.23, 0.19, 0.09, 0.04])),</span>
+<span class="ln">        "dia_facturacion": rng.choice([1, 10, 20], n),</span>
+<span class="ln">        "riesgo": rng.normal(0, 1, n),        # la situación de cada cliente: nadie la ve</span>
+<span class="ln">        "propension_reclamo": rng.gamma(2.0, 0.5, n),</span>
+<span class="ln">        "u_contrato": rng.random(n), "u_extra": rng.random(n),</span>
+<span class="ln">        "extra_base": rng.poisson(0.5 + 0.3 * negocio),</span>
+<span class="ln">        "f_consumo": rng.lognormal(0, 0.22, n), "f_velocidad": rng.normal(0, 1, n),</span>
+<span class="ln">    })</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def foto(rng, p, antiguedad):</span>
+<span class="ln">    """Lo que se mide en una fecha: uso, calidad, reclamos y el riesgo de cancelar."""</span>
+<span class="ln">    n = len(p)</span>
+<span class="ln">    negocio = (p.tipo_cliente == "negocio").to_numpy()</span>
+<span class="ln">    precio = p.plan.map(PRECIO).to_numpy()</span>
+<span class="ln">    mbps = p.plan.map(MBPS).to_numpy()</span>
+<span class="ln">    anual = p.u_contrato.to_numpy() &lt; np.clip(0.25 + 0.25 * negocio + 0.004 * antiguedad, 0, 0.8)</span>
+<span class="ln">    extra = np.minimum(p.extra_base.to_numpy() + (p.u_extra.to_numpy() &lt; 0.012 * antiguedad), 3)</span>
+<span class="ln">    rampa = 1 - np.exp(-antiguedad / 4)          # los primeros meses se usa menos</span>
+<span class="ln">    consumo = ((60 + 70 * p.personas_hogar.to_numpy() + 0.12 * mbps + 150 * negocio</span>
+<span class="ln">                + 0.10 * mbps * negocio) * rampa * p.f_consumo.to_numpy() * rng.lognormal(0, 0.1, n)).round(1)</span>
+<span class="ln">    sur = (p.region == "Sur").to_numpy()</span>
+<span class="ln">    vel = np.clip(91 - 6 * sur + 6.5 * p.f_velocidad.to_numpy() + rng.normal(0, 2.5, n), 45, 100).round(1)</span>
+<span class="ln">    caidas = rng.poisson(0.5 + 0.03 * (100 - vel))</span>
+<span class="ln">    reclamos = rng.poisson(p.propension_reclamo.to_numpy() * (0.25 + 0.3 * caidas</span>
+<span class="ln">                                                              + 0.6 * (vel &lt; 80)))</span>
+<span class="ln">    llamadas = rng.poisson(0.4 + 0.9 * reclamos)</span>
+<span class="ln">    tarde = rng.poisson(np.exp(-0.9 + 0.6 * p.riesgo.to_numpy()).clip(0, 8))</span>
+<span class="ln">    app = rng.poisson(np.exp(1.4 - 0.25 * p.riesgo.to_numpy() + 0.3 * negocio))</span>
+<span class="ln">    promo = (antiguedad &lt;= 13) &amp; (rng.random(n) &lt; 0.45) | (rng.random(n) &lt; 0.05)</span>
+<span class="ln">    fin_promo = promo &amp; (rng.random(n) &lt; 0.35)</span>
+<span class="ln">    mensual = ~anual</span>
+<span class="ln">    basico_lleno = (precio == 20) &amp; (consumo &gt; 320)   # el plan ya le queda chico</span>
+<span class="ln">    aniversario = (antiguedad &gt;= 11) &amp; (antiguedad &lt;= 13)  # se cumple el primer año</span>
+<span class="ln">    logit = (-2.25 + 1.0 * mensual - 0.75 * np.log1p(antiguedad / 6) + 0.7 * aniversario</span>
+<span class="ln">             + 0.40 * np.minimum(reclamos, 3) + 0.20 * caidas + 1.0 * (vel &lt; 80)</span>
+<span class="ln">             + 0.4 * fin_promo + 1.1 * (fin_promo &amp; mensual)</span>
+<span class="ln">             + 1.3 * (sur &amp; (precio &lt;= 30)) + 1.0 * basico_lleno</span>
+<span class="ln">             - 0.32 * extra - 0.10 * app</span>
+<span class="ln">             + 0.012 * (precio - 30) + 0.12 * tarde - 0.35 * negocio</span>
+<span class="ln">             + 0.35 * (p.metodo_pago == "efectivo").to_numpy()</span>
+<span class="ln">             - 0.30 * (p.metodo_pago == "debito").to_numpy()</span>
+<span class="ln">             + 0.45 * p.riesgo.to_numpy())</span>
+<span class="ln">    return pd.DataFrame({</span>
+<span class="ln">        "antiguedad_meses": antiguedad, "contrato": np.where(anual, "anual", "mensual"),</span>
+<span class="ln">        "precio_plan": precio, "velocidad_mbps": mbps, "servicios_extra": extra,</span>
+<span class="ln">        "consumo_gb": consumo, "velocidad_pct": vel, "caidas_90d": caidas,</span>
+<span class="ln">        "reclamos_90d": reclamos, "llamadas_soporte_90d": llamadas,</span>
+<span class="ln">        "facturas_tarde_12m": tarde, "uso_app_30d": app, "fin_promo_60d": fin_promo.astype(int),</span>
+<span class="ln">    }), logit</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def clientes(n, semilla):</span>
+<span class="ln">    rng = np.random.default_rng(semilla)</span>
+<span class="ln">    p = perfil(rng, n)</span>
+<span class="ln">    antiguedad = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)</span>
+<span class="ln">    f, logit = foto(rng, p, antiguedad)</span>
+<span class="ln">    cancela = (rng.random(n) &lt; 1 / (1 + np.exp(-(logit + rng.normal(0, 0.6, n))))).astype(int)</span>
+<span class="ln">    # Encuesta de satisfacción (0 a 10): la contesta solo una parte, y menos los descontentos</span>
+<span class="ln">    nota = np.clip(np.round(8.2 - 0.9 * f.reclamos_90d - 0.5 * p.riesgo - 1.2 * cancela</span>
+<span class="ln">                            + rng.normal(0, 1.3, n)), 0, 10)</span>
+<span class="ln">    contesta = rng.random(n) &lt; np.clip(0.45 - 0.08 * f.reclamos_90d, 0.1, 0.6)</span>
+<span class="ln">    # FUGAS DE DATOS: las dos se registran DESPUÉS de la fecha de corte</span>
+<span class="ln">    gestion = np.where(cancela == 1, rng.random(n) &lt; 0.55, rng.random(n) &lt; 0.03).astype(int)</span>
+<span class="ln">    sin_pago = np.where(cancela == 1, rng.integers(12, 90, n),</span>
+<span class="ln">                        np.clip(rng.integers(0, 31, n) + 7 * f.facturas_tarde_12m, 0, 80))</span>
+<span class="ln">    alta = CORTE - pd.to_timedelta(antiguedad * 30.4 + rng.integers(0, 28, n), unit="D")</span>
+<span class="ln">    df = pd.concat([p.iloc[:, :6], f], axis=1)   # sin las columnas ocultas</span>
+<span class="ln">    df.insert(0, "cliente_id", np.arange(100001, 100001 + n))</span>
+<span class="ln">    df.insert(1, "fecha_alta", alta.strftime("%Y-%m-%d"))</span>
+<span class="ln">    df["satisfaccion"] = np.where(contesta, nota, np.nan)</span>
+<span class="ln">    df["gestion_retencion"] = gestion</span>
+<span class="ln">    df["dias_sin_pago"] = sin_pago</span>
+<span class="ln">    df["cancela"] = cancela</span>
+<span class="ln">    orden = ["cliente_id", "fecha_alta", "antiguedad_meses", "tipo_cliente", "region", "plan",</span>
+<span class="ln">             "precio_plan", "velocidad_mbps", "contrato", "metodo_pago", "dia_facturacion",</span>
+<span class="ln">             "personas_hogar", "servicios_extra", "consumo_gb", "velocidad_pct", "caidas_90d",</span>
+<span class="ln">             "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m", "uso_app_30d",</span>
+<span class="ln">             "fin_promo_60d", "satisfaccion", "gestion_retencion", "dias_sin_pago", "cancela"]</span>
+<span class="ln">    return df[orden]</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def historial(n, semilla):</span>
+<span class="ln">    """Fotos mensuales de una población que se mueve: entran clientes nuevos y otros se van."""</span>
+<span class="ln">    rng = np.random.default_rng(semilla + 1)</span>
+<span class="ln">    meses = pd.date_range("2025-07-01", "2026-09-01", freq="MS")</span>
+<span class="ln">    p = perfil(rng, n)</span>
+<span class="ln">    antig = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)</span>
+<span class="ln">    activo = np.ones(n, bool)</span>
+<span class="ln">    sale = np.full(n, -1)</span>
+<span class="ln">    filas = []</span>
+<span class="ln">    for i, mes in enumerate(meses):</span>
+<span class="ln">        nuevos = rng.binomial(n, 0.025) if i else 0       # altas del mes</span>
+<span class="ln">        if nuevos:</span>
+<span class="ln">            p = pd.concat([p, perfil(rng, nuevos)], ignore_index=True)</span>
+<span class="ln">            antig = np.concatenate([antig, np.ones(nuevos, int)])</span>
+<span class="ln">            activo = np.concatenate([activo, np.ones(nuevos, bool)])</span>
+<span class="ln">            sale = np.concatenate([sale, np.full(nuevos, -1)])</span>
+<span class="ln">        f, logit = foto(rng, p, antig)</span>
+<span class="ln">        idx = np.flatnonzero(activo)</span>
+<span class="ln">        if mes &lt;= pd.Timestamp("2026-06-01"):</span>
+<span class="ln">            filas.append(f.iloc[idx].assign(cliente_id=300001 + idx, mes_corte=mes.strftime("%Y-%m"),</span>
+<span class="ln">                                            _i=i, _pos=idx).join(p.iloc[idx][["tipo_cliente", "region",</span>
+<span class="ln">                                                                               "plan", "metodo_pago"]]))</span>
+<span class="ln">        # probabilidad de irse este mes (aprox. un tercio del riesgo a 90 días)</span>
+<span class="ln">        prob = 1 / (1 + np.exp(-(logit[idx] - 1.25 + rng.normal(0, 0.6, len(idx)))))</span>
+<span class="ln">        se_va = idx[rng.random(len(idx)) &lt; prob]</span>
+<span class="ln">        activo[se_va] = False</span>
+<span class="ln">        sale[se_va] = i</span>
+<span class="ln">        antig = antig + 1</span>
+<span class="ln">    h = pd.concat(filas, ignore_index=True)</span>
+<span class="ln">    s = sale[h._pos.to_numpy()]</span>
+<span class="ln">    h["cancela"] = ((s &gt;= h._i) &amp; (s &lt;= h._i + 2)).astype(int)</span>
+<span class="ln">    orden = ["cliente_id", "mes_corte", "antiguedad_meses", "tipo_cliente", "region", "plan",</span>
+<span class="ln">             "precio_plan", "contrato", "metodo_pago", "servicios_extra", "consumo_gb",</span>
+<span class="ln">             "velocidad_pct", "caidas_90d", "reclamos_90d", "llamadas_soporte_90d",</span>
+<span class="ln">             "facturas_tarde_12m", "uso_app_30d", "fin_promo_60d", "cancela"]</span>
+<span class="ln">    return h[orden].sort_values(["mes_corte", "cliente_id"], ignore_index=True)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">if __name__ == "__main__":</span>
+<span class="ln">    a = argparse.ArgumentParser(description=__doc__.splitlines()[0])</span>
+<span class="ln">    a.add_argument("--n", type=int, default=20000, help="clientes de la muestra (20000)")</span>
+<span class="ln">    a.add_argument("--semilla", type=int, default=42)</span>
+<span class="ln">    a.add_argument("--carpeta", default="datos")</span>
+<span class="ln">    a = a.parse_args()</span>
+<span class="ln">    carpeta = Path(a.carpeta)</span>
+<span class="ln">    carpeta.mkdir(parents=True, exist_ok=True)</span>
+<span class="ln">    c = clientes(a.n, a.semilla)</span>
+<span class="ln">    c.to_csv(carpeta / "clientes.csv", index=False)</span>
+<span class="ln">    print(f"{carpeta / 'clientes.csv'}: {len(c):,} clientes, cancela el {c.cancela.mean():.1%}")</span>
+<span class="ln">    h = historial(a.n // 4, a.semilla)</span>
+<span class="ln">    h.to_csv(carpeta / "historial.csv", index=False)</span>
+<span class="ln">    print(f"{carpeta / 'historial.csv'}: {len(h):,} filas de {h.cliente_id.nunique():,} clientes, "</span>
+<span class="ln">          f"cancela el {h.cancela.mean():.1%}")</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 172 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Corre el generador:</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python generar_clientes.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 generar_clientes.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Abre <code>datos/clientes.csv</code> con cualquier editor de texto o una hoja de cálculo y mira las primeras filas.</span></li><li><span>Corre el generador con <code>--semilla 7</code> y compara lo que imprime y las primeras filas de <code>clientes.csv</code>. Después córrelo otra vez sin opciones, para volver a los datos del curso.</span></li></ol><p><b>Qué observar:</b> el programa tarda un par de segundos y escribe dos archivos en <code>datos-churn/datos</code>. El primero, <code>clientes.csv</code>, tiene 20.000 clientes y una tasa de cancelación de 13,7 %: es el que usan casi todos los capítulos. El segundo, <code>historial.csv</code>, tiene 54.345 fotos mensuales de 6.376 clientes y espera al capítulo 04. La primera fila de <code>clientes.csv</code> es el cliente 100001: un hogar del Norte con plan Plus de US$ 45, contrato mensual, seis meses de antigüedad, que no canceló. Mira la columna <code>satisfaccion</code>: muchas filas la tienen vacía. Con la semilla 7 cambian los clientes, uno por uno, pero la tasa vuelve a dar 13,7 % y el historial cambia apenas (53.995 filas): los efectos escondidos son los mismos, porque la semilla cambia el azar, no las reglas.</p></div><div class="prose"><p>Con los datos listos, Ximena hace lo primero que se hace en cualquier proyecto: medir la línea base. Si dice que nadie cancela, acierta con el 86,3 % de los clientes, porque solo el 13,7 % cancela. Es una cifra alta que no sirve para nada: no encuentra a ninguno de los que se van. Cualquier modelo que presuma de «86 % de aciertos» en este problema no ha demostrado nada todavía. Fernando lo resumió mejor que ella: «Ese modelo ya lo tengo; se llama no hacer nada».</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Un modelo que memoriza, en tu computadora</h3></div><p>Vas a comparar cuatro formas de decidir sobre los mismos 5.000 clientes de prueba: decir que nadie cancela, la regla de Fernando, un árbol de decisión sin límite de tamaño y uno con límite. Los árboles son el tema del capítulo 07; aquí basta saber que un árbol sin límite puede crecer hasta tener una hoja para cada cliente.</p><ol class="steps"><li><span>Con el entorno activado y dentro de <code>datos-churn</code>, guarda este programa como <code>memoriza.py</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Un árbol que memoriza y otro que generaliza, frente a la línea base y la regla de Fernando."""</span>
+<span class="ln">import pandas as pd</span>
+<span class="ln">from sklearn.model_selection import train_test_split</span>
+<span class="ln">from sklearn.tree import DecisionTreeClassifier</span>
+<span class="ln"></span>
+<span class="ln">df = pd.read_csv("datos/clientes.csv")</span>
+<span class="ln">VARIABLES = ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct",</span>
+<span class="ln">             "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m",</span>
+<span class="ln">             "uso_app_30d", "fin_promo_60d", "tipo_cliente", "region", "contrato", "metodo_pago"]</span>
+<span class="ln">X = pd.get_dummies(df[VARIABLES])          # las categorías pasan a columnas de 0 y 1</span>
+<span class="ln">y = df["cancela"]</span>
+<span class="ln">X_ent, X_pru, y_ent, y_pru = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)</span>
+<span class="ln">print(f"Entrenamiento: {len(X_ent)} clientes · prueba: {len(X_pru)} · cancelan en prueba: {y_pru.sum()}")</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def informe(nombre, pred_ent, pred_pru):</span>
+<span class="ln">    atrapa = ((pred_pru == 1) &amp; (y_pru == 1)).sum()</span>
+<span class="ln">    print(f"{nombre:&lt;30} aciertos: entrenamiento {(pred_ent == y_ent).mean():6.1%}"</span>
+<span class="ln">          f" | prueba {(pred_pru == y_pru).mean():6.1%} | atrapa {atrapa} de {y_pru.sum()}")</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">informe("Nadie cancela", y_ent * 0, y_pru * 0)</span>
+<span class="ln">informe("Regla: 2 o más reclamos", (X_ent.reclamos_90d &gt;= 2).astype(int),</span>
+<span class="ln">        (X_pru.reclamos_90d &gt;= 2).astype(int))</span>
+<span class="ln">for profundidad in [None, 4]:</span>
+<span class="ln">    arbol = DecisionTreeClassifier(max_depth=profundidad, random_state=42).fit(X_ent, y_ent)</span>
+<span class="ln">    informe(f"Árbol, profundidad {profundidad or 'sin límite'}", arbol.predict(X_ent), arbol.predict(X_pru))</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 27 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo:</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python memoriza.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 memoriza.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Anota, para cada fila, los aciertos en entrenamiento y en prueba, y cuántos de los 687 clientes que cancelan en la prueba atrapa.</span></li></ol><p><b>Qué observar:</b> «nadie cancela» acierta 86,3 % y no atrapa a nadie. La regla de Fernando acierta menos (80,2 %) pero atrapa a 144. El árbol sin límite acierta 100 % en entrenamiento y 79,1 % en prueba: memorizó a los 15.000 clientes y con los nuevos le va peor que a no hacer nada. El árbol de profundidad 4 acierta casi lo mismo en los dos conjuntos (86,6 % y 86,5 %): generaliza, pero solo atrapa a 22, porque con tan pocos clientes que cancelan casi siempre le conviene decir «se queda». La exactitud no alcanza para juzgar este problema: el capítulo 03 empieza a resolverlo y el capítulo 05 lo resuelve del todo. Las cifras pueden variar en algún decimal con otras versiones de scikit-learn.</p></div><div class="ml"><b>En la práctica</b><p><b>La primera reunión.</b> Ximena le mostró a Fernando las cuatro filas de <code>memoriza.py</code>. Él preguntó por qué el árbol «perfecto» era el peor, y ella lo explicó con el estudiante que memoriza el examen viejo. Acordaron tres cosas para el resto del proyecto: ningún modelo se presenta sin su resultado en datos que no vio, la marca a superar es la regla de los reclamos, y el éxito se mide en dinero salvado. Joaquín quedó en revisar de dónde salían <code>gestion_retencion</code> y <code>dias_sin_pago</code>. Lo primero que Ximena va a probar es la herramienta más vieja y más útil del oficio: la regresión.</p></div></section>
+<section><h2>La idea clave</h2><div class="prose"><p>Aprender de los datos es encontrar, a partir de ejemplos con su respuesta, una regla que acierte en casos que el modelo no vio. Según haya o no etiqueta, el aprendizaje es supervisado o no supervisado; según la etiqueta sea un número o una clase, el problema es de regresión o de clasificación. Memorizar no es aprender: un modelo demasiado flexible acierta todo en entrenamiento y falla con los datos nuevos (sobreajuste), y uno demasiado simple falla en los dos (subajuste). Por eso el éxito se mide siempre en un conjunto de prueba que se guarda bajo llave, contra una línea base, siguiendo un flujo que empieza en la decisión del negocio.</p></div></section>
+<section><h2>Pruébate</h2><div class="quiz"><h3>Pruébate</h3><details><summary>¿Qué diferencia hay entre una variable y una etiqueta?</summary><p>Las variables describen cada caso (contrato, antigüedad, reclamos) y están disponibles al predecir; la etiqueta es la respuesta que se quiere predecir (si canceló), conocida solo para los casos del pasado.</p></details><details><summary>Predecir cuántos minutos durará una visita técnica, ¿es regresión o clasificación?</summary><p>Regresión: la respuesta es un número que puede tomar muchos valores.</p></details><details><summary>Un modelo acierta 99 % en entrenamiento y 70 % en prueba. ¿Qué le pasa?</summary><p>Sobreajuste: aprendió el ruido de los datos de entrenamiento y no generaliza. La brecha grande entre los dos resultados es la señal.</p></details><details><summary>¿Por qué el conjunto de prueba se usa una sola vez, al final?</summary><p>Porque si se mira, se ajusta el modelo y se vuelve a mirar, la prueba deja de ser datos que el modelo no vio y su resultado queda inflado.</p></details><details><summary>Si solo el 13,7 % de los clientes cancela, ¿qué exactitud tiene decir que nadie cancela, y por qué no sirve?</summary><p>86,3 %. No sirve porque no encuentra a ninguno de los clientes que se van, que son justamente los que importan.</p></details><details><summary>¿Por qué la fecha de corte es parte de la definición del problema?</summary><p>Porque fija qué se sabía al momento de predecir: las variables deben describir al cliente ese día, y la etiqueta, lo que pasó después. Sin ella se cuela información del futuro.</p></details></div></section>
+<section><h2>Para investigar</h2><div class="investiga"><h3>Para investigar</h3><p class="hint">Estas preguntas no se responden en el capítulo: búscalas por tu cuenta.</p><ol><li>¿Quién usó por primera vez la expresión <i>machine learning</i> y qué programa construyó para demostrarla?<small>Pista: busca «Arthur Samuel» y «damas».</small></li><li>¿Qué dice el teorema «no hay almuerzo gratis» (<i>no free lunch</i>) sobre elegir un algoritmo de aprendizaje?<small>Pista: busca «Wolpert no free lunch theorem».</small></li><li>¿Qué son el aprendizaje semisupervisado y el autosupervisado, y por qué importan cuando etiquetar es caro?<small>Pista: busca «self-supervised learning».</small></li><li>¿Qué es la navaja de Ockham y cómo se relaciona con preferir modelos simples?</li><li>¿Qué fue el concurso Netflix Prize y por qué la empresa no llevó a producción la solución ganadora tal cual?<small>Pista: busca «Netflix Prize engineering cost».</small></li></ol></div></section>
+<section><h2>Para saber más</h2><div class="vids"><span>Para saber más</span><a class="vid" href="https://www.statlearning.com/" target="_blank" rel="noopener">An Introduction to Statistical Learning <small>el libro de referencia del curso, gratuito, con ediciones en R y en Python, en inglés</small></a><a class="vid" href="https://developers.google.com/machine-learning/guides/rules-of-ml" target="_blank" rel="noopener">Rules of Machine Learning <small>43 reglas prácticas de Google para proyectos reales, en inglés</small></a><a class="vid" href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_underfitting_overfitting.html" target="_blank" rel="noopener">Underfitting vs. Overfitting <small>el ejemplo de scikit-learn con polinomios de grado creciente, en inglés</small></a><a class="vid" href="https://en.wikipedia.org/wiki/Google_Flu_Trends" target="_blank" rel="noopener">Google Flu Trends <small>la historia del caso, con enlaces al análisis de 2014 en <i>Science</i>, en inglés</small></a></div></section>
+<label class="got"><input type="checkbox" id="got"> Lo tengo claro</label>
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-estadistico" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-estadistico</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+<script>
+(function(){
+  const raiz=document.querySelector('[id="01-lab-2"]');
+  const T={r:'Regresión',c:'Clasificación',g:'Agrupamiento'};
+  const P=[
+    {p:'¿Cuántos GB va a consumir este cliente el mes que viene?',r:'r',x:'La respuesta es un número que puede tomar muchos valores (240,3 GB, 512,8 GB…). La etiqueta del pasado es el consumo real de cada cliente.'},
+    {p:'¿Este cliente va a cancelar el servicio en los próximos 90 días?',r:'c',x:'La respuesta es una de dos clases: cancela o se queda. Es el problema que recorre el curso; la etiqueta es si canceló o no después de la fecha de corte.'},
+    {p:'Formar grupos de clientes que usan el servicio de forma parecida, para diseñar planes nuevos. Nadie ha definido los grupos.',r:'g',x:'No hay una respuesta correcta guardada para cada cliente: el algoritmo busca los grupos por sí mismo. Es aprendizaje no supervisado (capítulo 09).'},
+    {p:'¿Cuántos reclamos van a entrar la semana que viene?',r:'r',x:'Es un número (un conteo). Cuando el número es del futuro y depende del tiempo, se le llama pronóstico, pero sigue siendo regresión.'},
+    {p:'¿El correo de este cliente es una queja, una consulta o un pedido de baja?',r:'c',x:'Clasificación con tres clases. La etiqueta sale de correos que alguien ya marcó a mano.'},
+    {p:'¿Esta factura va a seguir sin pagar 30 días después de vencer?',r:'c',x:'Sí o no: clasificación. Es el modelo de mora del curso de MLOps.'},
+    {p:'¿Qué barrios tienen un patrón de uso por hora parecido?',r:'g',x:'Se agrupan barrios por parecido, sin una etiqueta previa: agrupamiento.'},
+    {p:'¿Cuántos minutos va a durar la próxima visita técnica a este cliente?',r:'r',x:'Un número continuo: regresión. La etiqueta es la duración real de las visitas pasadas.'},
+    {p:'¿Este pago con tarjeta es un fraude?',r:'c',x:'Dos clases, y muy desbalanceadas: casi todos los pagos son legítimos. El capítulo 03 explica por qué eso complica las cosas.'},
+    {p:'Encontrar clientes con un consumo tan raro que no se parecen a ningún otro. No hay ejemplos marcados de «raro».',r:'g',x:'Sin etiquetas: se busca lo que queda lejos de todos los grupos. Se llama detección de anomalías y es de la familia no supervisada (capítulo 09).'}
+  ];
+  const lista=raiz.querySelector('#c1l2-lista');const resp={};
+  function pintar(){
+    lista.innerHTML=P.map((q,i)=>'<li data-i="'+i+'"><p>'+q.p+'</p><div class="btns" role="group" aria-label="Tipo del problema '+(i+1)+'">'+
+      Object.entries(T).map(([k,t])=>'<button type="button" data-k="'+k+'" aria-pressed="false">'+t+'</button>').join('')+'</div><p class="c1l2-por" hidden></p></li>').join('');
+    lista.querySelectorAll('li').forEach(li=>li.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      resp[li.dataset.i]=b.dataset.k;li.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+      li.classList.remove('ok','mal');li.querySelector('.c1l2-por').hidden=true;})));
+  }
+  raiz.querySelector('#c1l2-rev').addEventListener('click',()=>{
+    let bien=0,hechas=0;
+    lista.querySelectorAll('li').forEach(li=>{const i=+li.dataset.i,q=P[i],r=resp[i],por=li.querySelector('.c1l2-por');
+      if(!r){li.classList.remove('ok','mal');por.hidden=true;return;}
+      hechas++;const ok=r===q.r;if(ok)bien++;li.classList.toggle('ok',ok);li.classList.toggle('mal',!ok);
+      por.hidden=false;por.innerHTML=(ok?'<b>Correcto: '+T[q.r]+'.</b> ':'<b>Es '+T[q.r].toLowerCase()+'.</b> ')+q.x;});
+    const out=raiz.querySelector('#c1l2-out');
+    if(!hechas){out.innerHTML='<span class="warn">Todavía no elegiste ningún tipo.</span>';return;}
+    out.innerHTML='<span class="big">'+bien+' de '+hechas+' correctas'+(hechas<P.length?' (te faltan '+(P.length-hechas)+')':'')+'</span>'+
+      '<span>La pregunta que decide: ¿la respuesta es un número (regresión), una de pocas clases (clasificación), o no hay respuesta guardada y se buscan grupos (agrupamiento)?</span>'+
+      (bien<hechas?'<span class="warn">Lee la explicación de las marcadas en rojo.</span>':'<span class="ok">Sabes elegir la familia antes de elegir el algoritmo.</span>');
+  });
+  raiz.querySelector('#c1l2-otra').addEventListener('click',()=>{for(const k in resp)delete resp[k];pintar();
+    raiz.querySelector('#c1l2-out').innerHTML='<span>Elige un tipo para cada problema y pulsa «Revisar».</span>';});
+  pintar();
+})();
+</script>
+<script>
+(function(){
+  const raiz=document.querySelector('[id="01-lab-1"]');
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  const pct=x=>nf(100*x,0)+' %';
+  /* Clientes de contrato mensual del generador del curso (semilla 42): antigüedad en meses, velocidad entregada ×10, cancela.
+     Muestra balanceada a propósito: la mitad cancela y la otra mitad se queda. Los primeros 300 sirven para aprender; del 601 en adelante, son los clientes nuevos. */
+  const MUESTRA='61:842:0 17:755:1 18:870:1 15:845:0 3:924:1 24:1000:1 7:903:0 96:921:0 46:912:0 7:872:1 21:935:1 1:893:0 3:986:1 22:857:1 85:784:0 9:934:1 69:879:1 10:971:1 5:868:0 20:818:0 11:944:1 22:924:0 16:829:1 1:919:0 93:883:0 28:807:1 42:802:0 9:947:1 41:970:0 8:845:1 6:941:1 54:996:0 19:938:1 14:812:1 21:860:1 37:721:1 6:837:0 7:1000:1 36:814:1 1:921:1 4:1000:1 96:820:0 3:934:1 43:892:0 47:862:0 1:888:0 3:835:1 21:840:1 12:895:0 25:886:1 27:814:1 11:981:1 23:821:0 10:903:1 5:939:1 84:850:1 5:930:1 3:933:1 5:694:1 11:846:1 28:1000:0 12:916:0 13:805:0 7:915:0 18:866:0 8:975:1 5:919:0 12:848:0 44:889:0 13:886:1 15:897:0 11:714:1 21:934:0 14:1000:0 4:1000:0 6:895:0 11:869:1 2:826:1 12:897:0 19:736:1 8:931:0 13:959:1 70:856:0 9:978:1 66:822:0 43:1000:0 5:950:1 6:1000:0 12:968:0 96:911:0 10:892:0 13:900:0 2:854:0 27:892:0 9:801:1 38:827:1 43:897:0 1:874:1 53:790:0 57:889:1 50:814:0 14:773:1 22:968:0 19:875:0 3:849:0 1:868:0 5:875:0 19:865:1 13:864:0 13:839:1 5:1000:0 12:941:1 9:1000:1 14:855:1 13:1000:0 81:846:0 2:961:1 12:1000:1 17:968:0 50:892:0 13:975:1 2:927:0 5:825:1 3:856:1 37:856:0 26:728:1 3:976:0 7:1000:0 10:1000:1 5:866:1 93:860:0 7:917:1 2:866:0 13:944:0 38:783:0 9:914:0 27:835:1 5:897:0 2:835:1 31:852:0 21:964:0 5:880:0 26:888:0 44:730:0 2:836:1 9:933:0 53:856:0 20:798:1 54:862:0 45:911:0 31:855:0 22:842:0 8:753:1 12:844:0 35:857:1 22:903:1 12:1000:1 2:891:0 17:1000:0 30:838:0 8:854:0 5:901:1 26:863:1 19:834:0 9:946:1 3:761:1 2:838:0 7:813:0 8:1000:1 8:916:1 36:981:0 45:971:0 18:779:1 4:920:0 7:952:1 55:811:0 11:642:1 52:759:1 3:796:1 10:844:0 17:961:0 60:785:0 9:937:1 22:898:0 23:939:0 12:715:1 14:953:1 11:862:1 1:1000:0 65:873:0 23:872:0 2:907:0 19:854:0 24:1000:1 5:924:0 6:877:1 23:1000:1 34:965:0 18:864:0 19:929:1 17:695:1 13:923:1 9:889:1 19:832:0 21:939:0 4:1000:0 13:802:0 2:912:0 3:1000:0 19:825:0 45:797:1 2:945:1 32:879:0 1:801:0 22:936:0 38:799:1 5:863:1 20:968:0 28:844:0 6:836:0 41:890:0 7:986:0 14:766:0 4:883:1 6:772:1 23:953:0 5:938:0 17:954:0 2:887:1 5:913:1 28:766:1 12:1000:1 22:926:1 17:896:1 46:917:1 30:870:1 11:896:0 25:881:0 14:846:0 6:823:0 28:804:1 31:772:0 20:851:1 2:993:1 49:900:0 54:1000:1 11:763:0 13:910:1 1:977:1 14:973:0 19:869:1 3:885:1 43:797:1 3:940:1 60:962:0 13:795:1 3:916:0 10:963:0 23:831:0 3:935:0 2:855:1 1:958:0 21:796:0 6:915:1 8:956:0 11:926:0 17:809:1 42:956:0 40:832:0 14:818:1 96:873:0 7:991:0 52:909:0 31:865:1 16:926:1 55:947:0 12:870:0 10:744:1 14:943:0 1:747:1 5:823:1 12:968:0 14:1000:0 18:852:0 68:951:1 14:816:1 22:841:0 12:920:0 6:986:0 18:1000:1 9:885:1 2:782:1 35:845:0 1:832:1 13:1000:0 4:689:0 2:933:1 9:888:1 35:913:0 2:980:0 2:864:1 17:850:1 43:990:0 15:958:0 12:996:1 23:871:0 1:768:1 18:873:0 10:790:0 9:880:0 21:994:0 52:787:1 8:789:0 3:799:0 3:782:1 7:941:1 61:945:0 15:919:0 23:851:1 29:831:0 10:764:1 20:912:1 3:1000:1 4:898:0 44:829:0 6:887:1 7:911:0 1:858:1 17:904:0 63:864:0 33:969:0 8:902:0 8:789:1 19:1000:0 10:821:0 3:919:0 13:819:0 1:929:1 11:930:0 4:806:1 5:886:1 3:757:1 13:904:1 13:826:0 17:825:0 6:924:1 24:965:0 5:929:1 12:910:1 4:956:1 25:881:0 49:863:0 33:879:0 18:971:0 48:981:1 48:814:1 4:900:1 8:751:1 1:945:1 13:789:0 8:967:1 23:781:1 12:857:1 4:940:0 1:796:1 1:974:1 55:875:0 5:953:0 3:907:0 3:853:0 23:854:1 2:968:0 5:972:0 1:907:1 10:893:1 4:898:1 18:799:0 4:928:0 8:887:0 11:905:0 17:985:0 15:803:0 11:1000:1 53:872:0 22:947:0 29:722:1 56:954:1 22:874:0 29:886:0 17:860:0 15:1000:1 36:885:1 27:1000:0 3:877:1 65:883:0 1:859:1 38:909:0 12:923:1 12:891:1 2:867:0 4:904:1 7:995:1 7:852:1 1:773:1 31:905:0 14:789:1 8:861:1 27:795:1 31:949:1 1:853:1 70:799:0 13:988:1 24:998:0 66:973:0 5:864:1 22:798:1 44:910:0 21:875:0 5:850:0 2:905:0 8:811:0 11:928:1 1:954:1 52:790:1 33:869:0 96:854:0 28:799:1 20:838:1 12:854:1 19:939:0 40:1000:1 21:898:1 6:846:1 54:826:0 13:746:1 30:838:0 51:997:0 52:900:0 3:970:1 9:900:1 14:880:1 35:1000:0 33:796:1 48:808:0 20:906:1 14:900:0 3:880:1 9:889:0 12:888:1 6:884:1 38:852:0 20:810:1 21:820:0 54:803:1 2:983:1 11:952:0 2:979:0 60:815:0 15:816:0 4:924:0 3:732:1 20:857:0 58:917:0 12:902:0 31:886:1 5:792:1 3:952:0 22:818:0 25:1000:1 42:906:1 45:904:0 9:835:1 4:825:1 11:990:1 2:867:1 14:941:1 26:783:1 7:912:1 1:788:1 13:833:1 13:959:1 1:903:0 12:926:1 30:883:1 24:690:1 86:926:0 1:924:1 30:895:0 12:881:1 42:749:1 3:757:1 35:869:0 28:953:1 39:874:1 1:892:0 5:794:1 9:952:1 3:779:0 3:893:0 2:829:1 9:895:0 9:963:1 5:863:1 6:866:1 40:876:0 1:818:1 10:1000:1 9:988:1 42:933:1 32:767:1 24:872:1 23:990:1 11:928:1 26:1000:0 5:851:1 1:974:0 7:984:0 9:841:0 10:806:0 25:850:1 88:865:0 22:812:0 6:894:0 19:814:0 8:995:1 9:1000:0 2:886:1 2:909:0 4:949:1 13:876:1 7:858:1 11:983:0 11:1000:0 2:823:1 10:766:1 10:999:1 10:826:0 24:943:0 16:869:0 7:972:0 5:1000:1 2:903:1 26:914:0 18:791:1 23:940:0 7:962:1 27:1000:0 2:998:1 9:889:1 48:892:1 15:849:0 9:798:1 12:931:1 23:851:1 2:764:1 30:915:1 14:780:0 1:788:1 21:782:1 4:848:1 6:920:0 10:830:1 4:970:0 37:908:0 8:815:0 51:774:0 1:823:0 4:961:1 1:835:1 8:803:1 29:1000:0 28:788:0 4:871:1 35:837:0 41:783:1 3:920:1 12:785:1 8:1000:1 27:923:0 26:805:1 1:964:1 8:905:0 1:1000:1 3:828:1 27:952:1 33:956:0 10:724:1 12:849:1 8:883:0 11:770:1 30:840:0 9:801:0 7:853:1 2:822:0 22:853:1 2:900:1 19:924:0 3:845:1 12:744:1 34:840:0 4:878:1 3:1000:0 17:886:0 19:932:1 13:1000:0 14:783:1 10:821:1 1:794:1 17:883:0 81:838:1 6:788:1 17:977:0 89:921:0 2:949:1 21:915:0 28:940:1 41:950:1 15:975:0 15:811:0 29:995:0 6:866:0 19:708:1 41:785:1 8:905:1 3:794:1 2:962:1 9:861:0 2:841:0 15:869:0 3:1000:1 55:881:0 22:889:1 5:1000:1 6:799:0 43:912:0 9:807:0 16:892:1 11:977:1 5:911:0 5:1000:1 42:950:0 10:934:0 11:896:0 1:837:1 28:841:0 35:909:0 8:977:1 9:817:1 2:910:1 96:983:0 8:916:1 5:917:1 1:889:1 25:909:0 9:803:1 3:1000:1 28:853:0 2:917:1 1:836:1 20:939:0 38:967:0 30:1000:1 5:904:1 14:895:1 10:895:1 13:849:1 12:821:1 15:925:0 27:1000:0 49:943:0 4:927:0 3:808:1 22:939:1 4:964:0 8:957:0 11:875:0 5:896:0 29:994:0 17:903:0 5:866:0 11:895:1 9:904:0 2:766:1 2:922:0 50:942:0 5:944:1 1:905:1 2:856:1 9:868:0 24:898:0 38:1000:0 2:907:0 27:855:0 4:881:1 22:937:0 48:1000:0 1:907:1 15:922:1 52:787:0 13:934:0 9:794:1 1:863:1 13:982:0 34:739:1 14:924:1 29:898:0 12:838:0 12:856:0 23:882:1 53:929:0 19:837:1 1:908:1 56:892:0 3:778:0 6:883:1 28:855:0 11:897:1 5:818:0 20:801:0 96:972:0 12:921:0 6:785:1 30:907:0 1:923:1 16:860:1 33:813:1 38:833:0 42:942:0 45:989:0 8:842:0 6:978:0 38:987:0 9:753:1 3:867:1 8:975:0 96:777:0 4:800:1 7:816:0 2:979:0 12:910:1 43:952:1 75:945:0 48:827:0 25:912:1 3:737:1 9:810:1 10:822:1 2:885:1 43:966:0 34:931:0 20:864:1 1:911:1 10:899:1 25:902:1 17:855:0 12:929:1 1:1000:0 38:824:0 3:981:1 3:727:1 36:830:0 30:926:0 19:958:0 17:842:0 26:761:1 69:964:0 9:1000:0 29:895:1 13:1000:1 15:1000:1 12:985:0 4:910:1 29:796:1 16:946:0 73:940:0 42:862:0 3:845:1 6:852:0 49:1000:0 20:890:0 10:830:0 36:983:1 11:774:1 7:906:1 8:886:0 2:994:1 24:739:1 12:1000:0 19:911:0 6:832:1 14:744:1 15:779:0 18:934:1 18:830:0 20:939:0 11:1000:1 11:887:1 20:965:0 6:908:1 28:921:0 4:791:1 13:841:0 5:854:1 5:868:0 14:838:1 19:959:1 9:743:1 7:935:0 4:832:1 8:897:1 11:803:1 40:848:0 1:695:1 6:1000:1 39:1000:0 1:881:0 44:849:1 6:946:0 7:757:1 21:910:0 17:968:0 19:970:1 76:984:0 18:864:0 8:916:1 1:922:0 14:896:1 6:756:1 14:936:0 4:973:1 8:952:1 16:832:0 3:945:1 3:997:1 96:937:0 35:740:1 3:866:1 6:804:1 20:761:1 27:880:0 15:835:1 82:990:1 31:926:0 18:999:1 9:917:1 51:892:1 12:946:0 12:876:1 13:823:1 33:799:1 31:913:0 24:940:1 9:942:0 6:850:1 1:895:0 32:881:1 22:974:1 8:873:1 13:874:0 3:872:1 12:885:1 13:967:0 11:837:0 21:833:1 23:789:1 14:846:0 20:965:1 15:862:0 17:771:1 18:1000:0 4:930:1 8:986:1 50:888:1 3:867:1 19:942:1 3:846:1 53:910:0 18:857:0 22:895:1 22:820:1 27:859:1 69:975:0 24:842:0 12:1000:1 1:1000:1 68:750:0 12:760:1 18:847:1 2:793:0 9:833:1 5:844:1 12:1000:0 19:817:0 26:963:0 3:807:0 21:998:0 57:994:0 26:892:1 44:797:1 19:908:1 12:785:0 6:891:1 31:874:0 4:756:0 4:926:1 19:852:0 38:891:1 42:796:0 3:984:0 18:911:0 27:951:0 34:801:1 71:911:0 15:752:1 19:962:0 54:882:1 2:847:1 50:846:0 2:817:1 19:781:0 4:830:0 1:868:0 34:866:1 1:824:1 15:897:1 36:818:0 26:959:0 21:858:0 47:937:0 17:958:0 13:869:1 16:846:1 7:836:0 96:884:1 72:822:0 25:684:1 20:878:0 1:897:1 50:902:1 56:759:0 16:915:1 11:864:1 1:932:1 30:944:0 15:905:0 3:870:1 17:848:0 7:936:1 7:872:1 9:843:1 15:754:1 9:860:1 6:872:0 61:1000:0 9:844:0 22:928:0 83:878:0 1:853:1 84:808:0 14:724:1 13:972:1 34:846:1 43:902:1 15:875:1 52:952:0 14:954:0 12:835:1 9:976:1 26:897:0 1:827:1 37:906:0 61:869:0 20:771:1 14:866:0 38:781:1 17:854:0 39:905:1 4:938:0 14:816:0 1:966:1 8:831:1 6:990:0 20:863:0 75:995:0 25:978:0 42:862:0 24:865:1 56:901:0 1:979:1 1:851:0 93:841:0 4:764:0 11:822:1 37:994:0 2:1000:1 79:935:0 21:835:0 6:872:1 35:845:1 11:892:1 58:929:0 29:780:0 5:934:1 5:981:1 56:796:1 25:772:0 34:856:1 3:829:1 30:777:0 13:831:1 20:853:0 9:923:0 14:822:1 3:857:1 6:853:1 39:878:0 24:796:0 3:855:1 3:852:0 61:818:1 8:997:1 22:865:0 56:861:0 1:974:0 10:776:1 7:814:0 27:926:0 42:985:0 8:706:1 33:991:0 8:932:1 23:937:1 9:885:1 45:787:0 17:895:1 6:907:0 21:927:0 3:829:0 13:805:1 3:921:0 16:760:1 40:947:0 22:919:0 8:830:1 9:780:1 9:774:0 38:919:0 8:972:0 48:709:1 5:1000:1 1:945:0 3:930:0 31:976:1 7:1000:1 19:849:0 65:838:1 5:890:1 39:961:0 17:833:0 23:1000:0 26:817:0 34:777:1 1:893:1 50:821:0 10:843:1 52:966:0 5:990:1 1:962:0 23:964:1 7:955:1 4:821:1 73:740:0 31:926:0 6:951:0 23:842:1 17:1000:0 21:897:1 35:852:0 15:844:0 4:851:1 14:965:1 16:907:0 5:904:1 13:839:1 35:912:1 18:885:0 20:993:0 33:894:0 7:952:0 1:978:0 10:931:0 19:1000:0 28:950:0 32:781:1 8:744:1 9:859:0 56:840:0 1:907:1 13:903:1 12:943:0 6:947:1 13:1000:0 2:824:0 24:874:1 13:795:1 20:983:0 13:960:0 2:936:0 14:980:0 28:949:0 16:961:1 7:937:1 36:865:0 11:942:1 10:976:1 6:874:1 14:994:0 5:925:0 7:974:0 21:869:0 4:1000:1 29:936:0 14:978:1 3:910:1 8:853:1 12:1000:0 7:943:1 85:853:0 7:1000:0 4:785:1 4:852:0 55:865:0 53:932:0 33:860:1 5:807:1 7:883:1 12:930:1 3:753:1 4:1000:0 30:745:0 33:903:0 10:815:1 5:829:1 34:947:0 33:871:0 11:813:1 38:880:0 35:1000:0 4:691:1 13:827:1 10:984:0 16:933:0 14:829:0 14:837:0 3:907:1 34:988:0 7:858:0 5:919:1 17:791:1 4:878:1 12:904:1 29:990:0 19:821:1 14:885:1 4:1000:1 14:855:1 13:807:1 18:763:1 5:791:0 5:947:1 10:978:0 18:824:0 11:763:1 1:997:1 6:843:0 51:1000:0 14:863:1 33:806:1 31:864:0 24:969:0 9:882:0 8:1000:0 2:845:1 6:821:0 33:896:1 44:955:1 4:923:1 4:808:1 4:802:1 57:922:0 8:833:1 1:869:0 1:942:1 16:845:0 96:956:0 2:837:0 39:792:1 37:930:0 59:836:0 18:918:0 4:861:0 45:1000:0 2:847:0 23:868:0 4:916:1 34:964:1 33:907:1 4:807:1 9:987:1 11:933:0 17:925:0 13:769:0 1:937:1 1:951:1 6:848:1 13:878:1 5:911:1 59:783:1 11:983:1 15:899:0 60:917:0 50:936:0 21:905:0 12:810:0 56:848:0 56:941:0 19:936:0 50:945:0 18:839:0 16:861:1 3:931:1 15:791:1 3:864:1 4:921:0 3:873:1 11:940:1 24:903:0 18:653:1 2:902:0 45:874:0 31:856:0 31:924:0 2:908:1 34:920:0 34:862:0 96:917:0 6:884:0 7:756:1 15:937:0 6:944:0 21:795:1 4:873:1 11:994:1 38:945:0 1:881:0 14:1000:0 18:756:0 29:956:1 20:957:0 26:898:0 4:892:1 11:925:1 39:856:0 2:887:1 12:965:1 24:937:0 96:1000:0 17:957:1 2:721:1 5:914:0 9:848:0 2:768:1 4:733:1 29:756:0 3:919:0 12:862:1 11:958:1 65:960:1 18:948:0 11:850:0 9:853:0 46:605:1 7:857:1 3:902:0 10:867:0 63:935:0 34:971:1 49:896:0 14:898:1 6:877:1 6:971:1 5:950:1 5:1000:1 10:672:1 9:948:1 10:713:1 41:942:1 16:822:0 39:692:1 33:765:1 1:852:0 82:1000:1 7:895:0 21:853:1 50:853:0 14:898:0 22:946:0 2:834:1 2:769:1 1:757:1 33:772:1 2:1000:1 19:824:1 32:944:0 11:796:1 21:781:0 41:907:0 13:1000:1 96:945:0 13:914:0 20:895:1 96:845:0 3:804:1 17:878:1 71:720:1 12:793:1 21:809:0 37:801:0 25:855:1 1:827:1 68:832:0 2:968:1 53:865:0 38:898:0 25:879:0 19:800:0 21:924:0 15:896:0 7:921:1 40:946:0 44:839:0 6:830:0 7:829:1 50:991:0 2:892:0 1:781:1 16:862:1 11:906:0 11:756:1 1:973:0 34:815:1 24:932:0 28:776:0 6:825:1 45:984:0 6:814:1 10:827:1 26:892:0 19:896:0 4:750:1 45:775:1 20:874:0 25:929:0 3:884:1 2:893:1 34:889:0 7:751:0 37:806:0 3:899:1 45:771:0 32:984:0 18:866:0 30:888:0 19:948:0 10:936:1 30:894:0 1:849:1 5:873:1 22:831:1 15:913:1 21:1000:1 8:962:0 31:767:1 10:906:0 27:990:0 32:844:0 5:957:1 55:965:0 45:947:1 1:709:1 9:786:1 1:769:1 32:855:0 1:952:1 7:915:0 36:1000:0 22:810:1 22:941:0 9:834:1 24:783:1 25:848:1 33:891:0 1:903:0 20:765:1 78:897:0 9:765:1 25:925:0 20:880:1 16:859:1 63:950:1 24:944:0 7:998:1 25:960:1 18:769:1 52:862:0 21:772:1 12:1000:0 23:885:0 6:835:1 3:1000:1 46:1000:0 1:1000:1 5:848:1 24:810:1 24:1000:0 20:829:0 32:885:1 24:949:0 6:993:1 3:1000:1 25:889:0 56:698:1 13:934:0 2:762:1 5:868:1 6:886:1 4:812:1 12:938:1 14:901:1 7:970:0 35:855:1 5:793:1 21:838:0 32:841:0 14:993:0 6:787:1 96:812:0 29:852:0 9:910:0 4:762:1 12:796:1 21:876:1 7:898:1 18:875:1 7:967:0 1:802:0 2:856:1 54:948:0 9:970:1 17:947:0 6:985:1 2:930:1 13:753:1 5:899:0 96:773:1 28:892:0 6:829:1 6:853:1 6:971:1 13:863:0 35:921:0 8:794:1 59:813:0 14:971:0 5:828:0 96:869:1 12:885:1 1:1000:1 7:849:0 81:834:0 15:914:1 5:839:0 16:900:1 3:878:1 5:1000:1 4:867:1 75:906:0 73:890:1 6:877:1 50:858:0 12:837:1 32:795:0 10:752:1 30:930:0 7:907:1 5:940:1 1:975:1 5:949:1 17:853:0 5:857:0 96:948:0 38:797:1 63:903:0 10:863:1 5:940:0 3:918:1 12:865:1 7:1000:1 62:912:0 38:825:0 9:958:0 25:807:0 81:953:1 56:869:0 4:675:1 1:918:1 58:917:0 5:874:0 55:910:0 13:939:0 1:1000:1 32:946:0 15:881:0 12:762:1 20:960:0 42:817:1 6:840:0 9:952:1 11:885:1 47:907:0 17:772:0 6:868:1 10:800:1 19:950:1 32:935:0 5:772:1 41:965:0 28:885:1 17:993:1 96:962:0 13:1000:1 3:839:1 11:853:1 33:881:1 8:972:1 25:843:0 22:900:0 62:924:0 22:892:0 22:871:0 6:819:0 14:1000:0 5:982:1 48:867:0 68:922:0 13:939:1 35:873:0 4:831:1 15:992:0 14:701:0 41:818:0 12:830:0 53:885:0 26:904:0 14:846:1 3:844:0 38:931:1 19:978:0 6:994:1 4:787:1 48:952:0 10:867:0 11:865:1 1:956:1 9:894:0 16:885:0 11:908:1 60:1000:0 2:852:0 9:947:1 7:971:1 23:814:1 10:947:1 23:814:0 12:882:1 85:834:0 5:861:1 50:922:1 18:925:0 9:922:1 11:842:0 14:778:1 44:988:0 6:839:1 53:766:0 1:957:1 2:945:0 15:1000:1 25:944:0 23:872:1 22:938:0 29:908:0 7:983:0 1:859:0 1:942:1 3:949:1 14:785:1 12:1000:1 12:905:1 9:893:0 80:1000:1 44:879:0 46:905:1 29:959:1 6:996:1 31:852:0 13:977:1 7:938:0 27:938:0 34:936:0 34:907:1 6:837:0 26:866:1 14:772:1 2:1000:1 43:882:1 1:815:1 24:969:0 37:879:1 6:922:1 7:948:0 54:880:0 23:904:0 15:817:1 22:932:0 5:910:1 75:768:0 13:799:1 23:836:0 32:936:0 58:900:0 23:1000:0 17:985:0 23:990:0 46:803:1 1:1000:0 1:987:1 34:848:0 17:842:0 3:977:0 10:815:1 23:992:0 34:962:0 4:904:0 27:962:0 18:957:1 7:1000:0 1:895:0 19:890:0 29:831:1 16:1000:0 3:1000:0 15:948:0 35:851:1 27:899:0 18:1000:0 14:789:1 3:905:1 17:796:1 11:739:1 51:819:0 30:757:1 21:970:0 6:856:0 26:844:0 2:991:0 15:884:1 35:808:0 16:921:0 3:783:1 49:873:0 39:1000:0 14:891:1 26:868:0 77:1000:0 12:827:1 7:940:1 77:862:1 8:1000:0 96:868:0 5:1000:1 20:935:0 35:992:1 12:920:1 60:962:0 32:1000:0 8:841:0 8:905:0 31:755:1 7:937:1 4:948:1 21:816:0 4:931:1 96:889:0 13:827:0 3:884:1 9:856:1 5:958:1 5:763:1 36:769:0 22:794:1 14:878:0 1:954:0 45:867:0 37:863:0 11:918:1 3:957:1 16:857:0 26:792:1 52:907:0 12:992:0 24:973:0 5:915:1 17:877:0 42:1000:0 5:1000:1 27:890:1 2:758:1 35:815:0 49:863:0 28:818:0 29:939:0 6:883:1 3:885:1 11:897:1 7:847:1 6:883:0 13:854:1 18:879:0 4:981:1 14:904:1 1:986:0 5:1000:0 1:948:1 91:878:0 3:924:1 13:955:1 19:863:0 1:897:0 82:890:1 37:904:0 21:923:0 24:799:1 7:1000:1 41:968:0 13:893:1 70:939:0 19:940:0 44:855:0 1:881:0 3:840:0 11:917:1 34:799:1 45:873:0 57:795:0 73:984:0 2:779:0 5:921:1 9:924:0 14:890:1 11:859:0 21:953:0 96:909:0 2:955:0 12:878:0 14:1000:0 5:931:1 15:910:1 23:922:0 49:1000:0 13:932:1 17:802:0 1:774:1 10:933:1 85:912:0 14:858:0 59:970:0 56:815:1 7:924:1 3:856:0 9:993:0 16:887:0 17:906:1 9:941:0 75:689:1 24:943:0 33:858:1 19:936:0 36:862:0 32:851:0 21:811:0 25:868:0 50:956:0 9:838:1 8:863:1 5:995:1 21:899:0 5:939:1 28:908:0 3:922:1 21:947:0 9:1000:1 13:954:0 5:982:0 8:926:0 2:763:1 96:908:0 17:890:1 16:974:1 43:866:0 14:1000:1 2:850:0 28:859:0 10:785:1 12:860:1 54:808:0 25:924:0 45:985:0 3:1000:1 12:966:1 8:910:0 1:934:0 29:851:0 27:798:1 16:985:1 19:894:1 40:829:0 53:738:1 25:782:0 33:863:0 9:1000:0 7:761:1 1:835:1 46:841:0 11:1000:1 63:939:0 28:807:0 45:788:1 1:887:1 21:823:0 2:841:1 83:855:0 16:836:1 20:867:1 4:840:1 13:886:0 22:890:1 28:959:0 23:930:1 95:917:0 3:885:1 92:912:0 5:976:0 9:1000:1 4:811:1 5:1000:0 39:851:0 48:877:0 13:857:0 11:839:1 79:880:0 14:731:0 5:918:0 43:1000:0 1:883:1 6:1000:1 16:951:0 14:862:1 30:882:1 7:788:1 16:863:1 17:857:1 2:925:1 25:899:0 11:883:1 4:803:1 5:913:1 12:803:1 9:907:0 9:938:0 24:861:1 27:823:1 3:867:1 55:919:0 35:906:0 1:822:1 54:1000:0 27:839:1 14:913:0 25:953:0 33:932:0 4:985:0 15:1000:1 43:909:0 35:932:0 25:1000:0 43:952:1 15:944:0 2:811:1 6:813:0 19:858:0 37:915:0 11:928:0 11:778:1 17:844:0 12:961:1 4:892:1 23:923:1 1:787:1 9:866:0 35:830:1 32:871:0 9:800:0 9:916:1 2:945:0 11:857:1 22:848:0 35:1000:0 12:995:0 16:873:1 31:884:0 28:852:0 35:755:1 31:865:1 38:966:0 26:937:0 3:816:1 13:896:1 21:834:0 1:912:1 54:877:0 16:868:1 1:965:1 58:955:0 28:1000:0 3:927:1 44:938:0 6:920:1 11:915:1 2:975:0 30:861:1 12:963:0 18:801:1 30:904:0 1:816:0 4:1000:1 3:806:1 53:854:0 76:846:1 3:993:1 7:991:1 5:876:1 1:927:1 26:855:0 6:1000:0 51:811:0 54:957:0 7:863:0 5:859:1 25:787:1 21:957:0 50:888:0 35:937:0 8:853:1 29:870:0 13:796:1 62:638:0 17:934:1 27:895:0 12:870:1 33:751:0 4:891:1 10:764:1 96:851:0 12:876:1 21:880:0 29:1000:0 2:957:1 28:887:0 19:948:1 44:730:1 7:826:1 1:732:1 5:862:1 11:786:0 6:792:1 2:902:0 4:837:0 70:828:1 1:954:1 12:918:0 2:872:1 43:844:1 63:1000:1 55:942:1 25:856:1 10:887:0 16:871:1 56:964:0 2:873:1 2:763:0 96:945:1 15:1000:0 25:927:1 19:964:1 7:987:0 48:993:0 22:977:1 18:832:0 10:884:1 40:916:1 17:830:0 1:868:1 28:863:0 4:907:0 76:854:1 10:1000:1 12:924:1 1:934:1 9:895:0 2:883:1 29:979:0 9:930:0 17:830:1 2:902:0 1:938:1 7:841:0 32:902:0 2:900:1 46:1000:1 30:834:0 7:913:1 9:990:0 23:841:0 10:915:0 6:902:0 14:862:0 32:851:1 19:998:0 29:914:0 15:787:1 24:856:0 39:891:0 42:863:0 17:951:1 7:908:0 52:929:0 9:829:1 2:919:1 6:812:1 27:941:0 7:956:0 1:958:1 5:919:0 7:982:0 16:981:0 8:867:1 19:910:0 14:719:1 5:849:1 17:959:1 25:793:1 3:1000:0 5:862:1 38:857:1 45:954:1 50:822:0 8:852:1 41:808:1 5:936:0 8:848:0 1:1000:1 44:996:1 96:943:0 1:946:1 30:786:0 52:992:0 7:906:0 25:924:0 4:951:0 4:763:1 73:893:0 92:845:0 4:709:1 22:1000:1 4:662:1 15:962:0 4:838:0 12:700:1 18:922:1 12:886:1 18:724:1 14:852:0 8:898:0 8:971:0 24:984:1 9:830:1 3:902:0 11:873:1 2:978:0 3:1000:1 3:902:1 5:882:0 9:795:1 13:990:1 14:803:0 6:961:0 19:687:1 21:853:1 58:771:1 46:844:1 1:802:1 3:935:1 47:942:1 20:934:1 39:804:1 21:853:0 9:772:1 42:954:1 6:938:0 4:820:1 10:854:0 27:869:1 7:895:1 14:833:0 5:874:1 14:831:0 63:733:0 1:903:1 23:839:0 26:961:0 36:1000:1 10:930:0 7:895:1 10:791:1 3:963:1 10:858:0 19:877:0 10:771:1 3:858:0 7:950:0 25:957:0 15:785:1 21:955:0 38:930:0 2:928:0 17:953:0 7:734:1 8:939:0 25:954:0 41:986:0 13:829:1 34:890:1 78:918:0 6:992:0 3:911:1 21:907:1 75:904:0 16:804:1 23:840:1 49:948:0 6:878:1 32:794:1 4:945:0 7:928:0 16:868:1 25:810:0 11:833:1 3:855:1 9:867:0 39:871:0 9:774:1 35:836:0 31:851:0 33:954:0 18:846:0 18:895:1 16:952:0 5:987:0 6:679:1 23:781:0 96:847:0 15:887:0 1:976:0 30:771:1 35:781:0 66:849:0 13:834:0 2:843:1 8:896:1 34:821:0 16:948:0 53:821:1 1:811:1 72:785:1 96:925:0 10:826:0 7:829:1 3:878:0 2:942:0 29:793:1 4:782:1 23:954:0 30:884:0 35:786:1 30:835:1 11:1000:0 3:1000:0 27:978:0 7:772:1 29:818:1 17:973:0 26:876:0 14:976:1 19:925:0 44:825:0 33:939:0 5:836:0 73:950:0 36:932:0 13:858:1 11:971:1 25:942:1 10:1000:1 16:895:1 4:889:0 13:789:0 35:877:0 7:828:1 37:808:0 21:925:1 20:934:0 17:837:1 1:841:1 10:988:0 37:867:1 13:801:1 13:835:0 26:1000:0 25:937:1 23:811:0 12:835:1 6:944:1 14:813:1 7:906:1 13:943:1 54:914:0 92:780:1 36:937:0 1:894:1 8:822:0 2:843:0 11:942:1 1:972:1 13:893:1 3:832:0 19:932:0 7:963:0 10:892:0 1:794:1 19:834:0 25:955:1 24:903:0 37:939:0 34:1000:0 19:939:1 13:946:1 5:834:1 12:941:1 10:932:1 38:920:1 3:924:1 6:817:1 96:843:0 26:740:1 63:961:0 31:941:1 12:891:0 31:803:0 3:963:0 59:857:0 12:974:1 19:926:1 33:866:0 4:858:1 1:931:1 82:894:0 27:932:0 9:763:1 50:753:0 4:909:0 25:771:0 53:972:0 15:996:0 1:836:0 34:753:1 31:836:0 5:785:1 23:755:1 43:968:0 1:913:1 28:803:0 17:974:0 8:808:1 2:850:1 2:861:1 9:746:0 20:802:1 15:866:0 15:972:1 30:874:0 17:834:0 9:846:1 12:947:1 11:731:0 1:916:1 6:857:1 5:748:0 13:867:1 12:953:1 25:972:1 38:861:0 24:831:0 48:949:1 10:785:0 18:884:1 19:775:1 13:868:0 9:944:1 19:854:0 28:981:0 1:911:1 53:942:0 49:854:0 6:823:1 24:973:0 14:850:1 25:838:1 11:807:0 17:935:0 31:816:1 11:977:1 7:999:0 45:810:0 46:803:0 9:1000:0 7:671:0 94:834:0 20:875:1 36:929:0 31:941:0 44:1000:0 38:959:0 11:953:0 5:895:1 2:954:1 3:828:1 27:913:0 22:811:0 34:934:1 76:844:0 96:929:1 30:876:0 3:825:1 23:1000:1 22:887:1 11:827:1 14:909:0 35:855:0 34:922:0 26:915:0 5:923:1 86:1000:0 28:770:1 21:1000:0 8:879:0 11:813:1 16:893:0 3:852:0 36:926:0 3:896:0 13:895:1 34:964:0 35:909:0 96:863:0 24:872:0 81:971:0 17:902:1 11:977:1 9:887:0 4:959:0 66:978:1 14:921:1 1:1000:1 6:843:1 10:939:1 16:830:0 30:879:0 5:1000:1 45:657:0 12:876:1 14:880:0 43:1000:1 47:857:0 9:723:1 12:980:1 9:893:1 25:801:1 16:952:1 24:762:1 6:903:1 3:896:0 14:853:1 2:903:1 3:977:0 31:845:0 29:939:1 12:889:0 12:891:0 12:976:1 13:973:1 1:852:0 3:895:1 4:817:1 4:927:1 1:759:1 12:887:0 5:920:1 5:890:1 6:866:0 75:917:0 20:893:1 13:860:1 1:886:1 1:835:0 18:759:1 2:961:1 53:883:0 8:977:1 2:883:0 9:948:0 1:854:0 39:901:1 2:901:1 44:878:0 96:877:1 1:798:1 1:872:1 90:981:0 17:839:1 14:775:1 7:874:0 14:1000:1 8:787:0 27:899:1 7:930:1 75:976:0 7:948:0 18:820:0 12:752:1 7:842:0 2:826:1 41:838:1 25:973:0 24:854:1 16:782:0 18:811:1 2:951:1 12:847:1 49:871:0 1:767:1 18:809:0 25:879:0 8:877:0 26:920:0 13:835:1 6:960:0 6:846:0 2:992:1 7:826:1 45:955:0 1:895:1 12:829:1 27:854:1 35:721:1 19:934:1 73:866:0 15:948:1 19:856:1 3:869:1 18:814:1 26:803:0 3:991:1 2:735:1 13:891:1 4:851:0 7:840:1 12:930:1 25:794:0 2:973:0 14:939:0 24:921:1 23:899:1 6:863:1 21:858:0 2:930:0 7:771:1 19:932:0 3:902:1 7:849:1 12:809:1 18:857:1 6:780:1 20:948:0 27:879:1 2:904:0 12:935:1 8:911:1 22:860:0 4:946:1 15:894:1 8:969:0 12:906:1 89:891:0 8:866:1 11:909:1 3:959:0 14:902:0 29:929:1 18:802:0 5:912:1 16:810:0 17:861:1 8:970:1 2:924:1 3:1000:0 23:888:1 2:805:0 14:918:0 11:968:1 3:861:1 14:732:1 5:992:1 1:963:1 32:914:1 24:877:0 19:812:0 24:869:1 10:892:0 6:732:1 8:820:1 16:864:0 39:854:1 1:842:1 2:891:1 12:758:1 30:816:1 2:950:1 1:771:1 21:974:1 9:643:1 48:889:1 10:903:0 3:790:1 31:898:0 68:803:0 15:825:1 13:953:1 29:873:0 7:942:0 61:758:0 34:998:1 5:1000:0 33:844:1 1:1000:1 38:931:0 67:939:0 6:942:1 14:750:1 9:858:0 63:850:0 10:824:1 2:981:0 16:871:0 25:873:1 5:917:1 25:931:0 1:1000:0 39:850:0 39:809:0';
+  const D=MUESTRA.split(' ').map(t=>t.split(':').map(Number)).map(([a,v,c])=>({a,v:v/10,c}));
+  const NUEVOS=D.slice(600);
+  const st={k:3,n:100};
+  const XMAX=97,YMIN=55,YMAX=100,KMAX=40;
+  const celda=(p,K)=>Math.min(K-1,Math.floor(p.a/XMAX*K))*K+Math.max(0,Math.min(K-1,Math.floor((p.v-YMIN)/(YMAX-YMIN)*K)));
+  function entrenar(K,n){
+    const tr=D.slice(0,n),uno=new Map(),tot=new Map();
+    tr.forEach(p=>{const c=celda(p,K);tot.set(c,(tot.get(c)||0)+1);uno.set(c,(uno.get(c)||0)+p.c);});
+    const pred=c=>tot.has(c)&&uno.get(c)/tot.get(c)>0.5?1:0;   // casilla vacía o empatada: «se queda»
+    const acierto=ps=>ps.reduce((s,p)=>s+(pred(celda(p,K))===p.c),0)/ps.length;
+    return {uno,tot,pred,ent:acierto(tr),nue:acierto(NUEVOS)};
+  }
+  const curvas={};
+  [100,300].forEach(n=>{curvas[n]=[];for(let K=1;K<=KMAX;K++){const m=entrenar(K,n);curvas[n].push({K,ent:m.ent,nue:m.nue});}});
+  const css=n=>getComputedStyle(raiz).getPropertyValue(n).trim();
+  function lienzo(cv){const w=cv.clientWidth||300,h=+cv.getAttribute('height');const r=window.devicePixelRatio||1;
+    cv.width=Math.round(w*r);cv.height=Math.round(h*r);cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(r,0,0,r,0,0);return {c,w,h};}
+  function tri(c,x,y,s){c.beginPath();c.moveTo(x,y-s);c.lineTo(x+s,y+s*.8);c.lineTo(x-s,y+s*.8);c.closePath();c.fill();}
+  function plano(m){
+    const {c,w,h}=lienzo(raiz.querySelector('#c1l1-plano'));const L=40,R=8,T=8,B=34,W=w-L-R,H=h-T-B;
+    const X=a=>L+a/XMAX*W,Y=v=>T+H-(v-YMIN)/(YMAX-YMIN)*H;const K=st.k;
+    c.font='11px '+css('--f-display');
+    for(let i=0;i<K;i++)for(let j=0;j<K;j++){const id=i*K+j;if(!m.tot.has(id))continue;
+      const x0=L+i/K*W,y0=T+H-(j+1)/K*H,cw=W/K,ch=H/K;
+      if(m.pred(id)){c.fillStyle=css('--warm-soft');c.fillRect(x0,y0,cw,ch);c.strokeStyle=css('--warm');c.lineWidth=1;c.strokeRect(x0+.5,y0+.5,cw-1,ch-1);}}
+    c.strokeStyle=css('--grid');c.lineWidth=1;
+    if(K<=40){for(let i=1;i<K;i++){c.beginPath();c.moveTo(L+i/K*W,T);c.lineTo(L+i/K*W,T+H);c.moveTo(L,T+i/K*H);c.lineTo(L+W,T+i/K*H);c.stroke();}}
+    c.strokeStyle=css('--line');c.strokeRect(L,T,W,H);
+    D.slice(0,st.n).forEach(p=>{const x=X(p.a),y=Y(p.v);
+      if(p.c){c.fillStyle=css('--warm');tri(c,x,y,3.6);}else{c.fillStyle=css('--muted');c.beginPath();c.arc(x,y,2.4,0,7);c.fill();}});
+    c.fillStyle=css('--muted');c.textAlign='center';
+    [0,24,48,72,96].forEach(a=>c.fillText(a,X(a),T+H+14));c.fillText('antigüedad (meses)',L+W/2,h-4);
+    c.textAlign='right';[60,70,80,90,100].forEach(v=>c.fillText(v,L-5,Y(v)+4));
+    c.save();c.translate(11,T+H/2);c.rotate(-Math.PI/2);c.textAlign='center';c.fillText('velocidad entregada (%)',0,0);c.restore();
+  }
+  function curva(){
+    const {c,w,h}=lienzo(raiz.querySelector('#c1l1-curva'));const L=40,R=10,T=8,B=34,W=w-L-R,H=h-T-B;
+    const X=k=>L+(k-1)/(KMAX-1)*W,Y=v=>T+H-(v-.4)/.6*H;const cs=curvas[st.n];
+    c.font='11px '+css('--f-display');c.strokeStyle=css('--line');c.strokeRect(L,T,W,H);
+    c.fillStyle=css('--muted');c.textAlign='right';[.4,.5,.6,.7,.8,.9,1].forEach(v=>{c.fillText(nf(100*v)+' %',L-4,Y(v)+4);
+      c.strokeStyle=css('--grid');c.beginPath();c.moveTo(L,Y(v));c.lineTo(L+W,Y(v));c.stroke();});
+    c.textAlign='center';[1,10,20,30,40].forEach(k=>c.fillText(k,X(k),T+H+14));c.fillText('casillas por lado',L+W/2,h-4);
+    c.setLineDash([2,4]);c.strokeStyle=css('--muted');c.lineWidth=1.5;c.beginPath();c.moveTo(L,Y(.5));c.lineTo(L+W,Y(.5));c.stroke();
+    const linea=(key,col,dash)=>{c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=2.2;c.beginPath();cs.forEach((p,i)=>{i?c.lineTo(X(p.K),Y(p[key])):c.moveTo(X(p.K),Y(p[key]));});c.stroke();};
+    linea('ent',css('--accent'),[6,4]);linea('nue',css('--warm'),[]);c.setLineDash([]);
+    const p=cs[st.k-1];c.strokeStyle=css('--ink');c.lineWidth=1;c.beginPath();c.moveTo(X(st.k),T);c.lineTo(X(st.k),T+H);c.stroke();
+    [['ent',css('--accent')],['nue',css('--warm')]].forEach(([k,col])=>{c.fillStyle=col;c.beginPath();c.arc(X(st.k),Y(p[k]),4.5,0,7);c.fill();});
+  }
+  function leer(m){
+    const cs=curvas[st.n],mejor=cs.reduce((a,b)=>b.nue>a.nue?b:a);
+    const brecha=m.ent-m.nue;let txt;
+    if(st.k<=2)txt='<span class="warn">Subajuste: con tan pocas casillas el modelo casi no distingue a nadie.</span><span>Acierta poco en los dos grupos: le falta capacidad para ver que los clientes nuevos y con mala velocidad se van más.</span>';
+    else if(brecha>.15)txt='<span class="warn">Sobreajuste: memoriza.</span><span>Cada casilla tiene uno o dos clientes y copia su respuesta. Acierta '+pct(m.ent)+' con los que vio y '+pct(m.nue)+' con los nuevos: casi como tirar una moneda.</span>';
+    else txt='<span class="ok">Generaliza razonablemente.</span><span>Lo que aprendió con unos clientes sirve para otros: la diferencia entre los dos aciertos es de '+nf(100*brecha)+' puntos.</span>';
+    raiz.querySelector('#c1l1-out').innerHTML='<span class="big">'+st.k+' × '+st.k+' = '+nf(st.k*st.k)+(st.k===1?' casilla':' casillas')+' · aciertos: '+pct(m.ent)+' con los que aprendió, '+pct(m.nue)+' con 2.000 clientes nuevos</span>'+txt+
+      '<span>Con '+st.n+' clientes para aprender, el mejor resultado en clientes nuevos es '+pct(mejor.nue)+', con '+mejor.K+' casillas por lado. '+(st.n===100?'Prueba con 300 clientes: la curva roja tarda más en caer.':'Con más clientes, memorizar cuesta más casillas: la curva roja cae más tarde.')+'</span>';
+  }
+  function todo(){const m=entrenar(st.k,st.n);plano(m);curva();leer(m);}
+  const sl=raiz.querySelector('#c1l1-k');
+  sl.addEventListener('input',()=>{st.k=+sl.value;raiz.querySelector('#c1l1-kv').textContent=st.k;todo();});
+  raiz.querySelectorAll('[data-n]').forEach(b=>b.addEventListener('click',()=>{st.n=+b.dataset.n;raiz.querySelectorAll('[data-n]').forEach(x=>x.setAttribute('aria-pressed',x===b));todo();}));
+  let rt;const re=()=>{clearTimeout(rt);rt=setTimeout(todo,60);};
+  let anchoVisto=0;/* solo redibuja si cambia el ancho: evita un bucle de redibujos cuando la página cambia de alto */
+  if(window.ResizeObserver)new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(w!==anchoVisto){anchoVisto=w;re();}}).observe(raiz.querySelector('#c1l1-plano'));
+  new MutationObserver(re).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
+  if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',re);
+  todo();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX76XF8R');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Árboles y ensambles · Aprendizaje automático · Aprendizaje automático</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, con scikit-learn corriendo en la página.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KX76XF8R"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap" data-page="arboles-y-ensambles">
+<header class="topbar"><a class="brand" href="index.html">Aprendizaje <b>automático</b></a><span class="eyebrow">Curso visual e interactivo · Datos e inteligencia artificial</span><a class="al-sitio" href="https://aaramirez.github.io/">← Todos los cursos</a></header>
+<div class="layout">
+<nav class="toc" id="toc" aria-label="Ruta de aprendizaje"></nav>
+<main>
+<header class="page-head"><span class="num">CAPÍTULO 07 DE 12</span><h1>Árboles y ensambles: bosques y boosting</h1><p class="lede">Un árbol de decisión responde con preguntas de sí o no, y por eso cualquiera lo entiende; solo, sobreajusta con facilidad. Este capítulo arma con él dos ensambles: el bosque aleatorio, que hace votar a cientos de árboles distintos, y el boosting, que suma árboles chicos que corrigen los errores de los anteriores. Con los clientes que cancelan, el boosting es el mejor modelo del curso.</p></header>
+<section><h2>Árboles de decisión: preguntas que parten los datos</h2><div class="prose"><p>Marisol Cárdenas no sabe qué es una regresión logística, pero sabe a quién hay que llamar. Cuando Ximena Robles le mostró los coeficientes del capítulo 03, Marisol los miró un rato y preguntó: «¿No se puede escribir como lo pienso yo? Si es nuevo y la señal le llega mal, lo llamo. Si es antiguo y no reclama, no». Ximena tenía la respuesta a mano: eso es un árbol de decisión.</p></div><div class="analogia"><b>Imagínalo así</b><p>En el juego de las veinte preguntas, alguien piensa en un animal y tú adivinas preguntando cosas de sí o no. Un buen jugador no pregunta «¿es un ornitorrinco?» al comienzo: pregunta «¿vive en el agua?», porque la respuesta parte las posibilidades por la mitad. Un árbol de decisión juega así con los clientes: busca la pregunta que mejor separa a los que cancelan de los que se quedan, y después repite el juego dentro de cada mitad.</p></div><div class="prose"><p>Un <b>árbol de decisión</b> (<i>decision tree</i>) es un modelo que predice con una cadena de preguntas sobre las variables. Cada pregunta es un <b>nodo</b> (<i>node</i>) y compara una sola variable con un valor: «¿la antigüedad es de 13,5 meses o menos?». Según la respuesta, el cliente baja por la rama del sí o la del no hasta llegar a una <b>hoja</b> (<i>leaf</i>), donde ya no hay más preguntas. La primera pregunta se llama la <b>raíz</b> (<i>root</i>), y el número de preguntas que hay entre la raíz y la hoja más lejana, la <b>profundidad</b> (<i>depth</i>).</p><p>En clasificación, cada hoja guarda la proporción de clientes de entrenamiento que cancelaron entre los que cayeron en ella. Esa proporción es la probabilidad que entrega el árbol: un cliente nuevo que termina en una hoja donde canceló el 47,7 % recibe un riesgo de 0,477. En regresión, la hoja guarda el promedio de la variable que se predice.</p><p>Ximena entrenó un árbol de profundidad 2 con los 15.000 clientes de entrenamiento. Nadie le dijo qué preguntar: el algoritmo encontró solo los dos efectos más fuertes que tienen las variables numéricas de este problema.</p></div><figure class="fig fig-esquema" id="07-diagrama-1"><div class="lienzo"><svg viewBox="0 0 900 430" style="min-width:720px" role="img" aria-label="Un árbol de decisión de profundidad 2 entrenado con los 15.000 clientes. Primero pregunta si la antigüedad es de 13,5 meses o menos; después, en cada rama, si la velocidad entregada es menor que 80 %. Las cuatro hojas tienen tasas de cancelación de 47,7 %, 20,0 %, 24,0 % y 7,1 %. A la derecha, las mismas cuatro hojas como rectángulos del plano de antigüedad y velocidad">
+<defs>
+<marker id="c7d1-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+</defs>
+<text x="20" y="28" class="t t-b">EL ÁRBOL: PREGUNTAS QUE PARTEN A LOS CLIENTES</text>
+
+<rect x="170" y="44" width="200" height="66" rx="10" class="c-tra"/>
+<text x="270" y="66" class="t t-s t-b k-tra" text-anchor="middle">¿antigüedad ≤ 13,5 meses?</text>
+<text x="270" y="84" class="t t-xs" text-anchor="middle">15.000 CLIENTES · 13,7 % CANCELA</text>
+<text x="270" y="100" class="t t-xs t-m" text-anchor="middle">GINI 0,237</text>
+<path d="M230 110L130 158" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-m)"/>
+<path d="M310 110L410 158" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-m)"/>
+<text x="160" y="130" class="t t-s t-b">sí</text><text x="372" y="130" class="t t-s t-b">no</text>
+
+<rect x="30" y="162" width="200" height="66" rx="10" class="c-tra"/>
+<text x="130" y="184" class="t t-s t-b k-tra" text-anchor="middle">¿velocidad ≤ 79,9 %?</text>
+<text x="130" y="202" class="t t-xs" text-anchor="middle">5.607 CLIENTES · 22,4 %</text>
+<text x="130" y="218" class="t t-xs t-m" text-anchor="middle">GINI 0,348</text>
+<rect x="310" y="162" width="200" height="66" rx="10" class="c-tra"/>
+<text x="410" y="184" class="t t-s t-b k-tra" text-anchor="middle">¿velocidad ≤ 80,0 %?</text>
+<text x="410" y="202" class="t t-xs" text-anchor="middle">9.393 CLIENTES · 8,5 %</text>
+<text x="410" y="218" class="t t-xs t-m" text-anchor="middle">GINI 0,156</text>
+<path d="M95 228L70 276" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-m)"/>
+<path d="M165 228L190 276" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-m)"/>
+<path d="M375 228L350 276" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-m)"/>
+<path d="M445 228L470 276" class="ln s-tra" style="stroke-width:2" marker-end="url(#c7d1-m)"/>
+<text x="66" y="252" class="t t-xs t-m">SÍ</text><text x="186" y="252" class="t t-xs t-m">NO</text><text x="346" y="252" class="t t-xs t-m">SÍ</text><text x="466" y="252" class="t t-xs t-m">NO</text>
+
+<rect x="14" y="280" width="112" height="70" rx="8" style="fill:var(--warm);fill-opacity:.4;stroke:var(--warm)"/>
+<text x="70" y="302" class="t t-xs t-b" text-anchor="middle">HOJA A</text><text x="70" y="322" class="t t-b" text-anchor="middle">47,7 %</text><text x="70" y="340" class="t t-xs t-m" text-anchor="middle">488 CLIENTES</text>
+<rect x="134" y="280" width="112" height="70" rx="8" style="fill:var(--warm);fill-opacity:.17;stroke:var(--warm)"/>
+<text x="190" y="302" class="t t-xs t-b" text-anchor="middle">HOJA B</text><text x="190" y="322" class="t t-b" text-anchor="middle">20,0 %</text><text x="190" y="340" class="t t-xs t-m" text-anchor="middle">5.119 CLIENTES</text>
+<rect x="294" y="280" width="112" height="70" rx="8" style="fill:var(--warm);fill-opacity:.2;stroke:var(--warm)"/>
+<text x="350" y="302" class="t t-xs t-b" text-anchor="middle">HOJA C</text><text x="350" y="322" class="t t-b" text-anchor="middle">24,0 %</text><text x="350" y="340" class="t t-xs t-m" text-anchor="middle">810 CLIENTES</text>
+<rect x="414" y="280" width="112" height="70" rx="8" style="fill:var(--warm);fill-opacity:.06;stroke:var(--warm)"/>
+<text x="470" y="302" class="t t-xs t-b" text-anchor="middle">HOJA D</text><text x="470" y="322" class="t t-b" text-anchor="middle">7,1 %</text><text x="470" y="340" class="t t-xs t-m" text-anchor="middle">8.583 CLIENTES</text>
+<text x="20" y="382" class="t t-s">Cada hoja predice la proporción de clientes que cancela en ella: es la probabilidad</text>
+<text x="20" y="400" class="t t-s">que entrega el árbol. El Gini mide cuán mezclada está una caja: 0 si todos hacen</text>
+<text x="20" y="418" class="t t-s">lo mismo; 0,5 si mitad y mitad. Cada pregunta se elige para que baje lo más posible.</text>
+
+<text x="572" y="28" class="t t-b">EL MISMO ÁRBOL EN EL PLANO</text>
+<rect x="580" y="194" width="41" height="166" style="fill:var(--warm);fill-opacity:.4;stroke:var(--c-tra);stroke-width:1.5"/>
+<rect x="580" y="60" width="41" height="134" style="fill:var(--warm);fill-opacity:.17;stroke:var(--c-tra);stroke-width:1.5"/>
+<rect x="621" y="194" width="249" height="166" style="fill:var(--warm);fill-opacity:.2;stroke:var(--c-tra);stroke-width:1.5"/>
+<rect x="621" y="60" width="249" height="134" style="fill:var(--warm);fill-opacity:.06;stroke:var(--c-tra);stroke-width:1.5"/>
+<line x1="621" y1="44" x2="621" y2="370" class="ln s-tra" style="stroke-width:2.5"/>
+<line x1="580" y1="194" x2="880" y2="194" class="ln s-tra" style="stroke-width:2.5"/>
+<text x="600" y="282" class="t t-s t-b" text-anchor="middle">A</text>
+<text x="600" y="132" class="t t-s t-b" text-anchor="middle">B</text>
+<text x="745" y="282" class="t t-s t-b" text-anchor="middle">C</text>
+<text x="745" y="132" class="t t-s t-b" text-anchor="middle">D</text>
+<text x="626" y="54" class="t t-xs k-tra">13,5 MESES</text>
+<text x="876" y="188" class="t t-xs k-tra" text-anchor="end">80 %</text>
+<g class="t t-xs t-m" text-anchor="middle"><text x="580" y="378">0</text><text x="653" y="378">24</text><text x="725" y="378">48</text><text x="798" y="378">72</text><text x="870" y="378">96</text></g>
+<text x="725" y="396" class="t t-s t-m" text-anchor="middle">antigüedad (meses) →</text>
+<g class="t t-xs t-m" text-anchor="end"><text x="574" y="64">100</text><text x="574" y="197">80</text><text x="574" y="363">55</text></g>
+<text x="556" y="210" class="t t-s t-m" text-anchor="middle" transform="rotate(-90 556 210)">velocidad entregada (%) →</text>
+<text x="580" y="418" class="t t-s">Cortes rectos, paralelos a los ejes.</text>
+</svg></div><figcaption><b>Un árbol de profundidad 2 y el plano que dibuja.</b> A la izquierda, el árbol: la raíz pregunta por la antigüedad y cada rama pregunta después por la velocidad entregada. En cada caja, cuántos clientes llegan, qué porcentaje cancela y su Gini. Las hojas más rojas cancelan más: la hoja A, clientes nuevos con mala velocidad, cancela el 47,7 %. A la derecha, las mismas cuatro hojas como rectángulos del plano de antigüedad y velocidad. Léelo en paralelo: cada pregunta es una línea recta, paralela a un eje.</figcaption></figure><div class="prose"><p>El dibujo de la derecha muestra la forma de pensar de un árbol. Cada pregunta corta el espacio con una línea paralela a un eje, así que la frontera que dibuja siempre es una escalera de rectángulos. Eso tiene dos consecuencias. La buena: no hace falta escalar las variables, porque «¿consumo ≤ 300 GB?» funciona igual en GB que en MB; tampoco importa que la relación sea curva o tenga escalones, como el salto de la cancelación cuando la velocidad cae por debajo de 80 %. La mala: para seguir una frontera diagonal, el árbol necesita muchísimos escalones, y cada escalón se apoya en menos clientes.</p></div><div class="lab" id="07-lab-1"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Un árbol que crece: mueve la profundidad y mira las particiones del plano</h3></div><p class="hint">Cuatrocientos clientes de contrato mensual con dos variables: antigüedad y velocidad entregada. Sube la profundidad de 1 a 10 y mira cómo el plano se llena de rectángulos y cómo se separan las dos curvas de AUC. Después deja la profundidad en 10 y sube el mínimo de clientes por hoja. Pulsa «Ver los datos de prueba» para ver con qué clientes se mide.</p><style>
+[id="07-lab-1"] .c7l1-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="07-lab-1"] .c7l1-par{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:start}
+[id="07-lab-1"] .c7l1-col{display:grid;gap:6px}
+[id="07-lab-1"] canvas{border:1px solid var(--line)}
+[id="07-lab-1"] .c7l1-reglas{font:.76rem/1.5 var(--f-mono);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-height:260px;overflow:auto;white-space:pre;margin:0}
+@media (max-width:640px){[id="07-lab-1"] .c7l1-par{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="ctls">
+  <label class="ctl">Profundidad máxima <output id="c7l1-d-o"></output>
+    <input id="c7l1-d" type="range" min="1" max="10" step="1" value="2"></label>
+  <label class="ctl">Mínimo de clientes por hoja <output id="c7l1-m-o"></output>
+    <input id="c7l1-m" type="range" min="1" max="40" step="1" value="1"></label>
+</div>
+<div class="btns" role="group" aria-label="Criterio y puntos que se ven">
+  <button type="button" id="c7l1-gini" aria-pressed="true">Gini</button><button type="button" id="c7l1-ent" aria-pressed="false">Entropía</button>
+  <button type="button" id="c7l1-prueba" aria-pressed="false">Ver los datos de prueba</button>
+</div>
+<div class="c7l1-par">
+  <div class="c7l1-col"><span class="c7l1-rot">Las particiones del plano</span>
+    <canvas id="c7l1-cv" role="img" aria-label="Los clientes en el plano de dos variables y los rectángulos en que el árbol parte el plano, sombreados según la proporción de clientes de cada hoja que cancela"></canvas></div>
+  <div class="c7l1-col"><span class="c7l1-rot">AUC según la profundidad</span>
+    <canvas id="c7l1-cu" role="img" aria-label="AUC en entrenamiento y en prueba para cada profundidad del árbol, con la profundidad elegida marcada"></canvas>
+    <span class="c7l1-rot">Las preguntas del árbol</span>
+    <pre class="c7l1-reglas" id="c7l1-reglas"></pre></div>
+</div>
+<div class="legend"><span><b style="color:var(--warm)">▲</b> cancela</span><span><b style="color:var(--muted)">●</b> se queda</span><span>rectángulo más rojo: hoja donde cancelan más</span><span>AUC: <b style="color:var(--accent)">- - entrenamiento</b> · <b style="color:var(--warm)">— prueba</b></span></div>
+<div class="readout texto" id="c7l1-out" aria-live="polite"></div></div></section>
+<section><h2>Impureza, ganancia y poda</h2><div class="prose"><p>¿Cómo elige el árbol la pregunta? Prueba todas: cada variable y cada valor de corte posible. Para cada candidata mira cuán mezcladas quedan las dos cajas que resultan y se queda con la que las deja más ordenadas. A esa mezcla se le llama <b>impureza</b> (<i>impurity</i>).</p></div><div class="analogia"><b>Imagínalo así</b><p>Imagina dos cajones de calcetines revueltos, negros y blancos. Un cajón con todos negros está «puro»: sacas uno y sabes qué color te va a salir. Uno mitad y mitad es el peor: no puedes adivinar. Una buena pregunta para ordenar es la que, al separar los calcetines en dos cajones, deja a cada uno lo más cerca posible de un solo color.</p></div><div class="prose"><p>La medida que usa scikit-learn por omisión es el <b>índice de Gini</b> (<i>Gini impurity</i>). Si en una caja una proporción <span class="math">p</span> de los clientes cancela, el Gini vale <span class="math">2p(1-p)</span>: es 0 cuando todos hacen lo mismo y llega a su máximo, 0,5, cuando hay mitad y mitad. Con más de dos clases se escribe <span class="math">1 - \sum_k p_k^2</span>. Se lee como la probabilidad de equivocarse si a un cliente de la caja se le asigna una clase al azar, en la proporción de la caja.</p><p>En la raíz, con 13,7 % de cancelación, el Gini es <span class="math">2 \times 0{,}137 \times 0{,}863 = 0{,}237</span>. La pregunta por la antigüedad deja una caja de 5.607 clientes con Gini 0,348 y otra de 9.393 con Gini 0,156. La <b>ganancia</b> (<i>gain</i>) de la pregunta es cuánto baja la impureza, pesando cada caja por su tamaño:</p><div class="math-display">0{,}237 - \left(\tfrac{5.607}{15.000} \times 0{,}348 + \tfrac{9.393}{15.000} \times 0{,}156\right) = 0{,}237 - 0{,}228 = 0{,}009</div><p>Parece poco, pero ninguna otra pregunta sobre ninguna variable baja más. La alternativa más conocida es la <b>entropía</b> (<i>entropy</i>), <span class="math">-\sum_k p_k \log_2 p_k</span>, que viene de la teoría de la información y mide cuántas preguntas de sí o no harían falta para adivinar la clase. Con la entropía, la ganancia se llama <b>ganancia de información</b> (<i>information gain</i>). En la práctica, Gini y entropía eligen casi siempre las mismas preguntas: con profundidad 6, el árbol con entropía da AUC 0,760 en prueba, igual que con Gini.</p><p>El algoritmo que construye así los árboles, pregunta a pregunta y sin volver atrás, se llama <b>CART</b> (<i>Classification and Regression Trees</i>, árboles de clasificación y regresión), y lo publicaron Breiman, Friedman, Olshen y Stone en 1984. Es <b>voraz</b> (<i>greedy</i>): en cada paso elige la mejor pregunta para ese paso, sin mirar si otra peor ahora abriría mejores preguntas después.</p><p>Si nadie lo detiene, el árbol sigue preguntando hasta que cada hoja es pura, aunque tenga un solo cliente. Con los 15.000 clientes, el árbol sin límite tiene 2.091 hojas y acierta a todos en entrenamiento (AUC 1,000); en prueba cae a 0,585, peor que con dos preguntas. Es el sobreajuste del capítulo 06 llevado al extremo: un árbol profundo tiene sesgo bajo y varianza altísima. Para evitarlo se lo <b>poda</b> (<i>pruning</i>), de dos maneras:</p><ul><li><b>Poda previa</b> (<i>pre-pruning</i>): ponerle límites mientras crece. Los hiperparámetros más usados en scikit-learn son <code>max_depth</code> (profundidad máxima), <code>min_samples_leaf</code> (mínimo de clientes por hoja) y <code>max_leaf_nodes</code> (máximo de hojas). Con <code>min_samples_leaf=100</code>, el árbol llega a 0,767 en prueba.</li><li><b>Poda posterior</b> (<i>post-pruning</i>): dejarlo crecer entero y después cortar las ramas que aportan menos de lo que cuestan. scikit-learn lo hace con la <b>poda por costo y complejidad</b> (<i>cost-complexity pruning</i>), el parámetro <code>ccp_alpha</code>: cada hoja extra tiene que bajar la impureza al menos en <code>ccp_alpha</code> para quedarse. Con <code>ccp_alpha=0,0005</code>, el árbol queda con 18 hojas y AUC 0,759.</li></ul><div class="tbl"><table><thead><tr><th>Árbol (15.000 clientes)</th><th>Hojas</th><th>AUC entrenamiento</th><th>AUC prueba</th></tr></thead><tbody><tr><td>profundidad 2</td><td>4</td><td>0,678</td><td>0,668</td></tr><tr><td>profundidad 3</td><td>8</td><td>0,722</td><td>0,717</td></tr><tr><td>profundidad 6</td><td>63</td><td>0,793</td><td>0,760</td></tr><tr><td>profundidad 10</td><td>455</td><td>0,886</td><td>0,707</td></tr><tr><td>sin límite</td><td>2.091</td><td>1,000</td><td>0,585</td></tr><tr><td>logística (para comparar)</td><td>—</td><td>0,803</td><td>0,798</td></tr></tbody></table></div><p>Ningún árbol solo le gana a la logística. La mejor profundidad lo deja en 0,76, y cualquier árbol cambia bastante si se cambian unos pocos clientes del entrenamiento: es un modelo inestable. Esas dos debilidades son las que arreglan los ensambles.</p></div></section>
+<section><h2><i>Bagging</i> y bosques aleatorios</h2><div class="prose"><p>Un <b>ensamble</b> (<i>ensemble</i>) es un modelo hecho de muchos modelos, cuyas predicciones se combinan. La idea más antigua es el <b><i>bagging</b></i>, abreviatura de <i>bootstrap aggregating</i> (agregación por remuestreo), que propuso Leo Breiman en 1996.</p></div><div class="analogia"><b>Imagínalo así</b><p>En una feria de pueblo hay un concurso: adivinar cuánto pesa un buey. Cada persona se equivoca, unas por arriba y otras por abajo, pero el promedio de todas las apuestas cae sorprendentemente cerca del peso real. Funciona porque los errores son distintos y se cancelan. Si todos hubieran copiado la apuesta del carnicero, el promedio sería tan bueno o tan malo como el carnicero.</p></div><div class="prose"><p>El <i>bagging</i> fabrica esa diversidad a partir de un solo conjunto de datos:</p><ol class="steps"><li><span>Saca una <b>muestra con reemplazo</b> (<i>bootstrap sample</i>) del entrenamiento, del mismo tamaño: 15.000 sorteos de entre los 15.000 clientes, donde un cliente puede salir dos o tres veces y otros ninguna. En promedio, cada muestra deja fuera a un 36,8 % de los clientes.</span></li><li><span>Entrena un árbol profundo con esa muestra.</span></li><li><span>Repite cientos de veces.</span></li><li><span>Para predecir, promedia las probabilidades de todos los árboles (o cuenta sus votos).</span></li></ol><p>Cada árbol sobreajusta a su manera, porque vio otra muestra. Al promediar, el ruido de cada uno se diluye y queda lo que tienen en común. El <i>bagging</i> baja la varianza sin subir el sesgo. Con 300 árboles sin límite de profundidad, el AUC de prueba sube de 0,585 a 0,786.</p><p>Queda un problema: si hay una variable muy fuerte, casi todos los árboles la usan en la raíz y se parecen demasiado entre sí, como los que copian al carnicero. El <b>bosque aleatorio</b> (<i>random forest</i>), que Breiman publicó en 2001, agrega un segundo sorteo: en cada pregunta, el árbol solo puede elegir entre un subconjunto al azar de las variables. En scikit-learn ese tamaño es <code>max_features</code>, que en clasificación vale por omisión la raíz cuadrada del número de variables. Con 24 columnas, cada pregunta elige entre 4. Los árboles salen peores uno por uno y mucho más distintos entre sí, y el promedio mejora.</p></div><figure class="fig fig-comparacion" id="07-diagrama-2"><div class="lienzo"><svg viewBox="0 0 900 470" style="min-width:720px" role="img" aria-label="Bagging y boosting comparados. A la izquierda, el bagging: cuatro muestras al azar de los datos entrenan cuatro árboles en paralelo y sus predicciones se promedian o votan. A la derecha, el boosting: un árbol tras otro, cada uno entrenado con los residuos del anterior, y la predicción final es la suma ponderada de todos">
+<defs>
+<symbol id="i07-arbol" viewBox="0 0 40 34"><path d="M20 7L9 20M20 7L31 20M9 20L4 30M9 20L14 30" style="fill:none;stroke:currentColor;stroke-width:1.8"/><circle cx="20" cy="6" r="4.5" style="fill:currentColor"/><circle cx="9" cy="20" r="4" style="fill:currentColor"/><circle cx="31" cy="20" r="4" style="fill:currentColor"/><circle cx="4" cy="30" r="3.2" style="fill:currentColor"/><circle cx="14" cy="30" r="3.2" style="fill:currentColor"/></symbol>
+<marker id="c7d2-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+<marker id="c7d2-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="k-tra"/></marker>
+</defs>
+
+<rect x="12" y="12" width="428" height="446" rx="12" class="c-tra" style="fill-opacity:.3"/>
+<text x="30" y="40" class="t t-b k-tra">BAGGING Y BOSQUE ALEATORIO: EN PARALELO</text>
+<text x="30" y="60" class="t t-s t-m">muchos árboles independientes que votan</text>
+<rect x="150" y="76" width="150" height="40" rx="8" class="caja"/>
+<text x="225" y="101" class="t t-s t-b" text-anchor="middle">datos de entrenamiento</text>
+<path d="M225 116L64 156" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M225 116L170 156" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M225 116L280 156" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M225 116L386 156" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/>
+<rect x="18" y="160" width="92" height="44" rx="6" class="caja"/><text x="64" y="180" class="t t-xs" text-anchor="middle">CON REEMPLAZO</text><text x="64" y="196" class="t t-xs t-m" text-anchor="middle">MUESTRA 1</text>
+<rect x="124" y="160" width="92" height="44" rx="6" class="caja"/><text x="170" y="180" class="t t-xs" text-anchor="middle">CON REEMPLAZO</text><text x="170" y="196" class="t t-xs t-m" text-anchor="middle">MUESTRA 2</text>
+<rect x="234" y="160" width="92" height="44" rx="6" class="caja"/><text x="280" y="180" class="t t-xs" text-anchor="middle">CON REEMPLAZO</text><text x="280" y="196" class="t t-xs t-m" text-anchor="middle">MUESTRA 3</text>
+<rect x="340" y="160" width="92" height="44" rx="6" class="caja"/><text x="386" y="180" class="t t-xs" text-anchor="middle">…</text><text x="386" y="196" class="t t-xs t-m" text-anchor="middle">MUESTRA 500</text>
+<path d="M64 204V226" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M170 204V226" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M280 204V226" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M386 204V226" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/>
+<use href="#i07-arbol" x="42" y="232" width="44" height="38" style="color:var(--c-tra)"/>
+<use href="#i07-arbol" x="148" y="232" width="44" height="38" style="color:var(--c-tra)"/>
+<use href="#i07-arbol" x="258" y="232" width="44" height="38" style="color:var(--c-tra)"/>
+<use href="#i07-arbol" x="364" y="232" width="44" height="38" style="color:var(--c-tra)"/>
+<text x="64" y="290" class="t t-s" text-anchor="middle">cancela</text><text x="170" y="290" class="t t-s" text-anchor="middle">se queda</text><text x="280" y="290" class="t t-s" text-anchor="middle">cancela</text><text x="386" y="290" class="t t-s" text-anchor="middle">cancela</text>
+<path d="M64 298L200 336" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M170 298L215 336" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M280 298L235 336" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/><path d="M386 298L250 336" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-a)"/>
+<rect x="130" y="340" width="190" height="44" rx="8" class="c-tra"/>
+<text x="225" y="360" class="t t-s t-b k-tra" text-anchor="middle">voto o promedio</text>
+<text x="225" y="376" class="t t-xs t-m" text-anchor="middle">P(CANCELA) = 3 DE 4 = 0,75</text>
+<text x="30" y="414" class="t t-s"><tspan class="t-b">Qué baja:</tspan> la varianza. Árboles profundos, cada uno</text>
+<text x="30" y="432" class="t t-s">sobreajustado a su manera; al votar, los errores se cancelan.</text>
+<text x="30" y="450" class="t t-s t-m">El bosque además sortea las variables en cada pregunta.</text>
+
+<rect x="460" y="12" width="428" height="446" rx="12" class="c-tra" style="fill-opacity:.3"/>
+<text x="478" y="40" class="t t-b k-tra">BOOSTING: EN SERIE</text>
+<text x="478" y="60" class="t t-s t-m">cada árbol corrige lo que faltó a los anteriores</text>
+<rect x="478" y="76" width="150" height="40" rx="8" class="caja"/>
+<text x="553" y="101" class="t t-s t-b" text-anchor="middle">datos de entrenamiento</text>
+<path d="M553 116V140" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-b)"/>
+<use href="#i07-arbol" x="531" y="146" width="44" height="38" style="color:var(--c-tra)"/><text x="590" y="170" class="t t-s">árbol 1</text>
+<path d="M553 188V212" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-b)"/>
+<rect x="490" y="216" width="126" height="30" rx="6" class="caja"/><text x="553" y="236" class="t t-xs t-m" text-anchor="middle">RESIDUOS 1</text>
+<path d="M553 246V266" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-b)"/>
+<use href="#i07-arbol" x="531" y="270" width="44" height="38" style="color:var(--c-tra)"/><text x="590" y="294" class="t t-s">árbol 2</text>
+<path d="M553 312V336" class="ln s-tra" style="stroke-width:1.6" marker-end="url(#c7d2-b)"/>
+<rect x="490" y="340" width="126" height="30" rx="6" class="caja"/><text x="553" y="360" class="t t-xs t-m" text-anchor="middle">RESIDUOS 2</text>
+<text x="553" y="392" class="t t-s t-m" text-anchor="middle">… árbol 300</text>
+<path d="M640 166C700 166 712 190 712 210" class="ln s-tra" style="stroke-width:1.6;fill:none" marker-end="url(#c7d2-b)"/><path d="M640 290C690 290 700 286 700 280" class="ln s-tra" style="stroke-width:1.6;fill:none" marker-end="url(#c7d2-b)"/><path d="M600 388C720 388 740 330 740 280" class="ln s-tra" style="stroke-width:1.6;fill:none" marker-end="url(#c7d2-b)"/>
+<rect x="660" y="214" width="214" height="62" rx="8" class="c-tra"/>
+<text x="767" y="236" class="t t-s t-b k-tra" text-anchor="middle">suma ponderada</text>
+<text x="767" y="254" class="t t-xs t-mono" text-anchor="middle">F = F₀ + η·h₁ + η·h₂ + …</text>
+<text x="767" y="270" class="t t-xs t-m" text-anchor="middle">η = TASA DE APRENDIZAJE</text>
+<text x="478" y="414" class="t t-s"><tspan class="t-b">Qué baja:</tspan> el sesgo. Árboles chicos (de 1 a 6 niveles),</text>
+<text x="478" y="432" class="t t-s">débiles por separado, que juntos aprenden formas complejas.</text>
+<text x="478" y="450" class="t t-s t-m">No se puede paralelizar entre árboles: cada uno espera al anterior.</text>
+</svg></div><figcaption><b>Bagging y boosting, en paralelo y en serie.</b> A la izquierda, el bagging y el bosque: muestras con reemplazo de los datos, un árbol profundo por muestra, todos a la vez, y un voto o promedio al final. A la derecha, el boosting: un árbol chico, los residuos que deja, otro árbol que aprende de esos residuos, y así cientos de veces; la predicción es la suma ponderada por la tasa de aprendizaje. Abajo de cada lado, qué error baja cada uno: el bagging baja la varianza; el boosting, el sesgo.</figcaption></figure><div class="prose"><p>El bosque tiene un regalo extra. Como cada árbol dejó fuera a un tercio de los clientes, se puede medir cada árbol con los clientes que no vio y promediar: es la <b>evaluación fuera de la bolsa</b> (<i>out-of-bag</i>, OOB), una validación que sale gratis, sin apartar datos. En scikit-learn se pide con <code>oob_score=True</code>.</p><p>Con los clientes de Retención, el bosque de 300 árboles con <code>min_samples_leaf=20</code> llega a AUC 0,805 en prueba, por primera vez por encima de la logística. Más árboles nunca lo empeoran: con 1 árbol da 0,725, con 10 ya 0,798, con 100 y con 300, 0,805. A partir de cierto número solo cuesta más tiempo. El número de árboles no es un hiperparámetro que sobreajuste; la profundidad y el tamaño de las hojas sí lo son.</p></div><div class="lab" id="07-lab-2"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Un bosque que vota: mira la predicción de cada árbol y el voto final</h3></div><p class="hint">Veinticinco árboles, cada uno entrenado con una muestra con reemplazo de los mismos 400 clientes y con una variable sorteada en cada pregunta. Elige un cliente en el plano y mira los votos. Compara los seis árboles de la derecha con el mapa del bosque y el AUC de un árbol solo con el del bosque. Prueba un bosque de 1 árbol y uno de 60.</p><style>
+[id="07-lab-2"] .c7l2-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="07-lab-2"] .c7l2-par{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;align-items:start}
+[id="07-lab-2"] .c7l2-col{display:grid;gap:6px}
+[id="07-lab-2"] canvas{border:1px solid var(--line)}
+[id="07-lab-2"] .c7l2-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+[id="07-lab-2"] .c7l2-mini figure{margin:0;display:grid;gap:2px}
+[id="07-lab-2"] .c7l2-mini figcaption{font:600 .7rem var(--f-mono);color:var(--muted);text-align:center}
+[id="07-lab-2"] .c7l2-mini figcaption.si{color:var(--warm)} [id="07-lab-2"] .c7l2-mini figcaption.no{color:var(--muted)}
+[id="07-lab-2"] .c7l2-urna{display:flex;flex-wrap:wrap;gap:3px}
+[id="07-lab-2"] .c7l2-urna i{width:13px;height:13px;border-radius:3px;display:block}
+@media (max-width:640px){[id="07-lab-2"] .c7l2-par{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="ctls">
+  <label class="ctl">Árboles en el bosque <output id="c7l2-n-o"></output>
+    <input id="c7l2-n" type="range" min="1" max="60" step="1" value="25"></label>
+  <label class="ctl">Profundidad de cada árbol <output id="c7l2-d-o"></output>
+    <input id="c7l2-d" type="range" min="1" max="12" step="1" value="8"></label>
+</div>
+<p class="hint">Los mismos 400 clientes de contrato mensual del laboratorio anterior: a lo ancho, la antigüedad (0 a 96 meses); a lo alto, la velocidad entregada (55 % a 100 %). Toca o haz clic en el plano grande para elegir un cliente y ver cómo vota cada árbol (con el teclado, las flechas lo mueven).</p>
+<div class="c7l2-par">
+  <div class="c7l2-col"><span class="c7l2-rot">El voto del bosque</span>
+    <canvas id="c7l2-cv" role="img" aria-label="El mapa del bosque aleatorio sobre antigüedad y velocidad: cada zona sombreada según la proporción de árboles que votan cancela; el cliente elegido marcado con una cruz" tabindex="0"></canvas></div>
+  <div class="c7l2-col"><span class="c7l2-rot">Seis de sus árboles</span>
+    <div class="c7l2-mini" id="c7l2-mini"></div>
+    <span class="c7l2-rot">Los votos por el cliente elegido</span>
+    <div class="c7l2-urna" id="c7l2-urna" aria-hidden="true"></div></div>
+</div>
+<div class="legend"><span><b style="color:var(--warm)">▲</b> cancela</span><span><b style="color:var(--muted)">●</b> se queda</span><span>zona más roja: más árboles votan cancela</span><span>✕ cliente elegido</span></div>
+<div class="readout texto" id="c7l2-out" aria-live="polite"></div></div><div class="prose"><p>Los bosques también ordenan las variables: cuánto bajó la impureza cada variable, sumado en todas las preguntas de todos los árboles. En el bosque de Ximena, las más usadas son la antigüedad (0,161), la velocidad entregada (0,146) y el fin de la promoción (0,091). Esa <b>importancia por impureza</b> (<i>impurity-based importance</i>), el atributo <code>feature_importances_</code>, es rápida pero engañosa: se calcula en entrenamiento y favorece a las variables con muchos valores distintos. El capítulo 11 la reemplaza por la importancia por permutación.</p></div></section>
+<section><h2><i>Boosting</i>: AdaBoost y <i>gradient boosting</i></h2><div class="prose"><p>El <i>bagging</i> combina expertos independientes que trabajan a la vez. El <b><i>boosting</b></i> (<i>impulso</i>) hace lo contrario: entrena los modelos uno tras otro, y cada uno se concentra en lo que los anteriores hicieron mal.</p></div><div class="analogia"><b>Imagínalo así</b><p>Un estudiante prepara un examen con una pila de ejercicios. Resuelve todos, revisa y separa los que le salieron mal. Al día siguiente practica sobre todo esos. Al otro, sobre los que todavía falla. Ninguna sesión lo convierte en experto, pero cada una corrige algo, y la suma de todas sí.</p></div><div class="prose"><p>La primera versión exitosa fue <b>AdaBoost</b> (<i>Adaptive Boosting</i>, impulso adaptativo), de Freund y Schapire, en 1995. Usa árboles de una sola pregunta, los <b>tocones</b> (<i>stumps</i>), que solos son apenas mejores que adivinar. Después de cada tocón, sube el peso de los clientes que clasificó mal, y el siguiente tocón se entrena con esos pesos. Al final, todos votan, y cada voto pesa según qué tan bueno fue su tocón. Con 300 tocones, AdaBoost llega a 0,801 en prueba: trescientas preguntas sueltas que juntas valen más que un árbol de profundidad 10.</p><p>El <b><i>gradient boosting</b></i> (impulso por gradiente), que Jerome Friedman formuló en 1999, generaliza la idea y es el que domina hoy:</p><ol class="steps"><li><span>Empieza con una predicción constante para todos: la tasa promedio de cancelación.</span></li><li><span>Calcula los <b>residuos</b> (<i>residuals</i>): lo que le falta a la predicción actual para llegar a la etiqueta. En clasificación, para cada cliente, la etiqueta (0 o 1) menos la probabilidad que el modelo le da.</span></li><li><span>Entrena un árbol chico, de pocas hojas, para predecir esos residuos.</span></li><li><span>Suma ese árbol al modelo, multiplicado por la <b>tasa de aprendizaje</b> (<i>learning rate</i>), un número entre 0 y 1 que hace que cada árbol corrija solo una parte.</span></li><li><span>Repite desde el paso 2.</span></li></ol><p>El nombre viene de que los residuos son, en términos matemáticos, la dirección en que hay que mover la predicción de cada cliente para bajar la pérdida: el <b>gradiente</b> (<i>gradient</i>) del capítulo 02, aplicado a las predicciones en vez de a los coeficientes. Cada árbol es un paso de descenso de gradiente.</p></div><div class="lab" id="07-lab-3"><div class="lab-title"><span class="tag">Laboratorio</span><h3><i>Boosting</i> paso a paso: cada árbol nuevo corrige los residuos del anterior</h3></div><p class="hint">Los clientes de contrato mensual, agrupados por mes de antigüedad: los puntos rojos son la proporción que cancela en cada mes. Suma árboles de uno en uno y mira cómo la curva morada se acerca a los puntos y qué corrige cada árbol en el panel de abajo. Busca el momento en que aparece el pico de los meses 11 a 13. Después prueba tasa 1 y profundidad 4, y lleva los árboles a 150.</p><style>
+[id="07-lab-3"] .c7l3-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="07-lab-3"] .c7l3-par{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:start}
+[id="07-lab-3"] .c7l3-col{display:grid;gap:6px}
+[id="07-lab-3"] canvas{border:1px solid var(--line)}
+@media (max-width:640px){[id="07-lab-3"] .c7l3-par{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="ctls">
+  <label class="ctl">Árboles sumados <output id="c7l3-m-o"></output>
+    <input id="c7l3-m" type="range" min="0" max="200" step="1" value="1"></label>
+  <label class="ctl">Tasa de aprendizaje <output id="c7l3-lr-o"></output>
+    <input id="c7l3-lr" type="range" min="0.05" max="1" step="0.05" value="0.3"></label>
+  <label class="ctl">Profundidad de cada árbol <output id="c7l3-d-o"></output>
+    <input id="c7l3-d" type="range" min="1" max="4" step="1" value="1"></label>
+</div>
+<div class="btns"><button type="button" id="c7l3-ant">← Árbol anterior</button><button type="button" class="primary" id="c7l3-sig">Sumar el siguiente árbol →</button><button type="button" id="c7l3-anim">Animar</button></div>
+<div class="c7l3-par">
+  <div class="c7l3-col"><span class="c7l3-rot">El riesgo según la antigüedad, árbol a árbol</span>
+    <canvas id="c7l3-cp" role="img" aria-label="La proporción de clientes que cancela en cada mes de antigüedad, como puntos, y la probabilidad que predice el modelo con los árboles sumados hasta ahora, como curva; la anterior va punteada"></canvas>
+    <span class="c7l3-rot">Lo que corrige el último árbol</span>
+    <canvas id="c7l3-cr" role="img" aria-label="Los residuos del modelo anterior en cada mes, como barras, y la corrección que agrega el último árbol, como escalera"></canvas></div>
+  <div class="c7l3-col"><span class="c7l3-rot">Pérdida según los árboles</span>
+    <canvas id="c7l3-ce" role="img" aria-label="Pérdida logarítmica en entrenamiento y en prueba según el número de árboles, con la línea base"></canvas></div>
+</div>
+<div class="legend"><span><b style="color:var(--warm)">●</b> proporción que cancela en ese mes</span><span><b style="color:var(--c-tra)">—</b> riesgo que predice el modelo</span><span><b style="color:var(--muted)">▮</b> residuos</span><span>pérdida: <b style="color:var(--accent)">- - entrenamiento</b> · <b style="color:var(--warm)">— prueba</b> · <b style="color:var(--muted)">··· línea base</b></span></div>
+<div class="readout texto" id="c7l3-out" aria-live="polite"></div></div><div class="prose"><p>En el laboratorio se ve lo que el boosting hace bien: con árboles de una sola pregunta y unas decenas de pasos, la curva descubre que el riesgo es alto los primeros meses, que vuelve a subir en el primer aniversario y que baja con los años. Nadie programó la forma. También se ve su riesgo: con tasa alta y árboles profundos, la pérdida de prueba empieza a subir después de pocos árboles. A diferencia del bosque, en el boosting <b>sí</b> pueden sobrar árboles. Por eso se usa la <b>parada temprana</b> (<i>early stopping</i>): apartar una parte del entrenamiento y detenerse cuando varios árboles seguidos no mejoran la pérdida en esa parte.</p><p>Los tres hiperparámetros que más importan se compensan entre sí: la tasa de aprendizaje, el número de árboles y el tamaño de cada árbol. Una tasa baja necesita más árboles y suele generalizar mejor. Con scikit-learn, <code>GradientBoostingClassifier</code> con sus valores por omisión ya da 0,812 en prueba, el mejor resultado del curso, igualado por la versión rápida que se ve en la próxima sección.</p></div></section>
+<section><h2>XGBoost, LightGBM y CatBoost</h2><div class="prose"><p>El <i>gradient boosting</i> de libro tiene un costo: para cada pregunta de cada árbol, prueba todos los valores de corte de todas las variables. Con millones de filas y cientos de árboles, eso es lento. Entre 2014 y 2017 aparecieron tres bibliotecas de código abierto que lo hicieron mucho más rápido y lo llevaron a todas partes.</p></div><div class="analogia"><b>Imagínalo así</b><p>Para repartir cajas en una bodega no hace falta medir cada caja al milímetro: basta con clasificarlas en estantes de «chicas», «medianas» y «grandes». Se pierde un poco de precisión y se gana muchísimo tiempo. Los histogramas del boosting moderno hacen eso con los valores de cada variable.</p></div><div class="prose"><p>La idea compartida es el <b>histograma</b> (<i>histogram</i>): antes de entrenar, cada variable numérica se agrupa en un número fijo de intervalos (por omisión, 255), y los cortes candidatos son solo los bordes de esos intervalos. En vez de 15.000 cortes posibles para el consumo hay 255, y contar los residuos por intervalo es rapidísimo. Lo que cambia entre las bibliotecas es cómo crece cada árbol y qué agregan:</p></div><figure class="fig fig-comparacion" id="07-diagrama-3"><div class="lienzo"><svg viewBox="0 0 900 420" style="min-width:720px" role="img" aria-label="Cómo crece un árbol en tres bibliotecas de gradient boosting. XGBoost crece por niveles: completa cada nivel antes de bajar. LightGBM crece por hojas: siempre parte la hoja que más reduce el error, y el árbol queda desbalanceado. CatBoost usa árboles simétricos: la misma pregunta en todo un nivel. Debajo, lo propio de cada una">
+
+<rect x="12" y="12" width="284" height="396" rx="12" class="caja"/>
+<text x="28" y="40" class="t t-b">XGBoost</text>
+<text x="28" y="58" class="t t-s t-m">crece por niveles (<tspan class="t-mono">depthwise</tspan>)</text>
+<g class="ln s-tra" style="stroke-width:2">
+<path d="M154 92L94 142M154 92L214 142M94 142L64 192M94 142L124 192M214 142L184 192M214 142L244 192"/>
+</g>
+<circle cx="154" cy="92" r="11" class="c-tra"/><text x="154" y="96" class="t t-xs" text-anchor="middle">1</text>
+<circle cx="94" cy="142" r="11" class="c-tra"/><text x="94" y="146" class="t t-xs" text-anchor="middle">2</text>
+<circle cx="214" cy="142" r="11" class="c-tra"/><text x="214" y="146" class="t t-xs" text-anchor="middle">2</text>
+<circle cx="64" cy="192" r="11" class="c-tra"/><text x="64" y="196" class="t t-xs" text-anchor="middle">3</text>
+<circle cx="124" cy="192" r="11" class="c-tra"/><text x="124" y="196" class="t t-xs" text-anchor="middle">3</text>
+<circle cx="184" cy="192" r="11" class="c-tra"/><text x="184" y="196" class="t t-xs" text-anchor="middle">3</text>
+<circle cx="244" cy="192" r="11" class="c-tra"/><text x="244" y="196" class="t t-xs" text-anchor="middle">3</text>
+<text x="28" y="236" class="t t-s">Completa cada nivel antes de bajar:</text>
+<text x="28" y="254" class="t t-s">árboles balanceados, fáciles de acotar.</text>
+<line x1="28" y1="272" x2="280" y2="272" class="ln"/>
+<text x="28" y="294" class="t t-xs t-b t-m">LO PROPIO</text>
+<text x="28" y="314" class="t t-s">• regularización en la pérdida</text>
+<text x="28" y="332" class="t t-s">• aprende hacia dónde mandar los faltantes</text>
+<text x="28" y="350" class="t t-s">• histogramas y GPU</text>
+<text x="28" y="368" class="t t-s">• muy usado en competencias de datos</text>
+<text x="28" y="394" class="t t-xs t-m">CHEN Y GUESTRIN, 2016</text>
+
+<rect x="308" y="12" width="284" height="396" rx="12" class="caja"/>
+<text x="324" y="40" class="t t-b">LightGBM</text>
+<text x="324" y="58" class="t t-s t-m">crece por hojas (<tspan class="t-mono">leaf-wise</tspan>)</text>
+<g class="ln s-tra" style="stroke-width:2">
+<path d="M450 92L390 142M450 92L510 142M510 142L480 192M510 142L540 192M480 192L455 242M480 192L505 242"/>
+</g>
+<circle cx="450" cy="92" r="11" class="c-tra"/><text x="450" y="96" class="t t-xs" text-anchor="middle">1</text>
+<circle cx="390" cy="142" r="11" class="caja"/>
+<circle cx="510" cy="142" r="11" class="c-tra"/><text x="510" y="146" class="t t-xs" text-anchor="middle">2</text>
+<circle cx="480" cy="192" r="11" class="c-tra"/><text x="480" y="196" class="t t-xs" text-anchor="middle">3</text>
+<circle cx="540" cy="192" r="11" class="caja"/>
+<circle cx="455" cy="242" r="11" class="caja"/><circle cx="505" cy="242" r="11" class="caja"/>
+<text x="324" y="276" class="t t-s">Siempre parte la hoja que más baja</text>
+<text x="324" y="294" class="t t-s">el error: árboles desbalanceados.</text>
+<line x1="324" y1="306" x2="576" y2="306" class="ln"/>
+<text x="324" y="326" class="t t-xs t-b t-m">LO PROPIO</text>
+<text x="324" y="346" class="t t-s">• histogramas: muy rápido con</text>
+<text x="324" y="362" class="t t-s">  millones de filas</text>
+<text x="324" y="380" class="t t-s">• categorías sin one-hot</text>
+<text x="324" y="398" class="t t-xs t-m">MICROSOFT, 2017</text>
+
+<rect x="604" y="12" width="284" height="396" rx="12" class="caja"/>
+<text x="620" y="40" class="t t-b">CatBoost</text>
+<text x="620" y="58" class="t t-s t-m">árboles simétricos (<tspan class="t-mono">oblivious</tspan>)</text>
+<g class="ln s-tra" style="stroke-width:2">
+<path d="M746 92L686 142M746 92L806 142M686 142L656 192M686 142L716 192M806 142L776 192M806 142L836 192"/>
+</g>
+<rect x="716" y="81" width="60" height="22" rx="5" class="c-tra"/><text x="746" y="96" class="t t-xs" text-anchor="middle">¿A?</text>
+<rect x="656" y="131" width="60" height="22" rx="5" class="c-tra"/><text x="686" y="146" class="t t-xs" text-anchor="middle">¿B?</text>
+<rect x="776" y="131" width="60" height="22" rx="5" class="c-tra"/><text x="806" y="146" class="t t-xs" text-anchor="middle">¿B?</text>
+<circle cx="656" cy="192" r="9" class="caja"/><circle cx="716" cy="192" r="9" class="caja"/><circle cx="776" cy="192" r="9" class="caja"/><circle cx="836" cy="192" r="9" class="caja"/>
+<text x="620" y="236" class="t t-s">La misma pregunta en todo el nivel:</text>
+<text x="620" y="254" class="t t-s">rápidos al predecir y difíciles de sobreajustar.</text>
+<line x1="620" y1="272" x2="872" y2="272" class="ln"/>
+<text x="620" y="294" class="t t-xs t-b t-m">LO PROPIO</text>
+<text x="620" y="314" class="t t-s">• codifica categorías con estadísticas</text>
+<text x="620" y="332" class="t t-s">  ordenadas, sin fuga del objetivo</text>
+<text x="620" y="350" class="t t-s">• buenos resultados sin ajustar mucho</text>
+<text x="620" y="394" class="t t-xs t-m">YANDEX, 2017</text>
+</svg></div><figcaption><b>Tres formas de hacer crecer un árbol de boosting.</b> XGBoost crece por niveles: completa cada nivel antes de bajar al siguiente. LightGBM crece por hojas: siempre parte la hoja que más baja el error, y el árbol queda desbalanceado. CatBoost usa árboles simétricos: la misma pregunta para todo un nivel. Los números en los nodos dicen en qué orden se agregó cada pregunta. Debajo de cada uno, lo que esa biblioteca aporta además del histograma.</figcaption></figure><div class="prose"><ul><li><b>XGBoost</b> (<i>eXtreme Gradient Boosting</i>), de Tianqi Chen y Carlos Guestrin, publicado en 2016: agrega a la pérdida un castigo por la complejidad de cada árbol (regularización, como en el capítulo 02), aprende hacia qué rama mandar los valores faltantes y entrena en paralelo y en tarjetas gráficas.</li><li><b>LightGBM</b> (<i>Light Gradient Boosting Machine</i>), de Microsoft, de 2017: crece por hojas, lo que llega más rápido a un buen error con menos hojas, pero sobreajusta si no se limita <code>num_leaves</code>. Acepta categorías sin convertirlas en <i>one-hot</i>.</li><li><b>CatBoost</b> (<i>Categorical Boosting</i>), de Yandex, de 2017: árboles simétricos, muy rápidos al predecir, y una forma de convertir las categorías en números con la etiqueta sin filtrar información del propio cliente.</li></ul><p>scikit-learn tiene su propia versión con histogramas, <code>HistGradientBoostingClassifier</code>, inspirada en LightGBM: crece por hojas, acepta faltantes y categorías, y trae parada temprana por omisión cuando hay más de 10.000 filas. Para la mayoría de los proyectos es suficiente, y no agrega dependencias.</p></div><div class="practica"><div class="practica-title"><span class="tag">En la terminal</span><h3>Árboles, bosque y boosting sobre los clientes de Retención</h3></div><p>Vas a comparar tres árboles, un bosque y dos versiones de boosting, con su AUC en entrenamiento y en prueba y el tiempo que tarda cada uno. Entra a <code>datos-churn</code>, activa el entorno e instala LightGBM, que es opcional y pesa unos pocos MB (XGBoost también funciona, pero su instalación pesa más de 100 MB).</p><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>cd $HOME\datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>.venv\Scripts\activate</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>pip install lightgbm</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>cd ~/datos-churn</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>source .venv/bin/activate</code><button type="button" class="copiar">Copiar</button></div><div class="cmd-l"><code>pip install lightgbm</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps"><li><span>Guarda este programa como <code>arboles.py</code> dentro de <code>datos-churn</code>:</span></li></ol><div class="code-copia code-lineas"><pre tabindex="0"><code><span class="ln">"""Árboles y ensambles sobre los clientes que cancelan (capítulo 07)."""</span>
+<span class="ln">import time</span>
+<span class="ln"></span>
+<span class="ln">import pandas as pd</span>
+<span class="ln">from sklearn.compose import ColumnTransformer</span>
+<span class="ln">from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier</span>
+<span class="ln">from sklearn.metrics import roc_auc_score</span>
+<span class="ln">from sklearn.model_selection import train_test_split</span>
+<span class="ln">from sklearn.pipeline import make_pipeline</span>
+<span class="ln">from sklearn.preprocessing import OneHotEncoder</span>
+<span class="ln">from sklearn.tree import DecisionTreeClassifier</span>
+<span class="ln"></span>
+<span class="ln">NUM = ["antiguedad_meses", "precio_plan", "servicios_extra", "consumo_gb", "velocidad_pct",</span>
+<span class="ln">       "caidas_90d", "reclamos_90d", "llamadas_soporte_90d", "facturas_tarde_12m",</span>
+<span class="ln">       "uso_app_30d", "fin_promo_60d"]</span>
+<span class="ln">CAT = ["tipo_cliente", "region", "contrato", "metodo_pago"]</span>
+<span class="ln">df = pd.read_csv("datos/clientes.csv")</span>
+<span class="ln">ent, pru = train_test_split(df, test_size=0.25, random_state=42, stratify=df.cancela)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">def prep():</span>
+<span class="ln">    # Los árboles no necesitan escalar: las numéricas pasan tal cual</span>
+<span class="ln">    return ColumnTransformer([("num", "passthrough", NUM),</span>
+<span class="ln">                              ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), CAT)],</span>
+<span class="ln">                             verbose_feature_names_out=False)</span>
+<span class="ln"></span>
+<span class="ln"></span>
+<span class="ln">modelos = {</span>
+<span class="ln">    "árbol, profundidad 3": DecisionTreeClassifier(max_depth=3, random_state=42),</span>
+<span class="ln">    "árbol, profundidad 6": DecisionTreeClassifier(max_depth=6, random_state=42),</span>
+<span class="ln">    "árbol sin límite": DecisionTreeClassifier(random_state=42),</span>
+<span class="ln">    "bosque, 300 árboles": RandomForestClassifier(300, min_samples_leaf=20, random_state=42, n_jobs=-1),</span>
+<span class="ln">    "boosting (HistGradientBoosting)": HistGradientBoostingClassifier(</span>
+<span class="ln">        learning_rate=0.05, max_leaf_nodes=8, min_samples_leaf=100, max_iter=180, random_state=42),</span>
+<span class="ln">}</span>
+<span class="ln">try:</span>
+<span class="ln">    from lightgbm import LGBMClassifier</span>
+<span class="ln">    modelos["LightGBM"] = LGBMClassifier(learning_rate=0.05, n_estimators=300, num_leaves=8,</span>
+<span class="ln">                                         min_child_samples=100, random_state=42, verbose=-1)</span>
+<span class="ln">except ImportError:</span>
+<span class="ln">    print("(LightGBM no está instalado: se omite)")</span>
+<span class="ln"></span>
+<span class="ln">filas = []</span>
+<span class="ln">for nombre, modelo in modelos.items():</span>
+<span class="ln">    t = time.time()</span>
+<span class="ln">    m = make_pipeline(prep(), modelo).fit(ent, ent.cancela)</span>
+<span class="ln">    filas.append({"modelo": nombre,</span>
+<span class="ln">                  "AUC entrenamiento": roc_auc_score(ent.cancela, m.predict_proba(ent)[:, 1]),</span>
+<span class="ln">                  "AUC prueba": roc_auc_score(pru.cancela, m.predict_proba(pru)[:, 1]),</span>
+<span class="ln">                  "segundos": time.time() - t})</span>
+<span class="ln">print(pd.DataFrame(filas).round(3).to_string(index=False))</span>
+<span class="ln"></span>
+<span class="ln">bosque = make_pipeline(prep(), modelos["bosque, 300 árboles"]).fit(ent, ent.cancela)</span>
+<span class="ln">imp = pd.Series(bosque[-1].feature_importances_, index=bosque[0].get_feature_names_out())</span>
+<span class="ln">print("\nLas cinco variables que más usa el bosque:")</span>
+<span class="ln">print(imp.sort_values(ascending=False).head(5).round(3).to_string())</span></code></pre><button type="button" class="ver-todo" aria-expanded="false">Ver las 56 líneas</button><button type="button" class="copiar copiar-todo">Copiar</button></div><ol class="steps" start="2" style="counter-reset:st 1"><li><span>Córrelo (tarda unos segundos):</span></li></ol><div class="cmds"><div class="cmd-tabs" role="tablist" aria-label="Sistema operativo"><button type="button" role="tab" data-so="win">Windows</button><button type="button" role="tab" data-so="mac linux">macOS y Linux</button></div><div class="cmd-panel" role="tabpanel" data-so="win"><div class="cmd-l"><code>python arboles.py</code><button type="button" class="copiar">Copiar</button></div></div><div class="cmd-panel" role="tabpanel" data-so="mac linux"><div class="cmd-l"><code>python3 arboles.py</code><button type="button" class="copiar">Copiar</button></div></div></div><ol class="steps" start="3" style="counter-reset:st 2"><li><span>Cambia <code>learning_rate=0.05</code> del boosting por <code>0.5</code> y <code>max_iter=180</code> por <code>500</code>, y vuelve a correrlo.</span></li></ol><p><b>Qué observar:</b> los árboles dan 0,717, 0,760 y 0,585 en prueba; el sin límite tiene 1,000 en entrenamiento. El bosque llega a 0,805 y el boosting a 0,812, con LightGBM muy cerca (0,810): las dos implementaciones del mismo método dan casi lo mismo. Las variables más usadas por el bosque son la antigüedad y la velocidad, las mismas de las dos primeras preguntas del árbol. Con tasa 0,5 y 500 árboles, el boosting llega casi a 1 en entrenamiento y baja a alrededor de 0,74 en prueba: sin freno, también memoriza. Los tiempos dependen de tu computadora, y con otras versiones las cifras pueden variar en el tercer decimal.</p></div><div class="lab" id="07-lab-4"><div class="lab-title"><span class="tag">Laboratorio</span><h3>Árboles, bosques y boosting con scikit-learn, en la página</h3></div><p class="hint">El código de este capítulo corriendo en tu navegador sobre los 20.000 clientes. Elige un ejemplo: las preguntas de un árbol, la profundidad contra el sobreajuste, el bosque con su evaluación fuera de la bolsa, el boosting con parada temprana o la comparación de todos contra la línea base. Antes de cargar Python ves el resultado guardado; después puedes cambiar los hiperparámetros y volver a entrenar.</p><style>
+[id="07-lab-4"] .c7l4-rot{font:700 .7rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+[id="07-lab-4"] .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+[id="07-lab-4"] .c7l4-estado{font:500 .85rem var(--f-display);color:var(--muted)}
+[id="07-lab-4"] .c7l4-estado.ok{color:var(--good)} [id="07-lab-4"] .c7l4-estado.warn{color:var(--warm)}
+[id="07-lab-4"] .c7l4-lado{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
+[id="07-lab-4"] textarea{width:100%;box-sizing:border-box;min-height:230px;font:.8rem/1.5 var(--f-mono);padding:8px;border:1px solid var(--line);border-left:5px solid var(--c-tra);border-radius:6px;background:var(--card);color:var(--ink);resize:vertical;tab-size:4}
+[id="07-lab-4"] pre.c7l4-salida{margin:0;font:.78rem/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+[id="07-lab-4"] .c7l4-tabla{overflow-x:auto;max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;margin-top:6px}
+[id="07-lab-4"] .c7l4-tabla:empty{display:none}
+[id="07-lab-4"] .c7l4-tabla table{font-size:.78rem;margin:0}
+[id="07-lab-4"] .c7l4-tabla th small{font:500 .66rem var(--f-mono);color:var(--muted)}
+[id="07-lab-4"] .c7l4-tabla .hint{margin:4px 8px}
+[id="07-lab-4"] .opciones{grid-template-columns:minmax(0,1fr);max-width:560px}
+[id="07-lab-4"] .c7l4-sello{font:700 .66rem var(--f-display);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--mark)}
+[id="07-lab-4"] details pre{font:.75rem/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:6px 0 0}
+[id="07-lab-4"] details summary{cursor:pointer;font:600 .85rem var(--f-display)}
+[id="07-lab-4"] .ae-valor{margin:6px 8px;font:.8rem/1.45 var(--f-mono);white-space:pre-wrap}
+</style>
+<div class="opciones"><label>Ejemplo
+  <select id="c7l4-ej"></select></label></div>
+<div class="btns">
+  <button type="button" class="primary" id="c7l4-cargar">Cargar Python con scikit-learn (unos 40 MB · tarda unos segundos)</button>
+  <span class="c7l4-estado" id="c7l4-estado" aria-live="polite">Python sin cargar · mientras tanto ves el resultado guardado</span>
+</div>
+<details><summary>Qué hay en <code>preparar_07.py</code> (se crea solo al cargar)</summary><pre id="c7l4-prep"></pre></details>
+<div class="c7l4-lado">
+  <div>
+    <label class="c7l4-rot" for="c7l4-cod">Código (puedes editarlo)</label>
+    <textarea id="c7l4-cod" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div class="btns"><button type="button" id="c7l4-run" disabled>Ejecutar (Ctrl+Enter)</button>
+      <button type="button" id="c7l4-rest">Restaurar el ejemplo</button></div>
+  </div>
+  <div>
+    <span class="c7l4-rot">Resultado</span> <span class="c7l4-sello" id="c7l4-sello">guardado</span>
+    <pre class="c7l4-salida" id="c7l4-salida" hidden></pre>
+    <div class="c7l4-tabla" id="c7l4-tabla"></div>
+  </div>
+</div>
+<div class="readout texto" id="c7l4-out" aria-live="polite"></div></div></section>
+<section><h2>Por qué los ensambles de árboles ganan en datos tabulares</h2><div class="prose"><p>Ximena llevó a Fernando Aguilar una tabla con todos los modelos del curso hasta aquí. El boosting quedó primero con 0,812, seguido por el bosque (0,805) y la logística (0,798). La diferencia no es enorme, porque la logística ya es una línea base fuerte. Pero el boosting gana sin que nadie le haya dicho nada del aniversario, del escalón de la velocidad, ni de que el fin de la promoción pesa mucho más en los contratos mensuales: encuentra solo los escalones y las <b>interacciones</b> (<i>interactions</i>), los efectos de una variable que dependen del valor de otra. Para que la logística las viera, alguien tendría que crear esas variables a mano.</p></div><div class="ml"><b>En la práctica</b><p><b>Lo que la tabla no decía.</b> Fernando preguntó si valía la pena cambiar de modelo por catorce milésimas de AUC. Ximena hizo la cuenta que importa: entre los 500 clientes con más riesgo de cada modelo en la prueba, la lista del boosting tenía 246 que de verdad cancelaron, y la de la logística, 237. Nueve clientes más por cada 500 llamadas, con el mismo equipo. Marisol, mirando la lista, notó otra cosa: el 15,6 % estaba entre los meses 11 y 13 de antigüedad, más del doble que en el total de clientes (7 %). «Eso lo sabemos desde siempre», dijo, «el aniversario es cuando comparan precios». El modelo lo había aprendido de los datos. Fernando aprobó el boosting con una condición: que Ximena pudiera explicar por qué cada cliente estaba en la lista. Eso queda para el capítulo 11.</p></div><div class="prose"><p>No es un caso aislado. En datos como estos, una tabla con columnas de distinto tipo y significado, los ensambles de árboles son el método que gana más seguido. Las razones son las que se vieron en el capítulo:</p><ul><li><b>Las columnas de una tabla no se parecen entre sí.</b> La antigüedad, el método de pago y los reclamos no comparten unidad ni escala. Los árboles preguntan por una variable a la vez y no necesitan que sean comparables; los modelos que suman o miden distancias, sí.</li><li><b>Los efectos tienen escalones.</b> Umbrales de velocidad, aniversarios, fines de promoción. Un árbol los toma con una sola pregunta; una recta o una red neuronal necesitan muchos datos para aproximar un salto brusco.</li><li><b>Hay variables que no sirven.</b> Un árbol simplemente no pregunta por ellas.</li><li><b>Funcionan bien sin mucho ajuste</b>, toleran faltantes y atípicos, y entrenan en segundos.</li></ul></div><div class="caso"><b>Un caso real</b><p>En el artículo que presentó XGBoost, en 2016, sus autores contaron que de las 29 soluciones ganadoras de competencias de Kaggle publicadas en el blog de esa plataforma durante 2015, 17 usaban XGBoost. En 2022, un estudio de Léo Grinsztajn, Edouard Oyallon y Gaël Varoquaux comparó modelos basados en árboles con redes neuronales profundas en 45 conjuntos de datos tabulares de tamaño mediano, con el mismo presupuesto de ajuste para todos: los árboles ganaron en la mayoría, y explicaron por qué con argumentos parecidos a los de esta sección. Las redes neuronales dominan en imágenes, audio y texto, donde los datos sí tienen una estructura que se repite.</p></div><div class="prose"><p>Las redes neuronales tienen su curso, <a href="https://aaramirez.github.io/aprendizaje-profundo/temario.html" target="_blank" rel="noopener">Aprendizaje profundo</a>. El capítulo 12 combina el boosting con otros modelos en un <i>stacking</i>, y el curso <a href="https://aaramirez.github.io/mlops/temario.html" target="_blank" rel="noopener">IA en producción (MLOps)</a> muestra cómo se pone un modelo así a trabajar todos los meses.</p></div></section>
+<section><h2>La idea clave</h2><div class="prose"><p>Un árbol de decisión predice con preguntas de sí o no, elegidas una a una para dejar las cajas lo más puras posible. Se entiende con facilidad, no necesita escalar las variables y toma escalones e interacciones, pero solo sobreajusta y es inestable: hay que podarlo. Los ensambles convierten esa debilidad en fuerza. El bosque aleatorio entrena cientos de árboles profundos y distintos, con muestras y variables sorteadas, y promedia: baja la varianza. El boosting suma árboles chicos, cada uno entrenado con los residuos de los anteriores y frenado por la tasa de aprendizaje: baja el sesgo, y necesita parada temprana. XGBoost, LightGBM, CatBoost y el <code>HistGradientBoosting</code> de scikit-learn hacen eso mismo con histogramas, rápido. Con datos tabulares, combinar muchos modelos débiles en uno fuerte suele ser lo mejor que hay.</p></div></section>
+<section><h2>Pruébate</h2><div class="quiz"><h3>Pruébate</h3><details><summary>¿Por qué un árbol de decisión no necesita que las variables estén escaladas?</summary><p>Porque cada pregunta compara una sola variable con un valor de corte. Cambiar la unidad (GB por MB) mueve el valor de corte, pero no el orden de los clientes ni la pregunta elegida.</p></details><details><summary>Una caja tiene 100 clientes y 20 cancelan. ¿Cuánto vale su Gini?</summary><p><span class="math">2 \times 0{,}2 \times 0{,}8 = 0{,}32</span>.</p></details><details><summary>¿Por qué el bosque aleatorio sortea las variables en cada pregunta, si eso hace peor a cada árbol?</summary><p>Para que los árboles sean distintos entre sí. Si todos usaran las mismas variables fuertes, se equivocarían igual y el promedio no ganaría nada; con árboles distintos, los errores se cancelan al promediar.</p></details><details><summary>¿En qué se diferencian el bagging y el boosting en cómo se entrenan los árboles y en qué error bajan?</summary><p>El bagging entrena árboles profundos e independientes, a la vez, y baja la varianza. El boosting entrena árboles chicos uno tras otro, cada uno sobre los residuos de los anteriores, y baja el sesgo.</p></details><details><summary>En un bosque, ¿agregar árboles puede causar sobreajuste? ¿Y en el boosting?</summary><p>En el bosque no: más árboles estabilizan el promedio y solo cuestan tiempo. En el boosting sí: cada árbol corrige más, y llega un punto en que corrige ruido; por eso se usa la parada temprana.</p></details><details><summary>¿Qué tienen en común XGBoost, LightGBM y <code>HistGradientBoostingClassifier</code>?</summary><p>Son implementaciones de gradient boosting que agrupan los valores de cada variable en histogramas para probar pocos cortes, lo que las hace mucho más rápidas con muchos datos.</p></details></div></section>
+<section><h2>Para investigar</h2><div class="investiga"><h3>Para investigar</h3><p class="hint">Estas preguntas no se responden en el capítulo: búscalas por tu cuenta.</p><ol><li>¿Qué son los árboles extremadamente aleatorios (<i>Extra Trees</i>) y en qué se diferencian de un bosque aleatorio al elegir los cortes?<small>Pista: busca <code>ExtraTreesClassifier</code> en la documentación de scikit-learn y el artículo de Geurts, Ernst y Wehenkel (2006).</small></li><li>¿Por qué un bosque o un boosting no pueden predecir valores fuera del rango que vieron en el entrenamiento, y cuándo es un problema?<small>Pista: busca «tree-based models extrapolation».</small></li><li>¿Qué es GOSS (<i>Gradient-based One-Side Sampling</i>) y cómo ayuda a LightGBM a entrenar más rápido?<small>Pista: busca el artículo de LightGBM de Ke y otros en NeurIPS 2017.</small></li><li>¿Qué son las restricciones monótonas en un boosting y por qué le interesarían a un área de riesgo o de precios?<small>Pista: busca <code>monotonic_cst</code> en la documentación de <code>HistGradientBoostingClassifier</code>.</small></li><li>¿Por qué las probabilidades de un bosque aleatorio suelen quedar lejos de 0 y de 1, y cómo se corrigen?<small>Pista: busca «random forest probability calibration» y <code>CalibratedClassifierCV</code>.</small></li></ol></div></section>
+<section><h2>Para saber más</h2><div class="vids"><span>Para saber más</span><a class="vid" href="https://scikit-learn.org/stable/modules/tree.html" target="_blank" rel="noopener">scikit-learn: Decision Trees <small>CART, criterios de impureza y poda por costo y complejidad, en inglés</small></a><a class="vid" href="https://scikit-learn.org/stable/modules/ensemble.html" target="_blank" rel="noopener">scikit-learn: Ensembles <small>bagging, bosques, AdaBoost y gradient boosting con histogramas, en inglés</small></a><a class="vid" href="https://arxiv.org/abs/1603.02754" target="_blank" rel="noopener">XGBoost: A Scalable Tree Boosting System <small>el artículo de Chen y Guestrin (2016), en inglés</small></a><a class="vid" href="https://arxiv.org/abs/2207.08815" target="_blank" rel="noopener">Why do tree-based models still outperform deep learning on tabular data? <small>el estudio de Grinsztajn, Oyallon y Varoquaux (2022), en inglés</small></a><a class="vid" href="https://www.statlearning.com/" target="_blank" rel="noopener">An Introduction to Statistical Learning <small>el capítulo 8 trata árboles, bagging, bosques y boosting, con ediciones en R y en Python, en inglés</small></a></div></section>
+<label class="got"><input type="checkbox" id="got"> Lo tengo claro</label>
+<nav class="pager" id="pager" aria-label="Capítulo anterior y siguiente"></nav>
+</main>
+</div>
+<footer><span>Curso abierto de aaramirez.github.io.</span><span>Sitio publicado: <a href="https://github.com/aaramirez/aprendizaje-estadistico" target="_blank" rel="noopener">github.com/aaramirez/aprendizaje-estadistico</a></span></footer>
+</div>
+<script src="assets/lab.js"></script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="07-lab-1"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  /* ---- Datos: 800 clientes de contrato mensual del generador del curso (semilla 42), 400 para entrenar y 400 de prueba.
+     Cada uno: antiguedad_meses, velocidad_pct, cancela (1 = cancela). ---- */
+  const VX={n:'antigüedad (meses)',min:0,max:96,d:0,t:[0,12,24,36,48,60,72,84,96]},VY={n:'velocidad entregada (%)',min:55,max:100,d:1,t:[60,70,80,90,100]};
+  const leer=s=>s.split(';').map(r=>r.split(',').map(Number));
+  const TR=leer('7,100,0;12,95.3,1;14,98,1;61,90.1,0;8,80.8,1;3,84.1,0;37,91.5,0;26,87.8,0;1,98.3,0;15,76,0;96,82.6,0;3,93.4,0;15,87.2,0;13,97.2,1;17,97.3,0;2,100,0;18,88.1,0;2,94.6,0;2,84.6,0;8,100,0;24,69,1;21,91.5,0;11,82.8,0;67,90.9,0;27,90,0;24,82.4,0;27,92.3,0;3,100,0;20,84.8,0;10,88.6,0;17,95.7,1;41,81.2,0;77,80.8,0;20,90.2,0;16,97.4,1;41,95.7,0;11,89.7,1;96,98.1,0;52,83.8,0;34,88.1,0;2,89.2,0;1,100,0;1,96.6,1;22,93.1,0;8,83,0;48,99.3,0;50,100,0;5,100,0;31,100,0;11,97.7,1;7,95.9,0;3,74.7,0;14,72.4,1;24,73.9,1;19,95.2,0;32,77.3,0;10,89.3,0;33,97.7,0;2,82.6,0;4,80.3,1;48,96.9,0;14,92.9,0;23,88.3,0;30,99.4,0;28,83.4,0;29,86.4,0;41,99.8,0;22,92.8,0;15,81,0;14,91.5,0;5,92.5,0;14,96.3,0;7,88.8,0;59,100,0;46,92.7,0;49,97.1,0;2,85.6,1;29,93.5,0;10,95.4,0;23,89.2,0;7,91.8,0;16,91.3,0;15,84.8,0;39,100,0;27,86.9,0;15,81.9,0;42,82.5,0;30,86.1,1;4,77.5,1;13,88.3,0;22,90.9,0;29,97.5,0;7,84.2,0;46,84.6,0;11,81.3,1;63,73.3,0;4,76.7,1;65,88.3,0;82,99,1;7,93.3,0;5,91.7,1;5,86.4,0;12,85.5,1;66,88.7,1;4,83.2,0;34,80.4,0;61,90,0;2,87.2,1;14,96.2,0;1,95,0;28,80.1,0;30,96.2,0;29,87.1,0;4,75.8,1;15,88.1,0;43,83.9,1;41,80.4,0;9,89.3,0;31,89.9,0;40,80.7,0;19,93.4,0;12,97.6,0;8,100,0;7,89,0;4,90.4,1;14,84.6,1;4,85.1,1;14,88,0;22,88.4,1;3,100,1;10,89.1,0;14,95.2,0;17,100,0;3,87.7,0;2,78.8,0;4,90.6,0;11,93.9,0;6,87.7,1;5,96.9,0;9,72.3,1;21,90.4,0;12,78.1,1;5,84.7,0;12,96.5,1;2,86,0;3,82.8,0;15,90.5,0;17,100,1;69,92.4,0;25,91,0;8,93.3,0;40,87.2,1;88,86.5,0;19,91,0;29,90.8,0;5,88.4,0;3,86.1,0;96,91.5,0;1,84.9,0;3,82.3,0;5,90.9,1;21,80.3,0;25,91.1,0;1,92.3,0;31,86.8,0;2,100,1;8,91.4,0;13,93.7,0;6,97.8,0;66,82.7,0;42,79.8,0;35,95.3,0;42,99.2,0;10,71.3,1;18,83.2,0;14,95.7,0;25,94.3,0;35,80,0;78,84.7,0;42,83.2,0;12,83.4,0;3,82,0;37,79.6,0;21,100,0;8,87.8,0;25,68.4,1;67,89.3,0;2,86.1,1;1,89.3,1;12,79.6,1;42,96.8,0;28,88.7,0;2,77.4,1;32,88.1,1;1,100,0;3,100,0;14,88.4,0;65,90.4,0;28,85.2,0;3,100,0;16,84,0;2,89.6,0;8,91.6,0;8,72,0;13,99.5,1;26,91.4,0;38,87.4,0;19,80.6,0;2,91.3,0;3,100,0;22,88.3,0;78,77.3,0;26,86.6,1;4,75.6,0;29,88.2,0;16,89.6,0;8,90.6,0;3,92.3,0;12,100,1;12,82.7,1;16,83.8,0;26,87.7,0;3,89.5,1;51,99.7,0;1,74,0;4,83.3,0;24,100,0;21,71,0;26,98.7,0;14,100,1;34,89.3,0;58,88.9,0;4,86.5,0;2,93.3,0;15,92.7,0;11,85.9,0;21,79.5,1;43,77.8,0;16,88.6,0;12,87.7,0;23,90.6,0;15,83.6,0;61,86.5,0;11,90.9,0;15,95.7,1;63,95.7,0;32,88.2,0;19,78.7,1;4,89.4,0;49,88.3,0;40,93,0;23,91.7,0;78,83,0;24,89.1,0;5,86.9,0;50,97.8,0;9,82.9,0;43,98.3,0;51,93.7,0;24,89.3,0;15,89.9,0;3,94.7,0;12,84.6,0;20,94.3,0;12,86.3,0;3,85.5,0;14,87.8,0;4,91.5,0;51,81.9,0;16,79.1,0;4,88.6,0;2,88.1,0;6,87.1,0;36,89.7,0;21,93.7,0;10,92.2,0;6,97.9,1;5,100,0;55,83.7,0;63,90.9,0;24,76.1,1;10,85.9,0;2,95.2,0;12,92.1,0;9,88.9,1;4,95.7,0;10,93.6,1;23,80,0;34,93.9,0;21,95.8,0;73,94,0;35,96,0;26,79,1;11,81.8,0;26,93.3,0;5,92.1,0;24,93.5,0;2,90.7,0;11,96.8,1;3,91.5,0;34,93.5,0;55,100,0;50,82.9,0;12,94.5,1;19,93.2,1;10,91.5,0;10,93.1,0;41,75.5,0;4,95.1,0;45,98.4,0;11,92.6,0;8,83.8,0;7,87.2,1;34,100,0;51,83.7,0;78,77.8,0;96,89.9,0;11,100,0;64,90.5,0;10,94.2,0;14,81.6,1;15,97.2,0;83,89.4,0;4,96.4,0;17,89.8,0;21,98.4,0;58,89,0;70,86.9,0;14,91.3,0;57,94.2,0;12,78.9,0;8,84.3,0;13,79.4,0;26,97.2,0;19,81.8,0;4,95.4,0;17,94,0;7,86.5,0;2,86.6,0;19,84.6,0;33,96.2,0;18,84.1,0;19,93.8,1;14,81.6,0;37,88.5,0;3,81.3,0;10,85.5,0;37,86.3,0;18,75.9,1;14,86.2,0;44,82.9,0;57,87.8,0;24,91.9,0;36,89,0;50,100,0;18,83,0;31,89.5,0;3,85.4,1;20,92.5,0;11,100,0;5,83.8,1;27,96.3,0;14,90.2,0;22,87.3,0;14,97.4,0;1,90.6,1;5,84.2,0;10,95.8,0;73,91.3,0;11,90.5,0;1,84.2,1;7,94.9,0;19,97.2,0;14,83.1,0;4,100,0;1,77.5,1;20,99,0;10,92.1,0;12,93,0;13,93.9,1;8,86.3,0;9,94.7,0;4,86.2,0;12,94.5,0;13,95.9,0;8,85.3,1;33,73.2,1;10,91.1,0;26,73.9,0;5,88.5,0;23,99.1,0;46,83.5,0;24,99.6,0;4,73.5,1;18,85,1;4,88.2,0;29,90,0;16,95.2,0;7,92.6,0;3,87.8,0');
+  const TE=leer('9,86.6,0;24,97.7,0;14,100,0;16,88,0;1,83.7,1;26,90.4,0;5,81.8,0;22,90.3,1;11,81.9,0;13,83.5,1;77,90.3,0;12,78.4,0;15,88.1,0;70,89.9,0;13,89.7,0;2,87.5,0;71,90.9,0;14,90.3,0;5,93.6,0;35,100,0;10,85.2,0;10,70.4,1;36,79.8,1;4,81.7,0;25,83.4,0;38,97.3,0;13,87.4,0;13,89.3,0;35,96.4,0;34,86.6,1;7,89.8,0;6,81.1,0;14,100,0;75,90.4,0;12,88.5,1;15,100,0;18,97.1,0;1,97.7,0;25,87.6,0;12,88.9,0;15,75.4,1;48,98.9,0;26,100,0;25,96.1,0;35,89.5,0;3,96.3,0;23,91.8,1;45,91.1,0;8,88.7,0;50,90,0;15,91.4,1;96,87.9,0;15,95,0;7,95.2,0;23,81.1,0;61,88.8,1;38,98.8,0;2,87.3,0;22,71,1;43,88.2,1;15,95.8,0;25,80.3,0;9,97.2,0;3,91.5,0;29,95.1,0;23,100,0;14,80.5,0;17,89,1;9,90.1,0;14,94.1,0;12,95.7,1;15,85.4,0;11,89.5,0;3,97.6,0;20,93.9,0;6,87.4,0;38,95.9,0;8,87.7,0;96,85.4,0;1,86.5,0;71,96.3,0;7,92.8,1;16,93.1,0;5,85,0;9,91.6,0;41,91.6,0;51,82.2,0;18,95.5,0;60,86.1,0;2,81.3,0;1,92,0;54,80.3,1;9,82.4,1;10,87.3,0;11,89.1,0;21,81.9,0;96,86.6,0;9,86.6,0;21,90.6,0;25,96.9,0;22,84.4,0;70,84.6,0;20,92.1,1;8,90.5,0;15,98.9,0;96,83.3,0;1,81.5,1;16,93,0;13,78.9,0;18,91.6,0;14,85.1,0;1,83.3,0;39,98.1,0;68,91.8,0;1,87,0;33,100,0;25,79.3,1;13,85.4,1;8,100,0;26,95.1,0;5,100,0;38,92.4,0;50,73.5,0;7,90.5,0;11,80.4,0;1,89.7,0;3,100,0;24,89.5,0;7,82.3,0;6,94.8,0;17,100,0;19,96,0;6,80.9,0;12,79.2,0;23,100,0;11,100,0;14,100,0;9,100,0;7,86,0;11,98.2,0;15,88.7,0;8,86.3,0;79,93.8,0;17,82.5,0;21,81.4,0;33,88.3,0;19,81.2,0;8,89.4,0;13,95.5,1;75,94.5,0;26,94,0;47,84.6,0;5,96.5,0;46,81.4,0;6,81.9,0;19,89,0;4,93.2,0;7,98.4,0;4,100,0;13,89.8,0;33,88.5,0;96,93.5,0;15,86.2,0;28,88.1,1;7,77.4,1;12,98.7,0;1,88.8,0;83,85.5,0;18,87.8,1;82,90.4,0;2,93.6,0;10,93.9,0;1,92.2,0;57,89.6,0;89,89.1,0;60,86,0;17,86.6,0;8,89.3,0;27,81.7,0;7,82.6,1;7,99.1,1;63,96.1,0;60,78.5,0;16,100,0;62,90,0;44,100,0;28,100,0;6,95.1,0;39,88.6,0;37,90.8,0;4,88.9,0;88,99.8,0;65,96,1;8,83.4,0;19,85.5,0;5,89.8,0;7,85.3,0;8,100,0;7,75.8,0;35,83.7,0;12,96.3,0;33,86.5,0;30,86.3,0;20,86.4,1;9,80.7,0;4,100,1;25,84.4,0;6,93.4,0;1,84.4,0;11,76.1,1;16,100,0;34,87.9,0;30,82.1,0;13,88.1,0;55,94.2,1;32,78.8,1;39,92.5,0;37,98.6,0;5,82.8,0;60,86.9,0;28,100,0;12,74.4,1;2,82.6,0;49,87.3,0;2,90.9,0;4,84.6,0;2,78.4,0;7,94.7,0;36,94.7,0;48,83.9,0;25,82.9,0;10,97.7,0;33,92.1,0;72,78.5,1;4,98.5,1;38,77.3,1;96,73.1,0;6,86.8,1;35,85.5,1;7,95.2,0;43,100,0;3,84.5,1;6,87,0;4,100,0;11,89.2,1;26,89.2,0;2,79.3,0;65,88.4,0;2,96.6,0;48,84.5,0;29,86,0;24,91.1,0;16,100,0;29,88.3,0;1,74.8,1;22,84.2,0;30,94.1,0;23,83.1,0;26,92.3,0;48,80.8,0;11,96.9,1;1,91.3,1;20,89.8,0;96,91.7,0;69,99.4,0;1,87.4,0;79,83.2,0;7,82.9,1;14,88.5,0;7,100,0;23,81.3,0;25,86.8,0;2,93.3,1;62,81.1,0;23,100,0;93,98,0;38,95.9,0;40,94.1,0;12,100,0;96,78.5,0;32,89.8,0;5,94.9,1;37,88.5,0;1,86.2,1;14,81.3,1;3,82.8,0;16,89.3,0;17,88.4,0;38,88.3,0;46,90.5,1;23,100,0;2,94,0;45,86.7,0;4,88.9,0;23,86,0;3,83.9,1;24,92.9,0;21,83.5,0;7,85.3,1;14,88.5,0;20,90.7,0;84,79.8,1;5,92,1;96,86.5,0;5,80.3,0;18,95.4,0;31,90.2,0;59,100,0;23,94.3,0;45,85.7,0;7,91.5,0;4,85.6,1;8,82,1;9,94.7,1;46,92.4,0;34,81.6,0;12,87,1;31,100,0;18,80.4,0;3,100,0;32,85.2,0;45,77.5,1;17,100,1;10,90.3,1;19,89,0;8,88.1,0;40,82.1,0;28,85.3,0;7,85.4,0;47,87.2,0;24,98.6,0;32,88.8,0;16,94.2,0;1,99.2,0;14,80.7,0;22,93.9,0;33,81.3,1;32,81.2,0;10,83.8,1;10,89.4,0;18,94.1,1;47,91.2,0;96,88.4,0;5,94.6,0;24,94.8,0;48,82.7,0;22,79.4,1;12,89.4,0;2,82.9,0;4,96.9,0;31,90.4,0;2,90.4,0;2,86.5,1;29,96.1,0;86,86.5,0;53,92.9,0;10,76.4,1;31,91,0;1,100,0;3,94,0;9,79.4,1;13,78.9,0;2,86.6,0;31,91.4,0;6,92.2,1;30,83.5,1;8,74.8,1;44,99.1,0;20,84.4,0;36,91.8,0;8,89.9,0;8,79.8,0;21,85.3,0;30,92.3,0;55,87.9,0;36,72.6,1;5,95.8,0;35,86.3,0;2,92.4,1;5,82.9,1;5,85.1,1;14,95.4,0;72,90.7,0;6,89.6,0;23,96.1,0;96,82.1,1;6,99.2,0;43,96.8,0;11,93.5,0;6,81.9,0;4,91.3,0;34,88.4,0;29,86,0;8,90,0;13,90.7,0;23,99,1;4,76.3,1;32,84,1;16,88.2,0;2,92.9,0');
+  /* ---- CART: árbol de clasificación con Gini o entropía ---- */
+  function imp(n1,n,crit){if(!n)return 0;const p=n1/n;if(crit==='gini')return 2*p*(1-p);return (p>0?-p*Math.log2(p):0)+(p<1?-(1-p)*Math.log2(1-p):0);}
+  function crecer(A,prof,max,minHoja,crit){
+    const n=A.length,n1=A.reduce((s,a)=>s+a[2],0),nodo={n,n1,p:n1/n,hoja:true};
+    if(prof>=max||n<2*minHoja||n1===0||n1===n)return nodo;
+    const base=imp(n1,n,crit);let mejor=null;
+    for(const f of [0,1]){
+      const o=A.slice().sort((a,b)=>a[f]-b[f]);let iz=0,iz1=0;
+      for(let i=0;i<n-1;i++){iz++;iz1+=o[i][2];
+        if(o[i][f]===o[i+1][f]||iz<minHoja||n-iz<minHoja)continue;
+        const g=base-(iz/n)*imp(iz1,iz,crit)-((n-iz)/n)*imp(n1-iz1,n-iz,crit);
+        if(!mejor||g>mejor.g+1e-12)mejor={g,f,u:(o[i][f]+o[i+1][f])/2};}
+    }
+    if(!mejor||mejor.g<=1e-12)return nodo;
+    nodo.hoja=false;nodo.f=mejor.f;nodo.u=mejor.u;nodo.g=mejor.g;
+    nodo.iz=crecer(A.filter(a=>a[mejor.f]<=mejor.u),prof+1,max,minHoja,crit);
+    nodo.de=crecer(A.filter(a=>a[mejor.f]>mejor.u),prof+1,max,minHoja,crit);
+    return nodo;
+  }
+  const predecir=(t,a)=>{while(!t.hoja)t=a[t.f]<=t.u?t.iz:t.de;return t.p;};
+  /* AUC: probabilidad de que un cliente que cancela reciba más riesgo que uno que se queda (con empates a medias) */
+  function aucDe(ps,ys){const o=ps.map((p,i)=>[p,ys[i]]).sort((a,b)=>a[0]-b[0]);let r=0,n1=0,i=0;
+    while(i<o.length){let j=i;while(j<o.length&&o[j][0]===o[i][0])j++;const rm=(i+j+1)/2;for(let k=i;k<j;k++)if(o[k][1]){r+=rm;n1++;}i=j;}
+    const n0=o.length-n1;return (r-n1*(n1+1)/2)/(n1*n0);}
+  const exact=(t,A)=>aucDe(A.map(a=>predecir(t,a)),A.map(a=>a[2]));
+  function marca(ctx,x,y,c){ctx.beginPath();if(c){ctx.moveTo(x,y-4.5);ctx.lineTo(x+4,y+3);ctx.lineTo(x-4,y+3);ctx.closePath();ctx.fillStyle=tok('--warm');}
+    else{ctx.arc(x,y,2.3,0,2*Math.PI);ctx.fillStyle=tok('--muted');}ctx.fill();}
+  const hojas=t=>t.hoja?1:hojas(t.iz)+hojas(t.de);
+  const st={crit:'gini',prueba:false};
+  const sD=q('#c7l1-d'),sM=q('#c7l1-m');
+  let T=null,curva=[];
+  const nom=f=>f?VY:VX;
+  function reglas(t,ind){
+    if(t.hoja)return ind+'→ cancela el '+nf(100*t.p)+' % ('+t.n+' clientes)\n';
+    const v=nom(t.f),u=nf(t.u,v.d);
+    return ind+'¿'+v.n+' ≤ '+u+'?\n'+ind+'  sí: '+reglas(t.iz,ind+'  ').trimStart()+ind+'  no: '+reglas(t.de,ind+'  ').trimStart();
+  }
+  const dib=canvasWidget(q('#c7l1-cv'),.9,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);if(!T)return;
+    const p={l:36,r:8,t:8,b:30},pw=w-p.l-p.r,ph=h-p.t-p.b;
+    const X=x=>p.l+(x-VX.min)/(VX.max-VX.min)*pw,Y=y=>p.t+(1-(y-VY.min)/(VY.max-VY.min))*ph;
+    const cw=tok('--warm');
+    /* rectángulos de las hojas: más rojo cuanto más cancela la hoja */
+    const rect=(t,x0,x1,y0,y1)=>{
+      if(t.hoja){ctx.globalAlpha=.5*Math.min(1,t.p/.6);ctx.fillStyle=cw;ctx.fillRect(X(x0),Y(y1),X(x1)-X(x0),Y(y0)-Y(y1));ctx.globalAlpha=1;
+        ctx.strokeStyle=tok('--c-tra');ctx.lineWidth=1.3;ctx.strokeRect(X(x0),Y(y1),X(x1)-X(x0),Y(y0)-Y(y1));return;}
+      if(t.f===0){rect(t.iz,x0,t.u,y0,y1);rect(t.de,t.u,x1,y0,y1);}else{rect(t.iz,x0,x1,y0,t.u);rect(t.de,x0,x1,t.u,y1);}};
+    rect(T,VX.min,VX.max,VY.min,VY.max);
+    const A=st.prueba?TE:TR;
+    A.filter(a=>!a[2]).forEach(a=>marca(ctx,X(a[0]),Y(a[1]),0));A.filter(a=>a[2]).forEach(a=>marca(ctx,X(a[0]),Y(a[1]),1));
+    ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');ctx.textAlign='center';ctx.textBaseline='top';
+    VX.t.forEach(v=>ctx.fillText(nf(v),X(v),p.t+ph+3));
+    ctx.fillText(VX.n+' →',p.l+pw/2,p.t+ph+16);
+    ctx.textAlign='right';ctx.textBaseline='middle';
+    VY.t.forEach(v=>ctx.fillText(nf(v),p.l-4,Y(v)));
+    ctx.save();ctx.translate(10,p.t+ph/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText(VY.n+' →',0,0);ctx.restore();
+  });
+  const dibC=canvasWidget(q('#c7l1-cu'),.62,(ctx,w,h)=>{
+    ctx.clearRect(0,0,w,h);if(!curva.length)return;
+    const p={l:34,r:8,t:8,b:24},pw=w-p.l-p.r,ph=h-p.t-p.b,y0=.5,y1=1;
+    const X=d=>p.l+(d-1)/9*pw,Y=v=>p.t+(1-(v-y0)/(y1-y0))*ph;
+    ctx.strokeStyle=tok('--grid');ctx.lineWidth=1;ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');
+    for(let v=.5;v<=1.001;v+=.1){ctx.beginPath();ctx.moveTo(p.l,Y(v));ctx.lineTo(p.l+pw,Y(v));ctx.stroke();ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(nf(v,1),p.l-3,Y(v));}
+    ctx.strokeStyle=tok('--muted');ctx.setLineDash([2,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.l,Y(.5)-1);ctx.lineTo(p.l+pw,Y(.5)-1);ctx.stroke();ctx.setLineDash([]);
+    ctx.textAlign='center';ctx.textBaseline='top';for(let d=1;d<=10;d++)ctx.fillText(d,X(d),p.t+ph+4);
+    const d0=+sD.value;ctx.strokeStyle=tok('--ink');ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X(d0),p.t);ctx.lineTo(X(d0),p.t+ph);ctx.stroke();ctx.setLineDash([]);
+    [[0,'--accent'],[1,'--warm']].forEach(([k,c])=>{ctx.strokeStyle=tok(c);ctx.lineWidth=2.4;ctx.setLineDash(k?[]:[6,4]);ctx.beginPath();curva.forEach((v,i)=>{const x=X(i+1),y=Y(v[k]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();ctx.setLineDash([]);
+      curva.forEach((v,i)=>{ctx.beginPath();ctx.arc(X(i+1),Y(v[k]),i+1===d0?4.5:2.5,0,2*Math.PI);ctx.fillStyle=tok(c);ctx.fill();});});
+  });
+  function todo(){
+    const d=+sD.value,m=+sM.value;
+    q('#c7l1-d-o').textContent=d;q('#c7l1-m-o').textContent=m;
+    curva=[];for(let k=1;k<=10;k++){const t=crecer(TR,0,k,m,st.crit);curva.push([exact(t,TR),exact(t,TE)]);}
+    T=crecer(TR,0,d,m,st.crit);dib();dibC();
+    q('#c7l1-reglas').textContent=reglas(T,'');
+    const etr=exact(T,TR),ete=exact(T,TE),mejor=curva.reduce((b,v,i)=>v[1]>curva[b][1]?i:b,0)+1,nh=hojas(T);
+    let txt;
+    if(d===1)txt='Una sola pregunta: el árbol parte el plano en dos con una recta paralela a un eje. Es el «tocón» (<i>stump</i>), el árbol más simple posible.';
+    else if(etr-ete>.15)txt='<span class="warn">Sobreajuste.</span> En entrenamiento el AUC es '+nf(etr,3)+', pero en los clientes que no vio baja a '+nf(ete,3)+'. Los rectángulos diminutos persiguen a uno o dos clientes cada uno: el árbol memorizó el ruido. Sube el mínimo de clientes por hoja y mira cómo se recupera la prueba.';
+    else txt='Cada pregunta agrega una línea horizontal o vertical: el árbol solo hace fronteras en escalera. Mira las primeras preguntas: la velocidad cerca de 80 % y después la antigüedad (los clientes nuevos cancelan más), los dos efectos más fuertes de estas dos variables.';
+    q('#c7l1-out').innerHTML='<span class="big">AUC entrenamiento '+nf(etr,3)+' · prueba '+nf(ete,3)+' · '+nh+' hojas</span><span>'+txt+'</span>'+
+      '<span class="hint">El riesgo que el árbol da a un cliente es la proporción que cancela en su hoja. Con solo dos variables, el mejor AUC de prueba es '+nf(curva[mejor-1][1],3)+' (profundidad '+mejor+'); el modelo completo del capítulo usa quince. La línea punteada gris es la línea base: AUC 0,5.</span>';
+  }
+  const bG=q('#c7l1-gini'),bE=q('#c7l1-ent'),bP=q('#c7l1-prueba');
+  bG.addEventListener('click',()=>{st.crit='gini';bG.setAttribute('aria-pressed','true');bE.setAttribute('aria-pressed','false');todo();});
+  bE.addEventListener('click',()=>{st.crit='ent';bE.setAttribute('aria-pressed','true');bG.setAttribute('aria-pressed','false');todo();});
+  bP.addEventListener('click',()=>{st.prueba=!st.prueba;bP.setAttribute('aria-pressed',st.prueba);dib();});
+  [sD,sM].forEach(s=>s.addEventListener('input',todo));
+  todo();
+})();
+</script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="07-lab-2"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  function rnd(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  /* ---- Datos: 800 clientes de contrato mensual del generador del curso (semilla 42), 400 para entrenar y 400 de prueba.
+     Cada uno: antiguedad_meses, velocidad_pct, cancela (1 = cancela). ---- */
+  const VX={n:'antigüedad (meses)',min:0,max:96,d:0},VY={n:'velocidad entregada (%)',min:55,max:100,d:1};
+  const leer=s=>s.split(';').map(r=>r.split(',').map(Number));
+  const TR=leer('7,100,0;12,95.3,1;14,98,1;61,90.1,0;8,80.8,1;3,84.1,0;37,91.5,0;26,87.8,0;1,98.3,0;15,76,0;96,82.6,0;3,93.4,0;15,87.2,0;13,97.2,1;17,97.3,0;2,100,0;18,88.1,0;2,94.6,0;2,84.6,0;8,100,0;24,69,1;21,91.5,0;11,82.8,0;67,90.9,0;27,90,0;24,82.4,0;27,92.3,0;3,100,0;20,84.8,0;10,88.6,0;17,95.7,1;41,81.2,0;77,80.8,0;20,90.2,0;16,97.4,1;41,95.7,0;11,89.7,1;96,98.1,0;52,83.8,0;34,88.1,0;2,89.2,0;1,100,0;1,96.6,1;22,93.1,0;8,83,0;48,99.3,0;50,100,0;5,100,0;31,100,0;11,97.7,1;7,95.9,0;3,74.7,0;14,72.4,1;24,73.9,1;19,95.2,0;32,77.3,0;10,89.3,0;33,97.7,0;2,82.6,0;4,80.3,1;48,96.9,0;14,92.9,0;23,88.3,0;30,99.4,0;28,83.4,0;29,86.4,0;41,99.8,0;22,92.8,0;15,81,0;14,91.5,0;5,92.5,0;14,96.3,0;7,88.8,0;59,100,0;46,92.7,0;49,97.1,0;2,85.6,1;29,93.5,0;10,95.4,0;23,89.2,0;7,91.8,0;16,91.3,0;15,84.8,0;39,100,0;27,86.9,0;15,81.9,0;42,82.5,0;30,86.1,1;4,77.5,1;13,88.3,0;22,90.9,0;29,97.5,0;7,84.2,0;46,84.6,0;11,81.3,1;63,73.3,0;4,76.7,1;65,88.3,0;82,99,1;7,93.3,0;5,91.7,1;5,86.4,0;12,85.5,1;66,88.7,1;4,83.2,0;34,80.4,0;61,90,0;2,87.2,1;14,96.2,0;1,95,0;28,80.1,0;30,96.2,0;29,87.1,0;4,75.8,1;15,88.1,0;43,83.9,1;41,80.4,0;9,89.3,0;31,89.9,0;40,80.7,0;19,93.4,0;12,97.6,0;8,100,0;7,89,0;4,90.4,1;14,84.6,1;4,85.1,1;14,88,0;22,88.4,1;3,100,1;10,89.1,0;14,95.2,0;17,100,0;3,87.7,0;2,78.8,0;4,90.6,0;11,93.9,0;6,87.7,1;5,96.9,0;9,72.3,1;21,90.4,0;12,78.1,1;5,84.7,0;12,96.5,1;2,86,0;3,82.8,0;15,90.5,0;17,100,1;69,92.4,0;25,91,0;8,93.3,0;40,87.2,1;88,86.5,0;19,91,0;29,90.8,0;5,88.4,0;3,86.1,0;96,91.5,0;1,84.9,0;3,82.3,0;5,90.9,1;21,80.3,0;25,91.1,0;1,92.3,0;31,86.8,0;2,100,1;8,91.4,0;13,93.7,0;6,97.8,0;66,82.7,0;42,79.8,0;35,95.3,0;42,99.2,0;10,71.3,1;18,83.2,0;14,95.7,0;25,94.3,0;35,80,0;78,84.7,0;42,83.2,0;12,83.4,0;3,82,0;37,79.6,0;21,100,0;8,87.8,0;25,68.4,1;67,89.3,0;2,86.1,1;1,89.3,1;12,79.6,1;42,96.8,0;28,88.7,0;2,77.4,1;32,88.1,1;1,100,0;3,100,0;14,88.4,0;65,90.4,0;28,85.2,0;3,100,0;16,84,0;2,89.6,0;8,91.6,0;8,72,0;13,99.5,1;26,91.4,0;38,87.4,0;19,80.6,0;2,91.3,0;3,100,0;22,88.3,0;78,77.3,0;26,86.6,1;4,75.6,0;29,88.2,0;16,89.6,0;8,90.6,0;3,92.3,0;12,100,1;12,82.7,1;16,83.8,0;26,87.7,0;3,89.5,1;51,99.7,0;1,74,0;4,83.3,0;24,100,0;21,71,0;26,98.7,0;14,100,1;34,89.3,0;58,88.9,0;4,86.5,0;2,93.3,0;15,92.7,0;11,85.9,0;21,79.5,1;43,77.8,0;16,88.6,0;12,87.7,0;23,90.6,0;15,83.6,0;61,86.5,0;11,90.9,0;15,95.7,1;63,95.7,0;32,88.2,0;19,78.7,1;4,89.4,0;49,88.3,0;40,93,0;23,91.7,0;78,83,0;24,89.1,0;5,86.9,0;50,97.8,0;9,82.9,0;43,98.3,0;51,93.7,0;24,89.3,0;15,89.9,0;3,94.7,0;12,84.6,0;20,94.3,0;12,86.3,0;3,85.5,0;14,87.8,0;4,91.5,0;51,81.9,0;16,79.1,0;4,88.6,0;2,88.1,0;6,87.1,0;36,89.7,0;21,93.7,0;10,92.2,0;6,97.9,1;5,100,0;55,83.7,0;63,90.9,0;24,76.1,1;10,85.9,0;2,95.2,0;12,92.1,0;9,88.9,1;4,95.7,0;10,93.6,1;23,80,0;34,93.9,0;21,95.8,0;73,94,0;35,96,0;26,79,1;11,81.8,0;26,93.3,0;5,92.1,0;24,93.5,0;2,90.7,0;11,96.8,1;3,91.5,0;34,93.5,0;55,100,0;50,82.9,0;12,94.5,1;19,93.2,1;10,91.5,0;10,93.1,0;41,75.5,0;4,95.1,0;45,98.4,0;11,92.6,0;8,83.8,0;7,87.2,1;34,100,0;51,83.7,0;78,77.8,0;96,89.9,0;11,100,0;64,90.5,0;10,94.2,0;14,81.6,1;15,97.2,0;83,89.4,0;4,96.4,0;17,89.8,0;21,98.4,0;58,89,0;70,86.9,0;14,91.3,0;57,94.2,0;12,78.9,0;8,84.3,0;13,79.4,0;26,97.2,0;19,81.8,0;4,95.4,0;17,94,0;7,86.5,0;2,86.6,0;19,84.6,0;33,96.2,0;18,84.1,0;19,93.8,1;14,81.6,0;37,88.5,0;3,81.3,0;10,85.5,0;37,86.3,0;18,75.9,1;14,86.2,0;44,82.9,0;57,87.8,0;24,91.9,0;36,89,0;50,100,0;18,83,0;31,89.5,0;3,85.4,1;20,92.5,0;11,100,0;5,83.8,1;27,96.3,0;14,90.2,0;22,87.3,0;14,97.4,0;1,90.6,1;5,84.2,0;10,95.8,0;73,91.3,0;11,90.5,0;1,84.2,1;7,94.9,0;19,97.2,0;14,83.1,0;4,100,0;1,77.5,1;20,99,0;10,92.1,0;12,93,0;13,93.9,1;8,86.3,0;9,94.7,0;4,86.2,0;12,94.5,0;13,95.9,0;8,85.3,1;33,73.2,1;10,91.1,0;26,73.9,0;5,88.5,0;23,99.1,0;46,83.5,0;24,99.6,0;4,73.5,1;18,85,1;4,88.2,0;29,90,0;16,95.2,0;7,92.6,0;3,87.8,0');
+  const TE=leer('9,86.6,0;24,97.7,0;14,100,0;16,88,0;1,83.7,1;26,90.4,0;5,81.8,0;22,90.3,1;11,81.9,0;13,83.5,1;77,90.3,0;12,78.4,0;15,88.1,0;70,89.9,0;13,89.7,0;2,87.5,0;71,90.9,0;14,90.3,0;5,93.6,0;35,100,0;10,85.2,0;10,70.4,1;36,79.8,1;4,81.7,0;25,83.4,0;38,97.3,0;13,87.4,0;13,89.3,0;35,96.4,0;34,86.6,1;7,89.8,0;6,81.1,0;14,100,0;75,90.4,0;12,88.5,1;15,100,0;18,97.1,0;1,97.7,0;25,87.6,0;12,88.9,0;15,75.4,1;48,98.9,0;26,100,0;25,96.1,0;35,89.5,0;3,96.3,0;23,91.8,1;45,91.1,0;8,88.7,0;50,90,0;15,91.4,1;96,87.9,0;15,95,0;7,95.2,0;23,81.1,0;61,88.8,1;38,98.8,0;2,87.3,0;22,71,1;43,88.2,1;15,95.8,0;25,80.3,0;9,97.2,0;3,91.5,0;29,95.1,0;23,100,0;14,80.5,0;17,89,1;9,90.1,0;14,94.1,0;12,95.7,1;15,85.4,0;11,89.5,0;3,97.6,0;20,93.9,0;6,87.4,0;38,95.9,0;8,87.7,0;96,85.4,0;1,86.5,0;71,96.3,0;7,92.8,1;16,93.1,0;5,85,0;9,91.6,0;41,91.6,0;51,82.2,0;18,95.5,0;60,86.1,0;2,81.3,0;1,92,0;54,80.3,1;9,82.4,1;10,87.3,0;11,89.1,0;21,81.9,0;96,86.6,0;9,86.6,0;21,90.6,0;25,96.9,0;22,84.4,0;70,84.6,0;20,92.1,1;8,90.5,0;15,98.9,0;96,83.3,0;1,81.5,1;16,93,0;13,78.9,0;18,91.6,0;14,85.1,0;1,83.3,0;39,98.1,0;68,91.8,0;1,87,0;33,100,0;25,79.3,1;13,85.4,1;8,100,0;26,95.1,0;5,100,0;38,92.4,0;50,73.5,0;7,90.5,0;11,80.4,0;1,89.7,0;3,100,0;24,89.5,0;7,82.3,0;6,94.8,0;17,100,0;19,96,0;6,80.9,0;12,79.2,0;23,100,0;11,100,0;14,100,0;9,100,0;7,86,0;11,98.2,0;15,88.7,0;8,86.3,0;79,93.8,0;17,82.5,0;21,81.4,0;33,88.3,0;19,81.2,0;8,89.4,0;13,95.5,1;75,94.5,0;26,94,0;47,84.6,0;5,96.5,0;46,81.4,0;6,81.9,0;19,89,0;4,93.2,0;7,98.4,0;4,100,0;13,89.8,0;33,88.5,0;96,93.5,0;15,86.2,0;28,88.1,1;7,77.4,1;12,98.7,0;1,88.8,0;83,85.5,0;18,87.8,1;82,90.4,0;2,93.6,0;10,93.9,0;1,92.2,0;57,89.6,0;89,89.1,0;60,86,0;17,86.6,0;8,89.3,0;27,81.7,0;7,82.6,1;7,99.1,1;63,96.1,0;60,78.5,0;16,100,0;62,90,0;44,100,0;28,100,0;6,95.1,0;39,88.6,0;37,90.8,0;4,88.9,0;88,99.8,0;65,96,1;8,83.4,0;19,85.5,0;5,89.8,0;7,85.3,0;8,100,0;7,75.8,0;35,83.7,0;12,96.3,0;33,86.5,0;30,86.3,0;20,86.4,1;9,80.7,0;4,100,1;25,84.4,0;6,93.4,0;1,84.4,0;11,76.1,1;16,100,0;34,87.9,0;30,82.1,0;13,88.1,0;55,94.2,1;32,78.8,1;39,92.5,0;37,98.6,0;5,82.8,0;60,86.9,0;28,100,0;12,74.4,1;2,82.6,0;49,87.3,0;2,90.9,0;4,84.6,0;2,78.4,0;7,94.7,0;36,94.7,0;48,83.9,0;25,82.9,0;10,97.7,0;33,92.1,0;72,78.5,1;4,98.5,1;38,77.3,1;96,73.1,0;6,86.8,1;35,85.5,1;7,95.2,0;43,100,0;3,84.5,1;6,87,0;4,100,0;11,89.2,1;26,89.2,0;2,79.3,0;65,88.4,0;2,96.6,0;48,84.5,0;29,86,0;24,91.1,0;16,100,0;29,88.3,0;1,74.8,1;22,84.2,0;30,94.1,0;23,83.1,0;26,92.3,0;48,80.8,0;11,96.9,1;1,91.3,1;20,89.8,0;96,91.7,0;69,99.4,0;1,87.4,0;79,83.2,0;7,82.9,1;14,88.5,0;7,100,0;23,81.3,0;25,86.8,0;2,93.3,1;62,81.1,0;23,100,0;93,98,0;38,95.9,0;40,94.1,0;12,100,0;96,78.5,0;32,89.8,0;5,94.9,1;37,88.5,0;1,86.2,1;14,81.3,1;3,82.8,0;16,89.3,0;17,88.4,0;38,88.3,0;46,90.5,1;23,100,0;2,94,0;45,86.7,0;4,88.9,0;23,86,0;3,83.9,1;24,92.9,0;21,83.5,0;7,85.3,1;14,88.5,0;20,90.7,0;84,79.8,1;5,92,1;96,86.5,0;5,80.3,0;18,95.4,0;31,90.2,0;59,100,0;23,94.3,0;45,85.7,0;7,91.5,0;4,85.6,1;8,82,1;9,94.7,1;46,92.4,0;34,81.6,0;12,87,1;31,100,0;18,80.4,0;3,100,0;32,85.2,0;45,77.5,1;17,100,1;10,90.3,1;19,89,0;8,88.1,0;40,82.1,0;28,85.3,0;7,85.4,0;47,87.2,0;24,98.6,0;32,88.8,0;16,94.2,0;1,99.2,0;14,80.7,0;22,93.9,0;33,81.3,1;32,81.2,0;10,83.8,1;10,89.4,0;18,94.1,1;47,91.2,0;96,88.4,0;5,94.6,0;24,94.8,0;48,82.7,0;22,79.4,1;12,89.4,0;2,82.9,0;4,96.9,0;31,90.4,0;2,90.4,0;2,86.5,1;29,96.1,0;86,86.5,0;53,92.9,0;10,76.4,1;31,91,0;1,100,0;3,94,0;9,79.4,1;13,78.9,0;2,86.6,0;31,91.4,0;6,92.2,1;30,83.5,1;8,74.8,1;44,99.1,0;20,84.4,0;36,91.8,0;8,89.9,0;8,79.8,0;21,85.3,0;30,92.3,0;55,87.9,0;36,72.6,1;5,95.8,0;35,86.3,0;2,92.4,1;5,82.9,1;5,85.1,1;14,95.4,0;72,90.7,0;6,89.6,0;23,96.1,0;96,82.1,1;6,99.2,0;43,96.8,0;11,93.5,0;6,81.9,0;4,91.3,0;34,88.4,0;29,86,0;8,90,0;13,90.7,0;23,99,1;4,76.3,1;32,84,1;16,88.2,0;2,92.9,0');
+  /* ---- Árbol CART (Gini). En cada nodo se sortea qué variable puede usar (max_features = 1) ---- */
+  const gini=(n1,n)=>{if(!n)return 0;const p=n1/n;return 2*p*(1-p);};
+  function crecer(A,prof,max,r,azar){
+    const n=A.length,n1=A.reduce((s,a)=>s+a[2],0),nodo={p:n1/n,hoja:true};
+    if(prof>=max||n<2||n1===0||n1===n)return nodo;
+    const base=gini(n1,n);let mejor=null;
+    const fs=azar?[r()<.5?0:1]:[0,1];
+    for(const f of fs){const o=A.slice().sort((a,b)=>a[f]-b[f]);let iz=0,iz1=0;
+      for(let i=0;i<n-1;i++){iz++;iz1+=o[i][2];if(o[i][f]===o[i+1][f])continue;
+        const g=base-(iz/n)*gini(iz1,iz)-((n-iz)/n)*gini(n1-iz1,n-iz);if(!mejor||g>mejor.g)mejor={g,f,u:(o[i][f]+o[i+1][f])/2};}}
+    if(!mejor||mejor.g<=1e-12)return nodo;
+    nodo.hoja=false;nodo.f=mejor.f;nodo.u=mejor.u;
+    nodo.iz=crecer(A.filter(a=>a[nodo.f]<=nodo.u),prof+1,max,r,azar);nodo.de=crecer(A.filter(a=>a[nodo.f]>nodo.u),prof+1,max,r,azar);
+    return nodo;
+  }
+  const hoja=(t,a)=>{while(!t.hoja)t=a[t.f]<=t.u?t.iz:t.de;return t;};
+  const pred=(t,a)=>hoja(t,a).p>=.5?1:0;
+  const sN=q('#c7l2-n'),sD=q('#c7l2-d');
+  let B=[],solo=null,cli=[10,78];
+  function entrenar(){
+    const r=rnd(2024),d=+sD.value;B=[];
+    for(let k=0;k<60;k++){const muestra=[];for(let i=0;i<TR.length;i++)muestra.push(TR[Math.floor(r()*TR.length)]);B.push(crecer(muestra,0,d,r,true));}
+    solo=crecer(TR,0,d,r,false);
+  }
+  const voto=(a,n)=>{let s=0;for(let k=0;k<n;k++)s+=pred(B[k],a);return s/n;};
+  function plano(ctx,w,h,f,marca){
+    ctx.clearRect(0,0,w,h);
+    const m=4,S=Math.min(w,h)-2*m,ox=(w-S)/2,X=x=>ox+(x-VX.min)/(VX.max-VX.min)*S,Y=y=>m+(1-(y-VY.min)/(VY.max-VY.min))*S;
+    const n=S>200?80:40,off=document.createElement('canvas');off.width=off.height=n;const oc=off.getContext('2d');
+    const cw=tok('--warm');
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){const v=f([VX.min+(VX.max-VX.min)*(i+.5)/n,VY.max-(VY.max-VY.min)*(j+.5)/n]);
+      if(v>0){oc.fillStyle=cw;oc.globalAlpha=.55*Math.min(1,v/.6);oc.fillRect(i,j,1,1);}}
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(off,ox,m,S,S);ctx.strokeStyle=tok('--c-tra');ctx.lineWidth=1.2;ctx.strokeRect(ox,m,S,S);
+    if(marca){[0,1].forEach(c=>TR.filter(a=>a[2]===c).forEach(a=>{const x=X(a[0]),y=Y(a[1]);ctx.beginPath();
+      if(c){ctx.moveTo(x,y-4);ctx.lineTo(x+3.6,y+2.6);ctx.lineTo(x-3.6,y+2.6);ctx.closePath();ctx.fillStyle=cw;}else{ctx.arc(x,y,2.1,0,2*Math.PI);ctx.fillStyle=tok('--muted');}ctx.fill();}));}
+    const x=X(cli[0]),y=Y(cli[1]),s=S>200?8:5;
+    ctx.strokeStyle=tok('--card');ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x-s,y-s);ctx.lineTo(x+s,y+s);ctx.moveTo(x+s,y-s);ctx.lineTo(x-s,y+s);ctx.stroke();
+    ctx.strokeStyle=tok('--ink');ctx.lineWidth=2.4;ctx.stroke();
+    return {X,Y,S,ox,m};
+  }
+  let geo=null;
+  const cv=q('#c7l2-cv');
+  const dib=canvasWidget(cv,1,(ctx,w,h)=>{if(!B.length)return;geo=plano(ctx,w,h,a=>voto(a,+sN.value),true);});
+  const mini=q('#c7l2-mini');const minis=[];
+  for(let k=0;k<6;k++){const fg=document.createElement('figure');fg.innerHTML='<canvas role="img" aria-label="Partición del árbol '+(k+1)+'"></canvas><figcaption></figcaption>';mini.appendChild(fg);
+    const c=fg.querySelector('canvas');minis.push({fg,r:canvasWidget(c,1,(ctx,w,h)=>{if(!B.length)return;plano(ctx,w,h,a=>pred(B[k],a),false);})});}
+  function exa(f){const o=TE.map(a=>[f(a),a[2]]).sort((a,b)=>a[0]-b[0]);let r=0,n1=0,i=0;
+    while(i<o.length){let j=i;while(j<o.length&&o[j][0]===o[i][0])j++;const rm=(i+j+1)/2;for(let k=i;k<j;k++)if(o[k][1]){r+=rm;n1++;}i=j;}
+    return (r-n1*(n1+1)/2)/(n1*(o.length-n1));}
+  function todo(re){
+    if(re)entrenar();
+    const n=+sN.value;q('#c7l2-n-o').textContent=n;q('#c7l2-d-o').textContent=sD.value;
+    dib();minis.forEach((m,k)=>{m.r();const v=pred(B[k],cli),cap=m.fg.querySelector('figcaption');cap.textContent='árbol '+(k+1)+': '+(v?'cancela':'se queda');cap.className=v?'si':'no';m.fg.style.opacity=k<n?1:.35;});
+    const vs=[];for(let k=0;k<n;k++)vs.push(pred(B[k],cli));const si=vs.reduce((a,b)=>a+b,0);
+    q('#c7l2-urna').innerHTML=vs.map(v=>'<i style="background:var('+(v?'--warm':'--muted')+')"></i>').join('');
+    const eS=exa(a=>hoja(solo,a).p),eB=exa(a=>voto(a,n));
+    const txt=n===1?'Con un solo árbol no hay votación: es un árbol entrenado con una muestra al azar, y por eso suele ser peor que el árbol normal.'
+      :eB>eS+.01?'El bosque le gana al árbol solo: cada árbol se equivoca distinto, porque vio otra muestra y otras variables, y al votar los errores se cancelan. Mira los seis árboles: ninguno se parece al mapa del bosque, que es más suave que cualquiera de ellos.'
+      :'Con árboles tan poco profundos todos se parecen y votar no aporta tanto. Sube la profundidad: los árboles individuales sobreajustan, pero el voto los suaviza.';
+    q('#c7l2-out').innerHTML='<span class="big">'+si+' de '+n+' árboles votan «cancela» para este cliente: '+(si/n>=.5?'mayoría por cancela':'mayoría por quedarse')+' · riesgo '+nf(100*si/n)+' %</span>'+
+      '<span>AUC en los 400 clientes de prueba: un solo árbol de profundidad '+sD.value+', '+nf(eS,3)+' · el bosque de '+n+' árboles, '+nf(eB,3)+'.</span><span>'+txt+'</span>'+
+      '<span class="hint">La proporción de votos sirve como probabilidad. <code>predict_proba</code> de scikit-learn hace algo muy parecido: promedia la proporción de «cancela» en la hoja de cada árbol en lugar de contar votos.</span>';
+  }
+  function elegir(ev){if(!geo)return;const b=cv.getBoundingClientRect(),px=ev.clientX-b.left,py=ev.clientY-b.top;
+    const x=VX.min+(px-geo.ox)/geo.S*(VX.max-VX.min),y=VY.max-(py-geo.m)/geo.S*(VY.max-VY.min);
+    if(x<VX.min||x>VX.max||y<VY.min||y>VY.max)return;cli=[x,y];todo(false);}
+  cv.addEventListener('click',elegir);
+  cv.addEventListener('keydown',ev=>{const st=(VX.max-VX.min)/40,k={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,st],ArrowDown:[0,-st]}[ev.key];
+    if(k){ev.preventDefault();cli=[Math.min(VX.max,Math.max(VX.min,cli[0]+k[0])),Math.min(VY.max,Math.max(VY.min,cli[1]+k[1]))];todo(false);}});
+  sN.addEventListener('input',()=>todo(false));sD.addEventListener('input',()=>todo(true));
+  todo(true);
+})();
+</script>
+<script>
+(function(){
+  const {tok,canvasWidget}=window.Lab;
+  const raiz=document.querySelector('[id="07-lab-3"]');
+  const q=s=>raiz.querySelector(s);
+  const nf=(n,d=0)=>{const s=Math.abs(n).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (n<0?'−':'')+s.join(',');};
+  /* ---- Datos: clientes de contrato mensual del generador del curso (semilla 42), contados por mes de antigüedad (1 a 96).
+     Entrenamiento: 8.824 clientes (1.640 cancelan). Prueba: 2.956 (559 cancelan). [clientes por mes, cancelan por mes] ---- */
+  const NE=[352,348,328,333,302,266,282,273,276,251,260,254,212,246,188,186,178,162,202,138,175,147,146,144,158,108,121,105,124,104,110,102,89,96,97,83,76,84,75,50,77,61,64,54,56,48,53,53,57,51,44,42,33,33,46,28,36,27,32,19,25,32,28,27,21,26,20,17,22,22,21,25,19,14,13,12,10,13,9,14,14,8,8,7,13,6,8,5,10,8,5,12,8,10,6,161];
+  const KE=[115,89,102,88,92,70,68,60,65,59,78,84,64,48,35,24,28,32,23,21,19,21,20,20,23,13,14,15,18,13,6,14,15,13,14,7,4,8,8,5,5,6,9,6,6,8,6,8,2,5,2,0,5,3,3,2,2,2,2,1,1,0,1,0,3,2,1,2,1,1,1,3,2,2,0,0,2,0,0,2,2,1,1,2,1,1,0,0,0,1,0,1,1,0,0,7];
+  const NP=[115,118,115,98,99,89,101,96,93,91,74,86,66,89,55,56,66,54,62,56,61,54,45,55,51,44,36,41,35,42,32,28,32,32,28,28,25,28,20,21,31,28,22,18,20,16,16,21,19,13,14,11,13,15,15,14,8,11,8,13,8,7,9,7,3,3,11,8,4,7,5,7,5,2,8,4,6,6,3,3,2,4,2,1,1,5,2,2,4,3,4,4,3,2,1,57];
+  const KP=[53,30,33,26,24,24,24,21,20,12,20,36,19,19,9,13,12,8,8,9,7,8,8,4,7,2,9,2,6,1,6,2,3,9,2,1,3,3,3,4,5,2,2,1,1,2,2,0,1,1,2,4,1,3,2,3,1,0,0,0,1,0,2,0,0,0,0,0,0,0,0,0,0,1,2,2,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,6];
+  const M=96,sig=z=>1/(1+Math.exp(-z));
+  const sum=a=>a.reduce((s,v)=>s+v,0);
+  /* ---- Gradient boosting con pérdida logarítmica: cada árbol se ajusta a los residuos (cancela − probabilidad)
+     y sus hojas dan un paso de Newton en log-odds. λ = 1 para que las hojas casi vacías no salten. ---- */
+  function arbol(G,H,a,b,prof,max){
+    let g=0,h=0;for(let i=a;i<b;i++){g+=G[i];h+=H[i];}
+    const hoja={a,b,v:g/(h+1)};
+    if(prof>=max||b-a<2)return hoja;
+    let mejor=null,gl=0,hl=0;
+    for(let i=a;i<b-1;i++){gl+=G[i];hl+=H[i];const gr=g-gl,hr=h-hl;if(NE[i]===0)continue;
+      const gan=gl*gl/(hl+1)+gr*gr/(hr+1)-g*g/(h+1);if(!mejor||gan>mejor.gan)mejor={gan,i};}
+    if(!mejor||mejor.gan<=1e-9)return hoja;
+    return {u:mejor.i,iz:arbol(G,H,a,mejor.i+1,prof+1,max),de:arbol(G,H,mejor.i+1,b,prof+1,max)};
+  }
+  const ev=(t,i)=>{while(t.u!==undefined)t=i<=t.u?t.iz:t.de;return t.v;};
+  const sM=q('#c7l3-m'),sL=q('#c7l3-lr'),sD=q('#c7l3-d');
+  const F0=Math.log(sum(KE)/(sum(NE)-sum(KE)));
+  let Z=[],err=[];   /* Z[m][i]: log-odds del mes i+1 con m árboles */
+  const perdida=(z,N,K)=>{let s=0;for(let i=0;i<M;i++){const p=sig(z[i]);s-=K[i]*Math.log(p)+(N[i]-K[i])*Math.log(1-p);}return s/sum(N);};
+  function entrenar(){
+    const lr=+sL.value,d=+sD.value;let z=new Array(M).fill(F0);Z=[z.slice()];err=[[perdida(z,NE,KE),perdida(z,NP,KP)]];
+    for(let k=0;k<200;k++){
+      const G=z.map((v,i)=>KE[i]-NE[i]*sig(v)),H=z.map((v,i)=>NE[i]*sig(v)*(1-sig(v)));
+      const t=arbol(G,H,0,M,0,d);z=z.map((v,i)=>v+lr*ev(t,i));Z.push(z.slice());err.push([perdida(z,NE,KE),perdida(z,NP,KP)]);
+    }
+  }
+  function ejes(ctx,w,h,y0,y1,pasoY,fmtY,etiq){
+    const p={l:38,r:8,t:8,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,X=x=>p.l+x/96*pw,Y=y=>p.t+(1-(y-y0)/(y1-y0))*ph;
+    ctx.clearRect(0,0,w,h);ctx.strokeStyle=tok('--grid');ctx.lineWidth=1;ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');
+    for(let v=y0;v<=y1+1e-9;v+=pasoY){ctx.beginPath();ctx.moveTo(p.l,Y(v));ctx.lineTo(p.l+pw,Y(v));ctx.stroke();ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(fmtY(v),p.l-4,Y(v));}
+    ctx.textAlign='center';ctx.textBaseline='top';for(let v=0;v<=96;v+=12)ctx.fillText(v,X(v),p.t+ph+4);
+    if(etiq){ctx.textAlign='left';ctx.textBaseline='top';ctx.fillStyle=tok('--ink');ctx.fillText(etiq,p.l+6,p.t+3);}
+    return {X,Y,p,pw,ph};
+  }
+  const escalera=(ctx,G,f,col,lw,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);ctx.beginPath();
+    for(let i=0;i<M;i++){const y=G.Y(f(i));i?ctx.lineTo(G.X(i+.5),y):ctx.moveTo(G.X(i+.5),y);ctx.lineTo(G.X(i+1.5),y);}ctx.stroke();ctx.setLineDash([]);};
+  const dP=canvasWidget(q('#c7l3-cp'),.52,(ctx,w,h)=>{if(!Z.length)return;const m=+sM.value,G=ejes(ctx,w,h,0,.6,.1,v=>nf(100*v)+'%','árboles sumados: '+m+' · meses de antigüedad →');
+    for(let i=0;i<M;i++){if(NE[i]<15)continue;const r=Math.max(2,Math.min(5,Math.sqrt(NE[i])/4));ctx.beginPath();ctx.arc(G.X(i+1),G.Y(Math.min(.6,KE[i]/NE[i])),r,0,2*Math.PI);ctx.fillStyle=tok('--warm');ctx.globalAlpha=.55;ctx.fill();ctx.globalAlpha=1;}
+    if(m>0)escalera(ctx,G,i=>sig(Z[m-1][i]),tok('--muted'),1.5,[4,4]);
+    escalera(ctx,G,i=>sig(Z[m][i]),tok('--c-tra'),2.6);});
+  const dR=canvasWidget(q('#c7l3-cr'),.36,(ctx,w,h)=>{if(!Z.length)return;const m=+sM.value,G=ejes(ctx,w,h,-.2,.2,.1,v=>(v>0?'+':'')+nf(100*v),m?'residuo medio por mes antes del árbol '+m+' y su corrección (puntos %)':'sin árboles: el modelo da a todos el riesgo promedio');
+    const prev=Z[Math.max(0,m-1)];ctx.fillStyle=tok('--muted');const bw=Math.max(1.5,G.pw/96*.7);
+    for(let i=0;i<M;i++){if(NE[i]<15)continue;const r=Math.max(-.2,Math.min(.2,KE[i]/NE[i]-sig(prev[i])));const y0=G.Y(0),y1=G.Y(r);ctx.fillRect(G.X(i+1)-bw/2,Math.min(y0,y1),bw,Math.abs(y1-y0));}
+    if(m>0)escalera(ctx,G,i=>sig(Z[m][i])-sig(Z[m-1][i]),tok('--warm'),2.4);});
+  const dE=canvasWidget(q('#c7l3-ce'),.85,(ctx,w,h)=>{if(!err.length)return;
+    const p={l:42,r:8,t:8,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,y0=.44,y1=.5,X=k=>p.l+k/200*pw,Y=v=>p.t+(1-(Math.max(y0,Math.min(y1,v))-y0)/(y1-y0))*ph;
+    ctx.clearRect(0,0,w,h);ctx.font='11px '+tok('--f-mono');ctx.fillStyle=tok('--muted');ctx.strokeStyle=tok('--grid');ctx.lineWidth=1;
+    for(let v=y0;v<=y1+1e-9;v+=.01){ctx.beginPath();ctx.moveTo(p.l,Y(v));ctx.lineTo(p.l+pw,Y(v));ctx.stroke();ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(nf(v,2),p.l-4,Y(v));}
+    ctx.textAlign='center';ctx.textBaseline='top';for(let k=0;k<=200;k+=50)ctx.fillText(k,X(k),p.t+ph+4);
+    ctx.strokeStyle=tok('--muted');ctx.setLineDash([2,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.l,Y(err[0][1]));ctx.lineTo(p.l+pw,Y(err[0][1]));ctx.stroke();
+    [[0,'--accent',[6,4]],[1,'--warm',[]]].forEach(([j,c,dash])=>{ctx.strokeStyle=tok(c);ctx.lineWidth=2.2;ctx.setLineDash(dash);ctx.beginPath();err.forEach((e,k)=>k?ctx.lineTo(X(k),Y(e[j])):ctx.moveTo(X(k),Y(e[j])));ctx.stroke();});
+    ctx.setLineDash([3,3]);ctx.strokeStyle=tok('--ink');ctx.lineWidth=1;const m=+sM.value;ctx.beginPath();ctx.moveTo(X(m),p.t);ctx.lineTo(X(m),p.t+ph);ctx.stroke();ctx.setLineDash([]);});
+  function pintar(){
+    const m=+sM.value;q('#c7l3-m-o').textContent=m;q('#c7l3-lr-o').textContent=nf(+sL.value,2);q('#c7l3-d-o').textContent=sD.value;
+    dP();dR();dE();
+    const [etr,ete]=err[m],mejor=err.reduce((b,e,k)=>e[1]<err[b][1]?k:b,0);
+    const pico=sig(Z[m][11]),antes=sig(Z[m][8]),despues=sig(Z[m][16]);
+    let txt;
+    if(m===0)txt='Sin árboles, el modelo da a todos el riesgo promedio de los mensuales (18,6 %). Pulsa «Sumar el siguiente árbol»: el primero busca la pregunta sobre la antigüedad que más corrige ese promedio.';
+    else if(m<6)txt='El árbol '+m+' no mira la etiqueta: mira los residuos, lo que el modelo todavía no explica (barras grises), y los corrige con una sola pregunta. Se suma multiplicado por la tasa de aprendizaje, para corregir solo una parte cada vez.';
+    else if(m>mejor+30&&ete>err[mejor][1]+.001)txt='<span class="warn">Demasiados árboles.</span> La pérdida de entrenamiento sigue bajando, pero la de prueba ya sube: los últimos árboles persiguen el ruido de los meses con pocos clientes. Por eso se usa la parada temprana (<i>early stopping</i>).';
+    else if(pico>antes+.02&&pico>despues+.02)txt='<span class="ok">El modelo encontró el pico del primer aniversario:</span> el riesgo sube en los meses 11 a 13 ('+nf(100*pico,1)+' % en el mes 12 frente a '+nf(100*antes,1)+' % en el 9 y '+nf(100*despues,1)+' % en el 17). Nadie lo programó: lo fueron armando los árboles a partir de los residuos.';
+    else txt='Cada árbol agrega una corrección pequeña. La curva ya baja con la antigüedad, pero todavía no ve el pico del aniversario (meses 11 a 13): sigue sumando árboles.';
+    q('#c7l3-out').innerHTML='<span class="big">Pérdida logarítmica: entrenamiento '+nf(etr,4)+' · prueba '+nf(ete,4)+'</span><span>'+txt+'</span>'+
+      '<span class="hint">Más baja es mejor. La línea base (el mismo riesgo para todos) da '+nf(err[0][1],4)+' en prueba. Con esta tasa y esta profundidad, la mejor prueba llega con '+mejor+(mejor===1?' árbol.':' árboles.')+' Prueba tasa 1 y profundidad 4: llega rápido y se pasa.</span>';
+  }
+  const re=()=>{entrenar();pintar();};
+  sM.addEventListener('input',pintar);sL.addEventListener('input',re);sD.addEventListener('input',re);
+  q('#c7l3-sig').addEventListener('click',()=>{sM.value=Math.min(200,+sM.value+1);pintar();});
+  q('#c7l3-ant').addEventListener('click',()=>{sM.value=Math.max(0,+sM.value-1);pintar();});
+  let timer=null;const bA=q('#c7l3-anim');
+  bA.addEventListener('click',()=>{
+    if(timer){clearInterval(timer);timer=null;bA.textContent='Animar';return;}
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){sM.value=Math.min(200,+sM.value+10);pintar();return;}
+    if(+sM.value>=80)sM.value=0;bA.textContent='Detener';
+    timer=setInterval(()=>{sM.value=+sM.value+1;pintar();if(+sM.value>=80){clearInterval(timer);timer=null;bA.textContent='Animar';}},200);
+  });
+  re();
+})();
+</script>
+<script>
+(function(){
+  const {$}=window.Lab;
+  const raiz=document.querySelector('[id="07-lab-4"]');
+  /* ---- Componente Pyodide común del curso «Aprendizaje automático» (copiar tal cual) ----
+     Pyodide 314.0.7 (Python 3.14.2; numpy 2.4.6, pandas 3.0.2, scikit-learn 1.8.0).
+     Se descarga solo al pulsar el botón y se comparte entre todos los labs de la página (window.aePy).
+     PY.generador(py) escribe generar_clientes.py (el del capítulo 01) y crea datos/clientes.csv con semilla 42. */
+  const PY=window.aePy||(window.aePy=(function(){
+    const VER='314.0.7',BASE='https://cdn.jsdelivr.net/pyodide/v'+VER+'/full/';
+    let base=null;const listos={};
+    const GEN="\"\"\"Clientes sintéticos para el curso «Aprendizaje automático»: quién cancela el servicio.\n\nFabrica una muestra de clientes de una empresa ficticia de servicios por suscripción,\ntal como estaban el 1 de julio de 2026 (la fecha de corte), y si cancelaron o no en los\n90 días siguientes (columna cancela). Todo es inventado.\n\n    clientes.csv   un cliente por fila, foto del 1 de julio de 2026\n    historial.csv  fotos mensuales de julio de 2025 a junio de 2026: el mismo cliente\n                   aparece en varios meses (sirve para partir por cliente y en el tiempo)\n\nUso: python generar_clientes.py [--n 20000] [--semilla 42] [--carpeta datos]\n\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport numpy as np\nimport pandas as pd\n\nCORTE = pd.Timestamp(\"2026-07-01\")\nREGIONES = [\"Norte\", \"Centro\", \"Sur\", \"Oriente\"]\nPLANES = [\"Básico\", \"Estándar\", \"Plus\", \"Premium\"]\nPRECIO = {\"Básico\": 20.0, \"Estándar\": 30.0, \"Plus\": 45.0, \"Premium\": 60.0}\nMBPS = {\"Básico\": 100, \"Estándar\": 300, \"Plus\": 600, \"Premium\": 1000}\nMETODOS = [\"debito\", \"tarjeta\", \"efectivo\", \"transferencia\", \"billetera\"]\n\n\ndef perfil(rng, n):\n    \"\"\"Lo que no cambia de un mes a otro: quién es el cliente y qué contrató.\"\"\"\n    negocio = rng.random(n) < 0.18\n    p_plan = np.where(negocio[:, None], [0.10, 0.30, 0.35, 0.25], [0.32, 0.41, 0.18, 0.09])\n    plan = np.array(PLANES)[(rng.random(n)[:, None] > p_plan.cumsum(1)).sum(1)]\n    return pd.DataFrame({\n        \"tipo_cliente\": np.where(negocio, \"negocio\", \"hogar\"),\n        \"region\": rng.choice(REGIONES, n, p=[0.30, 0.32, 0.20, 0.18]),\n        \"plan\": plan,\n        \"metodo_pago\": rng.choice(METODOS, n, p=[0.30, 0.25, 0.25, 0.12, 0.08]),\n        \"personas_hogar\": np.where(negocio, 0, rng.choice([1, 2, 3, 4, 5, 6], n,\n                                                          p=[0.18, 0.27, 0.23, 0.19, 0.09, 0.04])),\n        \"dia_facturacion\": rng.choice([1, 10, 20], n),\n        \"riesgo\": rng.normal(0, 1, n),        # la situación de cada cliente: nadie la ve\n        \"propension_reclamo\": rng.gamma(2.0, 0.5, n),\n        \"u_contrato\": rng.random(n), \"u_extra\": rng.random(n),\n        \"extra_base\": rng.poisson(0.5 + 0.3 * negocio),\n        \"f_consumo\": rng.lognormal(0, 0.22, n), \"f_velocidad\": rng.normal(0, 1, n),\n    })\n\n\ndef foto(rng, p, antiguedad):\n    \"\"\"Lo que se mide en una fecha: uso, calidad, reclamos y el riesgo de cancelar.\"\"\"\n    n = len(p)\n    negocio = (p.tipo_cliente == \"negocio\").to_numpy()\n    precio = p.plan.map(PRECIO).to_numpy()\n    mbps = p.plan.map(MBPS).to_numpy()\n    anual = p.u_contrato.to_numpy() < np.clip(0.25 + 0.25 * negocio + 0.004 * antiguedad, 0, 0.8)\n    extra = np.minimum(p.extra_base.to_numpy() + (p.u_extra.to_numpy() < 0.012 * antiguedad), 3)\n    rampa = 1 - np.exp(-antiguedad / 4)          # los primeros meses se usa menos\n    consumo = ((60 + 70 * p.personas_hogar.to_numpy() + 0.12 * mbps + 150 * negocio\n                + 0.10 * mbps * negocio) * rampa * p.f_consumo.to_numpy() * rng.lognormal(0, 0.1, n)).round(1)\n    sur = (p.region == \"Sur\").to_numpy()\n    vel = np.clip(91 - 6 * sur + 6.5 * p.f_velocidad.to_numpy() + rng.normal(0, 2.5, n), 45, 100).round(1)\n    caidas = rng.poisson(0.5 + 0.03 * (100 - vel))\n    reclamos = rng.poisson(p.propension_reclamo.to_numpy() * (0.25 + 0.3 * caidas\n                                                              + 0.6 * (vel < 80)))\n    llamadas = rng.poisson(0.4 + 0.9 * reclamos)\n    tarde = rng.poisson(np.exp(-0.9 + 0.6 * p.riesgo.to_numpy()).clip(0, 8))\n    app = rng.poisson(np.exp(1.4 - 0.25 * p.riesgo.to_numpy() + 0.3 * negocio))\n    promo = (antiguedad <= 13) & (rng.random(n) < 0.45) | (rng.random(n) < 0.05)\n    fin_promo = promo & (rng.random(n) < 0.35)\n    mensual = ~anual\n    basico_lleno = (precio == 20) & (consumo > 320)   # el plan ya le queda chico\n    aniversario = (antiguedad >= 11) & (antiguedad <= 13)  # se cumple el primer año\n    logit = (-2.25 + 1.0 * mensual - 0.75 * np.log1p(antiguedad / 6) + 0.7 * aniversario\n             + 0.40 * np.minimum(reclamos, 3) + 0.20 * caidas + 1.0 * (vel < 80)\n             + 0.4 * fin_promo + 1.1 * (fin_promo & mensual)\n             + 1.3 * (sur & (precio <= 30)) + 1.0 * basico_lleno\n             - 0.32 * extra - 0.10 * app\n             + 0.012 * (precio - 30) + 0.12 * tarde - 0.35 * negocio\n             + 0.35 * (p.metodo_pago == \"efectivo\").to_numpy()\n             - 0.30 * (p.metodo_pago == \"debito\").to_numpy()\n             + 0.45 * p.riesgo.to_numpy())\n    return pd.DataFrame({\n        \"antiguedad_meses\": antiguedad, \"contrato\": np.where(anual, \"anual\", \"mensual\"),\n        \"precio_plan\": precio, \"velocidad_mbps\": mbps, \"servicios_extra\": extra,\n        \"consumo_gb\": consumo, \"velocidad_pct\": vel, \"caidas_90d\": caidas,\n        \"reclamos_90d\": reclamos, \"llamadas_soporte_90d\": llamadas,\n        \"facturas_tarde_12m\": tarde, \"uso_app_30d\": app, \"fin_promo_60d\": fin_promo.astype(int),\n    }), logit\n\n\ndef clientes(n, semilla):\n    rng = np.random.default_rng(semilla)\n    p = perfil(rng, n)\n    antiguedad = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)\n    f, logit = foto(rng, p, antiguedad)\n    cancela = (rng.random(n) < 1 / (1 + np.exp(-(logit + rng.normal(0, 0.6, n))))).astype(int)\n    # Encuesta de satisfacción (0 a 10): la contesta solo una parte, y menos los descontentos\n    nota = np.clip(np.round(8.2 - 0.9 * f.reclamos_90d - 0.5 * p.riesgo - 1.2 * cancela\n                            + rng.normal(0, 1.3, n)), 0, 10)\n    contesta = rng.random(n) < np.clip(0.45 - 0.08 * f.reclamos_90d, 0.1, 0.6)\n    # FUGAS DE DATOS: las dos se registran DESPUÉS de la fecha de corte\n    gestion = np.where(cancela == 1, rng.random(n) < 0.55, rng.random(n) < 0.03).astype(int)\n    sin_pago = np.where(cancela == 1, rng.integers(12, 90, n),\n                        np.clip(rng.integers(0, 31, n) + 7 * f.facturas_tarde_12m, 0, 80))\n    alta = CORTE - pd.to_timedelta(antiguedad * 30.4 + rng.integers(0, 28, n), unit=\"D\")\n    df = pd.concat([p.iloc[:, :6], f], axis=1)   # sin las columnas ocultas\n    df.insert(0, \"cliente_id\", np.arange(100001, 100001 + n))\n    df.insert(1, \"fecha_alta\", alta.strftime(\"%Y-%m-%d\"))\n    df[\"satisfaccion\"] = np.where(contesta, nota, np.nan)\n    df[\"gestion_retencion\"] = gestion\n    df[\"dias_sin_pago\"] = sin_pago\n    df[\"cancela\"] = cancela\n    orden = [\"cliente_id\", \"fecha_alta\", \"antiguedad_meses\", \"tipo_cliente\", \"region\", \"plan\",\n             \"precio_plan\", \"velocidad_mbps\", \"contrato\", \"metodo_pago\", \"dia_facturacion\",\n             \"personas_hogar\", \"servicios_extra\", \"consumo_gb\", \"velocidad_pct\", \"caidas_90d\",\n             \"reclamos_90d\", \"llamadas_soporte_90d\", \"facturas_tarde_12m\", \"uso_app_30d\",\n             \"fin_promo_60d\", \"satisfaccion\", \"gestion_retencion\", \"dias_sin_pago\", \"cancela\"]\n    return df[orden]\n\n\ndef historial(n, semilla):\n    \"\"\"Fotos mensuales de una población que se mueve: entran clientes nuevos y otros se van.\"\"\"\n    rng = np.random.default_rng(semilla + 1)\n    meses = pd.date_range(\"2025-07-01\", \"2026-09-01\", freq=\"MS\")\n    p = perfil(rng, n)\n    antig = np.clip(rng.exponential(28, n).astype(int) + 1, 1, 96)\n    activo = np.ones(n, bool)\n    sale = np.full(n, -1)\n    filas = []\n    for i, mes in enumerate(meses):\n        nuevos = rng.binomial(n, 0.025) if i else 0       # altas del mes\n        if nuevos:\n            p = pd.concat([p, perfil(rng, nuevos)], ignore_index=True)\n            antig = np.concatenate([antig, np.ones(nuevos, int)])\n            activo = np.concatenate([activo, np.ones(nuevos, bool)])\n            sale = np.concatenate([sale, np.full(nuevos, -1)])\n        f, logit = foto(rng, p, antig)\n        idx = np.flatnonzero(activo)\n        if mes <= pd.Timestamp(\"2026-06-01\"):\n            filas.append(f.iloc[idx].assign(cliente_id=300001 + idx, mes_corte=mes.strftime(\"%Y-%m\"),\n                                            _i=i, _pos=idx).join(p.iloc[idx][[\"tipo_cliente\", \"region\",\n                                                                               \"plan\", \"metodo_pago\"]]))\n        # probabilidad de irse este mes (aprox. un tercio del riesgo a 90 días)\n        prob = 1 / (1 + np.exp(-(logit[idx] - 1.25 + rng.normal(0, 0.6, len(idx)))))\n        se_va = idx[rng.random(len(idx)) < prob]\n        activo[se_va] = False\n        sale[se_va] = i\n        antig = antig + 1\n    h = pd.concat(filas, ignore_index=True)\n    s = sale[h._pos.to_numpy()]\n    h[\"cancela\"] = ((s >= h._i) & (s <= h._i + 2)).astype(int)\n    orden = [\"cliente_id\", \"mes_corte\", \"antiguedad_meses\", \"tipo_cliente\", \"region\", \"plan\",\n             \"precio_plan\", \"contrato\", \"metodo_pago\", \"servicios_extra\", \"consumo_gb\",\n             \"velocidad_pct\", \"caidas_90d\", \"reclamos_90d\", \"llamadas_soporte_90d\",\n             \"facturas_tarde_12m\", \"uso_app_30d\", \"fin_promo_60d\", \"cancela\"]\n    return h[orden].sort_values([\"mes_corte\", \"cliente_id\"], ignore_index=True)\n\n\nif __name__ == \"__main__\":\n    a = argparse.ArgumentParser(description=__doc__.splitlines()[0])\n    a.add_argument(\"--n\", type=int, default=20000, help=\"clientes de la muestra (20000)\")\n    a.add_argument(\"--semilla\", type=int, default=42)\n    a.add_argument(\"--carpeta\", default=\"datos\")\n    a = a.parse_args()\n    carpeta = Path(a.carpeta)\n    carpeta.mkdir(parents=True, exist_ok=True)\n    c = clientes(a.n, a.semilla)\n    c.to_csv(carpeta / \"clientes.csv\", index=False)\n    print(f\"{carpeta / 'clientes.csv'}: {len(c):,} clientes, cancela el {c.cancela.mean():.1%}\")\n    h = historial(a.n // 4, a.semilla)\n    h.to_csv(carpeta / \"historial.csv\", index=False)\n    print(f\"{carpeta / 'historial.csv'}: {len(h):,} filas de {h.cliente_id.nunique():,} clientes, \"\n          f\"cancela el {h.cancela.mean():.1%}\")\n";
+    const AYUDA="import ast, io, json, sys\n_ae_espacios = {}\ndef _ae_limpio(v):\n    if v is None: return None\n    if hasattr(v, \"item\") and not isinstance(v, (str, bytes)):\n        try: v = v.item()\n        except Exception: v = str(v)\n    if isinstance(v, float) and v != v: return None\n    if isinstance(v, (bool, int, float, str)): return v\n    return str(v)\ndef _ae_tabla(x, n=12):\n    mod = type(x).__module__.split(\".\")[0]\n    if mod == \"pandas\":\n        import pandas as pd\n        if isinstance(x, pd.Series): x = x.to_frame()\n        if not isinstance(x, pd.DataFrame): return {\"valor\": repr(x)}\n        h = x.head(n); filas = h.astype(object).values.tolist()\n        indice = [str(i) for i in h.index]\n        cols = [str(c) for c in h.columns]; tipos = [str(t) for t in h.dtypes]\n    elif x is None: return None\n    else: return {\"valor\": repr(x)}\n    return {\"columnas\": cols, \"tipos\": tipos, \"indice\": indice, \"forma\": list(x.shape), \"motor\": mod,\n            \"filas\": [[_ae_limpio(v) for v in f] for f in filas]}\ndef _ae_correr(lab, codigo):\n    import warnings\n    warnings.filterwarnings(\"ignore\")\n    ns = _ae_espacios.setdefault(lab, {\"__name__\": \"__main__\"})\n    buf, viejo = io.StringIO(), sys.stdout\n    sys.stdout = buf\n    try:\n        arbol = ast.parse(codigo); ultimo = None\n        if arbol.body and isinstance(arbol.body[-1], ast.Expr):\n            exp = ast.Expression(arbol.body.pop().value)\n            exec(compile(arbol, \"<lab>\", \"exec\"), ns)\n            ultimo = eval(compile(exp, \"<lab>\", \"eval\"), ns)\n        else:\n            exec(compile(arbol, \"<lab>\", \"exec\"), ns)\n        return json.dumps({\"salida\": buf.getvalue(), \"tabla\": _ae_tabla(ultimo)})\n    except BaseException as e:\n        return json.dumps({\"salida\": buf.getvalue(), \"error\": type(e).__name__ + \": \" + str(e)})\n    finally:\n        sys.stdout = viejo\ndef _ae_generador():\n    import os, sys\n    if os.getcwd() not in sys.path: sys.path.insert(0, os.getcwd())\n    import generar_clientes as g\n    os.makedirs(\"datos\", exist_ok=True)\n    if not os.path.exists(\"datos/clientes.csv\"):\n        g.clientes(20000, 42).to_csv(\"datos/clientes.csv\", index=False)\n";
+    function script(){return new Promise((ok,mal)=>{
+      if(window.loadPyodide)return ok();
+      const s=document.createElement('script');s.src=BASE+'pyodide.js';
+      s.onload=ok;s.onerror=()=>mal(new Error('No se pudo descargar Pyodide'));document.head.appendChild(s);});}
+    return {VER,
+      /* paquetes: ['pandas','scikit-learn']; aviso(texto) recibe el estado */
+      cargar(paquetes,aviso){
+        if(!base){aviso&&aviso('Descargando Python (Pyodide '+VER+')…');
+          base=script().then(()=>loadPyodide({indexURL:BASE})).then(py=>{py.runPython(AYUDA);return py;});
+          base.catch(()=>{base=null;});}
+        return base.then(async py=>{
+          const faltan=paquetes.filter(p=>!listos[p]);
+          if(faltan.length){aviso&&aviso('Instalando '+faltan.join(' y ')+'…');
+            await py.loadPackage(faltan);faltan.forEach(p=>listos[p]=1);}
+          return py;});
+      },
+      /* escribe el generador del curso y crea datos/clientes.csv (20.000 clientes, semilla 42) */
+      generador(py){py.FS.writeFile('generar_clientes.py',GEN);py.runPython('_ae_generador()');},
+      /* archivos: {'nombre.py': 'texto…'}; se escriben en la carpeta de trabajo de Python */
+      archivos(py,archivos){for(const k in archivos)py.FS.writeFile(k,archivos[k]);},
+      async correr(py,lab,codigo){
+        py.globals.set('_ae_codigo',codigo);
+        return JSON.parse(py.runPython('_ae_correr('+JSON.stringify(lab)+', _ae_codigo)'));}
+    };
+  })());
+  /* Dibuja la tabla que devuelve PY.correr (r.tabla) dentro de un elemento */
+  function pintarTabla(el,t){
+    const nfx=(v,dec)=>{if(typeof v!=='number')return v===null?'<i>nulo</i>':String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      let s=Math.abs(v).toFixed(Number.isInteger(v)&&!dec?0:3).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').split('.');
+      s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (v<0?'−':'')+s.join(',');};
+    if(!t){el.innerHTML='';return;}
+    if(t.valor!==undefined){el.innerHTML='<pre class="ae-valor">'+nfx(t.valor)+'</pre>';return;}
+    const idx=t.indice&&!t.indice.every((v,i)=>v===String(i));
+    let h='<table class="tbl"><thead><tr>'+(idx?'<th></th>':'')+t.columnas.map((c,i)=>'<th>'+nfx(c)+'<br><small>'+t.tipos[i]+'</small></th>').join('')+'</tr></thead><tbody>';
+    t.filas.forEach((f,j)=>{h+='<tr>'+(idx?'<th>'+nfx(t.indice[j])+'</th>':'')+f.map((v,i)=>'<td'+(typeof v==='number'?' style="text-align:right"':'')+'>'+(/(^|_)id$/i.test(String(t.columnas[i]))&&typeof v==='number'?String(v):nfx(v,/float/i.test(t.tipos[i])))+'</td>').join('')+'</tr>';});
+    const n=t.forma[0];
+    el.innerHTML=h+'</tbody></table><p class="hint">'+(n>t.filas.length?'Primeras '+t.filas.length+' de ':'')+nfx(n)+' filas × '+t.forma[1]+' columnas</p>';
+  }
+  /* ---- fin del componente ---- */
+  const PREP="\"\"\"Preparación común del laboratorio: datos, partición y una función para medir.\"\"\"\nimport pandas as pd\nfrom sklearn import set_config\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.metrics import roc_auc_score\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import OneHotEncoder\n\nset_config(working_memory=128)   # el navegador tiene poca memoria\ndf = pd.read_csv(\"datos/clientes.csv\")\nNUM = [\"antiguedad_meses\", \"precio_plan\", \"servicios_extra\", \"consumo_gb\", \"velocidad_pct\",\n       \"caidas_90d\", \"reclamos_90d\", \"llamadas_soporte_90d\", \"facturas_tarde_12m\",\n       \"uso_app_30d\", \"fin_promo_60d\"]\nCAT = [\"tipo_cliente\", \"region\", \"contrato\", \"metodo_pago\"]\nent, pru = train_test_split(df, test_size=0.25, random_state=42, stratify=df.cancela)\n\n\ndef prep():\n    \"\"\"Los árboles no necesitan escalar: las numéricas pasan tal cual y las categorías van en one-hot.\"\"\"\n    return ColumnTransformer([(\"num\", \"passthrough\", NUM),\n                              (\"cat\", OneHotEncoder(handle_unknown=\"ignore\", sparse_output=False), CAT)],\n                             verbose_feature_names_out=False)\n\n\ndef medir(nombre, modelo):\n    \"\"\"AUC en entrenamiento y en prueba (júntalos con pd.concat).\"\"\"\n    return pd.DataFrame({\"AUC entrenamiento\": round(roc_auc_score(ent.cancela, modelo.predict_proba(ent)[:, 1]), 3),\n                         \"AUC prueba\": round(roc_auc_score(pru.cancela, modelo.predict_proba(pru)[:, 1]), 3)},\n                        index=[nombre])\n", PREPNOMBRE="preparar_07.py";
+  const EJ=[{"t": "Un árbol de profundidad 3 y sus preguntas", "c": "from preparar_07 import ent, prep, medir\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.tree import DecisionTreeClassifier, export_text\n\narbol = make_pipeline(prep(), DecisionTreeClassifier(max_depth=3, random_state=42))\narbol.fit(ent, ent.cancela)\nnombres = list(arbol[0].get_feature_names_out())\nprint(export_text(arbol[-1], feature_names=nombres, show_weights=True))\nmedir(\"árbol, profundidad 3\", arbol)", "x": ["<code>export_text</code> imprime las preguntas del árbol. Entre corchetes, cuántos clientes de entrenamiento se quedan y cuántos cancelan en cada hoja.", "La primera pregunta es la antigüedad (13,5 meses: justo después del primer aniversario) y la segunda, la velocidad entregada por debajo de 80 %. El árbol encontró solo los dos escalones que el texto describe."]}, {"t": "La profundidad: entrenamiento frente a prueba", "c": "from preparar_07 import ent, prep, medir\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.tree import DecisionTreeClassifier\n\nfilas = []\nfor d in [2, 3, 4, 6, 8, 10, None]:\n    m = make_pipeline(prep(), DecisionTreeClassifier(max_depth=d, random_state=42)).fit(ent, ent.cancela)\n    filas.append(medir(f\"profundidad {d}\", m).assign(hojas=m[-1].get_n_leaves()))\npd.concat(filas)", "x": ["Mientras el árbol crece, el AUC de entrenamiento sube siempre; el de prueba sube hasta profundidad 6 (0,760) y después baja.", "Sin límite, el árbol tiene 2.091 hojas, una por cada siete clientes: acierta todo en entrenamiento (1,000) y en prueba cae a 0,585, peor que con dos preguntas. Es el sobreajuste del capítulo 06, en vivo."]}, {"t": "Bosque aleatorio y su error fuera de la bolsa", "c": "from preparar_07 import ent, prep, medir\nimport pandas as pd\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.pipeline import make_pipeline\n\nbosque = make_pipeline(prep(), RandomForestClassifier(\n    n_estimators=100, min_samples_leaf=20, oob_score=True, random_state=42))\nbosque.fit(ent, ent.cancela)\nprint(f\"Exactitud fuera de la bolsa (OOB): {bosque[-1].oob_score_:.3f}\")\nimp = pd.Series(bosque[-1].feature_importances_, index=bosque[0].get_feature_names_out())\nprint(\"Las variables que más usa:\")\nprint(imp.sort_values(ascending=False).head(6).round(3).to_string())\nmedir(\"bosque, 100 árboles\", bosque)", "x": ["Cien árboles, cada uno con una muestra con reemplazo de los clientes y un sorteo de variables en cada pregunta. El AUC de prueba (≈ 0,80) le gana a cualquier árbol solo.", "La exactitud fuera de la bolsa (<i>out-of-bag</i>) se mide con los clientes que cada árbol no vio: es una validación gratis. Ojo: es exactitud, y la línea base ya tiene 0,863."]}, {"t": "Gradient boosting con parada temprana", "c": "from preparar_07 import ent, prep, medir\nimport pandas as pd\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.pipeline import make_pipeline\n\nrapido = make_pipeline(prep(), HistGradientBoostingClassifier(\n    learning_rate=0.5, max_iter=300, early_stopping=False, random_state=42))\najustado = make_pipeline(prep(), HistGradientBoostingClassifier(\n    learning_rate=0.05, max_leaf_nodes=8, min_samples_leaf=100, max_iter=500,\n    early_stopping=True, validation_fraction=0.15, n_iter_no_change=20, random_state=42))\nrapido.fit(ent, ent.cancela)\najustado.fit(ent, ent.cancela)\nprint(f\"El ajustado se detuvo solo en {ajustado[-1].n_iter_} árboles\")\npd.concat([medir(\"tasa 0,5 · 300 árboles\", rapido), medir(\"tasa 0,05 · parada temprana\", ajustado)])", "x": ["Con tasa alta y sin freno, el boosting memoriza: AUC de entrenamiento cerca de 1 y prueba muy por debajo.", "Con tasa baja, hojas chicas y parada temprana (<code>early_stopping</code>: aparta 15 % de los datos y se detiene cuando 20 árboles seguidos no mejoran), queda cerca del mejor modelo del curso."]}, {"t": "Todos contra la línea base", "c": "from preparar_07 import ent, pru, NUM, CAT, prep, medir\nimport pandas as pd\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.dummy import DummyClassifier\nfrom sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\nfrom sklearn.tree import DecisionTreeClassifier\n\nescalar = ColumnTransformer([(\"num\", StandardScaler(), NUM),\n                             (\"cat\", OneHotEncoder(handle_unknown=\"ignore\"), CAT)])\nmodelos = {\n    \"línea base\": make_pipeline(prep(), DummyClassifier()),\n    \"logística\": make_pipeline(escalar, LogisticRegression(max_iter=1000)),\n    \"árbol, profundidad 6\": make_pipeline(prep(), DecisionTreeClassifier(max_depth=6, random_state=42)),\n    \"bosque, 100 árboles\": make_pipeline(prep(), RandomForestClassifier(100, min_samples_leaf=20, random_state=42)),\n    \"boosting ajustado\": make_pipeline(prep(), HistGradientBoostingClassifier(\n        learning_rate=0.05, max_leaf_nodes=8, min_samples_leaf=100, max_iter=180, random_state=42)),\n}\npd.concat([medir(n, m.fit(ent, ent.cancela)) for n, m in modelos.items()])", "x": ["La foto del capítulo: el árbol solo pierde contra la logística; el bosque la iguala y el boosting le gana por poco (0,812 contra 0,798).", "La diferencia es chica porque la logística ya es una línea base fuerte. El boosting gana porque capta el aniversario, el escalón de la velocidad y las interacciones sin que nadie las programe."]}];
+  const GUARDADO=[{"salida": "|--- antiguedad_meses <= 13.50\n|   |--- velocidad_pct <= 79.85\n|   |   |--- reclamos_90d <= 1.50\n|   |   |   |--- weights: [205.00, 132.00] class: 0\n|   |   |--- reclamos_90d >  1.50\n|   |   |   |--- weights: [50.00, 101.00] class: 1\n|   |--- velocidad_pct >  79.85\n|   |   |--- contrato_mensual <= 0.50\n|   |   |   |--- weights: [1528.00, 172.00] class: 0\n|   |   |--- contrato_mensual >  0.50\n|   |   |   |--- weights: [2566.00, 853.00] class: 0\n|--- antiguedad_meses >  13.50\n|   |--- velocidad_pct <= 79.95\n|   |   |--- contrato_anual <= 0.50\n|   |   |   |--- weights: [307.00, 143.00] class: 0\n|   |   |--- contrato_anual >  0.50\n|   |   |   |--- weights: [309.00, 51.00] class: 0\n|   |--- velocidad_pct >  79.95\n|   |   |--- contrato_mensual <= 0.50\n|   |   |   |--- weights: [3801.00, 145.00] class: 0\n|   |   |--- contrato_mensual >  0.50\n|   |   |   |--- weights: [4174.00, 463.00] class: 0\n\n", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba"], "tipos": ["float64", "float64"], "indice": ["árbol, profundidad 3"], "forma": [1, 2], "motor": "pandas", "filas": [[0.722, 0.717]]}}, {"salida": "", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba", "hojas"], "tipos": ["float64", "float64", "int64"], "indice": ["profundidad 2", "profundidad 3", "profundidad 4", "profundidad 6", "profundidad 8", "profundidad 10", "profundidad None"], "forma": [7, 3], "motor": "pandas", "filas": [[0.678, 0.668, 4], [0.722, 0.717, 8], [0.749, 0.748, 16], [0.793, 0.76, 63], [0.836, 0.749, 195], [0.886, 0.707, 455], [1.0, 0.585, 2091]]}}, {"salida": "Exactitud fuera de la bolsa (OOB): 0.869\nLas variables que más usa:\nantiguedad_meses    0.168\nvelocidad_pct       0.145\nfin_promo_60d       0.083\nregion_Sur          0.071\ncontrato_mensual    0.070\nconsumo_gb          0.069\n", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba"], "tipos": ["float64", "float64"], "indice": ["bosque, 100 árboles"], "forma": [1, 2], "motor": "pandas", "filas": [[0.876, 0.805]]}}, {"salida": "El ajustado se detuvo solo en 235 árboles\n", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba"], "tipos": ["float64", "float64"], "indice": ["tasa 0,5 · 300 árboles", "tasa 0,05 · parada temprana"], "forma": [2, 2], "motor": "pandas", "filas": [[1.0, 0.748], [0.844, 0.81]]}}, {"salida": "", "tabla": {"columnas": ["AUC entrenamiento", "AUC prueba"], "tipos": ["float64", "float64"], "indice": ["línea base", "logística", "árbol, profundidad 6", "bosque, 100 árboles", "boosting ajustado"], "forma": [5, 2], "motor": "pandas", "filas": [[0.5, 0.5], [0.803, 0.798], [0.793, 0.76], [0.876, 0.805], [0.838, 0.812]]}}];
+  let py=null;
+  const sel=raiz.querySelector('#c7l4-ej'),cod=raiz.querySelector('#c7l4-cod');
+  raiz.querySelector('#c7l4-prep').textContent=PREP;
+  sel.innerHTML=EJ.map((e,i)=>'<option value="'+i+'">'+e.t+'</option>').join('');
+  function estado(t,c){const e=raiz.querySelector('#c7l4-estado');e.textContent=t;e.className='c7l4-estado'+(c?' '+c:'');}
+  function mostrar(r,guardado){
+    raiz.querySelector('#c7l4-sello').textContent=guardado?'guardado':'en vivo';
+    const s=raiz.querySelector('#c7l4-salida');s.hidden=!(r.salida||r.error);
+    s.textContent=(r.salida||'')+(r.error?(r.salida?'\n':'')+'Error: '+r.error:'');
+    s.style.color=r.error?'var(--warm)':'';
+    pintarTabla(raiz.querySelector('#c7l4-tabla'),r.error?null:r.tabla);
+    const e=EJ[sel.value];
+    raiz.querySelector('#c7l4-out').innerHTML=r.error?'<span class="warn">El código falló: lee el mensaje de error, que dice el tipo de problema y dónde.</span><span>Corrígelo o pulsa «Restaurar el ejemplo».</span>':
+      '<span class="big">'+e.t+'</span>'+e.x.map(p=>'<span>'+p+'</span>').join('')+(guardado?'':'<span>Si cambiaste el código, las cifras de arriba son las tuyas: compáralas con las del texto.</span>');
+  }
+  function cargarEjemplo(){cod.value=EJ[sel.value].c;mostrar(GUARDADO[sel.value],true);}
+  sel.addEventListener('change',cargarEjemplo);
+  raiz.querySelector('#c7l4-rest').addEventListener('click',cargarEjemplo);
+  async function preparar(){
+    const b=raiz.querySelector('#c7l4-cargar');b.disabled=true;
+    try{
+      py=await PY.cargar(['pandas','scikit-learn'],t=>estado(t));
+      estado('Generando los 20.000 clientes con la semilla 42…');
+      await new Promise(r=>setTimeout(r,30));
+      PY.generador(py);PY.archivos(py,{[PREPNOMBRE]:PREP});
+      estado('Listo: Python 3.14 con scikit-learn 1.8 · edita el código y pulsa Ejecutar','ok');
+      raiz.querySelector('#c7l4-run').disabled=false;b.hidden=true;
+    }catch(e){
+      estado('No se pudo cargar Python. Revisa tu conexión y vuelve a intentar; el resultado guardado sigue abajo.','warn');
+      b.disabled=false;
+    }
+  }
+  raiz.querySelector('#c7l4-cargar').addEventListener('click',preparar);
+  async function ejecutar(){
+    const run=raiz.querySelector('#c7l4-run');
+    if(!py||run.disabled)return;
+    run.disabled=true;estado('Entrenando en tu navegador…');
+    await new Promise(r=>setTimeout(r,30));
+    try{const r=await PY.correr(py,'07-lab-4',cod.value);mostrar(r,false);estado('Listo · ejecutado en tu navegador','ok');}
+    catch(e){mostrar({error:String(e)},false);estado('Python se detuvo; recarga la página si no responde','warn');}
+    run.disabled=false;
+  }
+  raiz.querySelector('#c7l4-run').addEventListener('click',ejecutar);
+  cod.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();ejecutar();}});
+  cargarEjemplo();
+})();
+</script>
+</body>
+</html>
