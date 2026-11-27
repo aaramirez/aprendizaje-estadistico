@@ -12,7 +12,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Aprendizaje automático</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, con scikit-learn corriendo en la página.">
+<meta name="description" content="Cómo aprende una máquina de los datos: regresión, clasificación, validación, métricas, árboles y ensambles, SVM, aprendizaje no supervisado, pipelines e interpretabilidad, y su uso contra el fraude y el riesgo con grafos, biometría conductual, telemática y reservas siniestro a siniestro, con scikit-learn corriendo en la página.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
@@ -38,9 +38,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <section>
   <h2>Cómo usar este curso</h2>
   <div class="prose">
-    <p><b>Estado.</b> Curso completo: los 12 capítulos tienen sus laboratorios, diagramas y prácticas. Empieza por la <a href="temario.html">tabla de contenido</a> o por el primer capítulo.</p>
+    <p><b>Estado.</b> El curso está en preparación: ya están escritos 12 de los 16 capítulos. La <a href="temario.html">tabla de contenido</a> tiene todos, con sus secciones y sus laboratorios.</p>
     <p><b>Para quién es.</b> Para quien quiere construir modelos: analistas que dan el salto a predecir, desarrolladores y futuros científicos de datos. Conviene haber hecho Ciencia de datos y saber Python con pandas. La teoría estadística se usa y se enlaza: la regresión se demuestra en Modelos lineales, el PCA en Multivariante y la probabilidad en Probabilidad y estadística.</p>
-    <p><b>Cómo está hecho.</b> Un mismo ejemplo recorre el curso: predecir qué clientes de un servicio de suscripción ficticio van a cancelar. Cada capítulo prueba una idea nueva sobre ese problema, y los laboratorios entrenan modelos con scikit-learn en el navegador: mueves un parámetro y ves la frontera, la curva o el error cambiar al instante.</p>
+    <p><b>Cómo está hecho.</b> Un mismo ejemplo recorre el curso: predecir qué clientes de un servicio de suscripción ficticio van a cancelar. Cada capítulo prueba una idea nueva sobre ese problema, y los laboratorios entrenan modelos con scikit-learn en el navegador: mueves un parámetro y ves la frontera, la curva o el error cambiar al instante. La última parte cambia de datos: grafos de cuentas, sesiones de una app, viajes en auto y siniestros abiertos, todos simulados.</p>
   </div>
 </section>
 
@@ -79,6 +79,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a class="mod" data-id="variables-y-pipelines" href="10-variables-y-pipelines.html"><span class="n">10</span><b>Ingeniería de variables y pipelines con scikit-learn</b><p>Escalar, codificar, imputar y crear variables dentro de un pipeline que no filtra información.</p></a>
     <a class="mod" data-id="interpretabilidad" href="11-interpretabilidad.html"><span class="n">11</span><b>Interpretabilidad: explicar un modelo y una predicción</b><p>Importancia de variables, dependencia parcial, SHAP y sus límites.</p></a>
     <a class="mod" data-id="patrones-de-modelos" href="12-patrones-de-modelos.html"><span class="n">12</span><b>Patrones de modelos de aprendizaje automático</b><p>Línea base primero, pipelines, validación anidada y *stacking*, y el proyecto completo.</p></a>
+  </div>
+</details>
+
+<details class="stage" id="parte-5" open><summary><h2><span class="pn">Parte 5</span> Aprendizaje automático contra el fraude y el riesgo</h2><span class="cuenta" data-etapa-cuenta="5"></span></summary>
+  <div class="mods">
+    <div class="mod soon" data-id="grafos-contra-el-fraude"><span class="n">13</span><b>Grafos y redes para detectar fraude</b><p>Transacciones y relaciones dibujadas como un grafo: quién conecta a quién, qué grupos aparecen y cómo convertir esa estructura en variables para un modelo.</p></div>
+    <div class="mod soon" data-id="biometria-conductual-y-dispositivo"><span class="n">14</span><b>Biometría conductual y huella del dispositivo</b><p>Cómo escribe, toca y mueve el teléfono una persona, y qué dice el dispositivo con que entra, convertidos en un modelo que la compara con su propio perfil.</p></div>
+    <div class="mod soon" data-id="sensores-y-telematica"><span class="n">15</span><b>Datos de sensores y telemática</b><p>De la señal cruda del acelerómetro y el GPS a un puntaje de manejo que se valida contra los siniestros reales.</p></div>
+    <div class="mod soon" data-id="reservas-con-aprendizaje-automatico"><span class="n">16</span><b>Reservas siniestro a siniestro con aprendizaje automático</b><p>Del triángulo que suma todo al modelo que mira cada siniestro abierto: cuánto costará al final, cuándo se cerrará y qué gana frente al *chain ladder*.</p></div>
   </div>
 </details>
 
